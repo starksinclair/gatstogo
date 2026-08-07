@@ -1,0 +1,15 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "templ generate && go build -o ./tmp/server ./cmd/server"
+bin = "tmp/server"
+delay = 1000
+include_ext = ["go", "templ"]
+exclude_dir = ["tmp", "vendor", ".git"]
+
+[log]
+time = true
+
+[misc]
+clean_on_exit = true

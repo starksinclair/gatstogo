@@ -1,0 +1,33 @@
+package pages
+
+import (
+	"gatstogo/internal/domain"
+	"gatstogo/web/templates/components"
+	"gatstogo/web/templates/layouts"
+)
+
+templ Dashboard(plant *domain.Plant) {
+	@layouts.Base(plant.Name+" dashboard", plant, dashboardContent(plant))
+}
+
+templ dashboardContent(plant *domain.Plant) {
+	<main>
+		<header class="dash-header">
+			<h1>{ plant.Name }</h1>
+			<p>Plant dashboard · { plant.Slug }</p>
+		</header>
+		<div class="dash-actions">
+			<button
+				class="button button-primary full-width"
+				hx-get="/home/summary"
+				hx-target="#summary"
+				hx-swap="innerHTML"
+			>
+				Refresh plant summary
+			</button>
+		</div>
+		<div id="summary" class="card">
+			@components.PlantSummary(plant)
+		</div>
+	</main>
+}

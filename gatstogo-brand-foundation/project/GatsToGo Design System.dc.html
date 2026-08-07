@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#F8FAFC}
+  ::selection{background:#10B981;color:#0F172A}
+  @keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;font-family:'IBM Plex Sans',sans-serif;background:#F8FAFC;color:#0F172A">
+
+  <nav style="position:sticky;top:0;align-self:flex-start;height:100vh;width:216px;flex:none;background:#0F172A;padding:28px 0 28px 0;display:flex;flex-direction:column;gap:2px;overflow-y:auto">
+    <div style="padding:0 24px 20px;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;letter-spacing:0.02em;color:#F8FAFC">GATSTOGO</div>
+    <div style="padding:0 24px 10px;font-size:10px;letter-spacing:0.08em;color:#64748B;font-weight:600">DESIGN SYSTEM</div>
+    <a href="#wordmark" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none;border-left:2px solid transparent" style-hover="color:#F8FAFC;background:#1E293B">01 · Wordmark</a>
+    <a href="#color" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none" style-hover="color:#F8FAFC;background:#1E293B">02 · Colour</a>
+    <a href="#type" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none" style-hover="color:#F8FAFC;background:#1E293B">03 · Typography</a>
+    <a href="#buttons" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none" style-hover="color:#F8FAFC;background:#1E293B">04 · Buttons</a>
+    <a href="#badges" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none" style-hover="color:#F8FAFC;background:#1E293B">05 · Status badges</a>
+    <a href="#forms" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none" style-hover="color:#F8FAFC;background:#1E293B">06 · Forms</a>
+    <a href="#cards" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none" style-hover="color:#F8FAFC;background:#1E293B">07 · Cards &amp; tables</a>
+    <a href="#states" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none" style-hover="color:#F8FAFC;background:#1E293B">08 · Empty / loading / error</a>
+    <a href="#keypad" style="padding:10px 24px;font-size:13px;color:#CBD5E1;text-decoration:none" style-hover="color:#F8FAFC;background:#1E293B">09 · Numeric keypad</a>
+    <div style="margin-top:auto;padding:20px 24px 0;font-size:10.5px;color:#475569;line-height:1.5">Nigeria LPG plants<br/>v1.0 · {{ today }}</div>
+  </nav>
+
+  <main style="flex:1;max-width:1180px;padding:56px 64px 120px">
+
+    <header style="margin-bottom:56px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;color:#00543D;background:#E7F6F1;display:inline-block;padding:4px 10px;border:1px solid #93D6BE;margin-bottom:16px">BRAND FOUNDATION &amp; DESIGN SYSTEM</div>
+      <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:40px;letter-spacing:-0.01em;line-height:1.1;color:#0F172A;margin-bottom:14px">GatsToGo</h1>
+      <p style="font-size:16px;line-height:1.6;color:#334155;max-width:720px">A pay-before-you-fill system for LPG plants. Customers pay, get a code, get a receipt with the exact weight delivered. Staff authorise fills on a tablet. Owners reconcile daily takings. Built to read cleanly in bright sun, on cheap screens, for owners in their 40s and 50s who want a dependable tool — not a startup toy.</p>
+    </header>
+
+    <!-- ============ 01 WORDMARK ============ -->
+    <section id="wordmark" style="margin-bottom:80px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">01 · Wordmark</h2>
+      <p style="font-size:14px;color:#64748B;margin-bottom:28px;max-width:680px">Note the spelling: GATS, not GAS. Four directions explored below — industrial and dependable, no flame motifs, no bubbly rounded type, no gradients.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px">
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:28px 20px 20px;display:flex;flex-direction:column;gap:16px;min-height:170px">
+          <div style="display:flex;align-items:center;justify-content:center;flex:1">
+            <div style="text-align:center;font-family:'Archivo',sans-serif;font-weight:800;letter-spacing:-0.01em">
+              <div style="font-size:26px;color:#0F172A;line-height:1">GATS</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:13px;letter-spacing:0.28em;color:#475569;margin-top:4px">TOGO</div>
+            </div>
+          </div>
+          <div><div style="font-size:11px;font-weight:600;color:#0F172A">A · Stacked ledger</div><div style="font-size:11px;color:#94A3B8;margin-top:2px">Stamp-like, receipt-derived</div></div>
+        </div>
+
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:28px 20px 20px;display:flex;flex-direction:column;gap:16px;min-height:170px">
+          <div style="display:flex;align-items:center;justify-content:center;flex:1">
+            <div style="font-family:'Archivo',sans-serif;letter-spacing:-0.01em;font-size:24px"><span style="font-weight:800;color:#0F172A">GATS</span><span style="font-weight:500;color:#0F172A">TOGO</span></div>
+          </div>
+          <div><div style="font-size:11px;font-weight:600;color:#0F172A">B · Two-weight inline</div><div style="font-size:11px;color:#94A3B8;margin-top:2px">One tight word, split by weight</div></div>
+        </div>
+
+        <div style="border:2px solid #006B4D;background:#fff;padding:24px 20px 20px;display:flex;flex-direction:column;gap:16px;min-height:170px;position:relative">
+          <div style="position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;letter-spacing:0.08em;color:#fff;background:#006B4D;padding:2px 6px">SELECTED</div>
+          <div style="display:flex;align-items:center;justify-content:center;flex:1">
+            <div style="border:1.5px solid #0F172A;padding:10px 14px;position:relative">
+              <div style="position:absolute;top:-1.5px;left:-1.5px;width:6px;height:6px;border-top:1.5px solid #10B981;border-left:1.5px solid #10B981"></div>
+              <div style="position:absolute;bottom:-1.5px;right:-1.5px;width:6px;height:6px;border-bottom:1.5px solid #10B981;border-right:1.5px solid #10B981"></div>
+              <div style="font-family:'Archivo',sans-serif;font-size:20px;letter-spacing:0.01em"><span style="font-weight:800;color:#0F172A">GATS</span><span style="color:#94A3B8;margin:0 2px">·</span><span style="font-weight:500;color:#0F172A">TOGO</span></div>
+            </div>
+          </div>
+          <div><div style="font-size:11px;font-weight:600;color:#0F172A">C · Nameplate</div><div style="font-size:11px;color:#94A3B8;margin-top:2px">Equipment-tag bracket + tick</div></div>
+        </div>
+
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:28px 20px 20px;display:flex;flex-direction:column;gap:16px;min-height:170px">
+          <div style="display:flex;align-items:center;justify-content:center;flex:1">
+            <div style="text-align:center">
+              <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:24px;letter-spacing:-0.01em;color:#0F172A;padding-bottom:6px;border-bottom:2px solid #0F172A;display:inline-block">GATSTOGO</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.18em;color:#94A3B8;margin-top:6px">LPG DISPENSING SYSTEM</div>
+            </div>
+          </div>
+          <div><div style="font-size:11px;font-weight:600;color:#0F172A">D · Underlined tabular</div><div style="font-size:11px;color:#94A3B8;margin-top:2px">Ruled baseline, ledger tagline</div></div>
+        </div>
+      </div>
+
+      <div style="background:#F1F5F9;border:1px solid #E2E8F0;padding:18px 22px;margin-bottom:44px;font-size:13.5px;line-height:1.6;color:#334155;max-width:760px">
+        <strong style="color:#0F172A">Why C — Nameplate:</strong> reads like a tag bolted to a cylinder or gauge — dependable, technical, not playful. The bracket + corner tick reduce cleanly to a compact mark, hold up at favicon size, and the mint tick gives one small point of brand colour without a gradient.
+      </div>
+
+      <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;margin-bottom:18px">Developed identity</h3>
+      <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:16px">
+
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:32px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.06em">FULL HORIZONTAL WORDMARK</div>
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px 0">
+            <div style="border:2px solid #0F172A;padding:16px 24px;position:relative">
+              <div style="position:absolute;top:-2px;left:-2px;width:9px;height:9px;border-top:2px solid #10B981;border-left:2px solid #10B981"></div>
+              <div style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-bottom:2px solid #10B981;border-right:2px solid #10B981"></div>
+              <div style="font-family:'Archivo',sans-serif;font-size:34px;letter-spacing:0.005em"><span style="font-weight:800;color:#0F172A">GATS</span><span style="color:#10B981;margin:0 4px">·</span><span style="font-weight:500;color:#0F172A">TOGO</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:32px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.06em">COMPACT MARK</div>
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:18px;padding:20px 0">
+            <div style="width:72px;height:72px;border:2px solid #0F172A;display:flex;align-items:center;justify-content:center;position:relative;background:#F8FAFC">
+              <div style="position:absolute;top:-2px;left:-2px;width:10px;height:10px;border-top:2px solid #10B981;border-left:2px solid #10B981"></div>
+              <div style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-bottom:2px solid #10B981;border-right:2px solid #10B981"></div>
+              <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:34px;color:#0F172A">G</span>
+            </div>
+            <div style="width:32px;height:32px;border:1.5px solid #0F172A;display:flex;align-items:center;justify-content:center;background:#F8FAFC"><span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#0F172A">G</span></div>
+          </div>
+          <div style="font-size:11px;color:#94A3B8;text-align:center">72px app icon · 32px favicon</div>
+        </div>
+
+        <div style="border:1px solid #E2E8F0;background:#0F172A;padding:32px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:11px;font-weight:600;color:#94A3B8;letter-spacing:0.06em">REVERSED — DARK SURFACE</div>
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px 0">
+            <div style="border:2px solid #F8FAFC;padding:14px 18px;position:relative">
+              <div style="position:absolute;top:-2px;left:-2px;width:9px;height:9px;border-top:2px solid #10B981;border-left:2px solid #10B981"></div>
+              <div style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-bottom:2px solid #10B981;border-right:2px solid #10B981"></div>
+              <div style="font-family:'Archivo',sans-serif;font-size:24px"><span style="font-weight:800;color:#F8FAFC">GATS</span><span style="color:#10B981;margin:0 3px">·</span><span style="font-weight:500;color:#F8FAFC">TOGO</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 02 COLOUR ============ -->
+    <section id="color" style="margin-bottom:80px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">02 · Colour tokens</h2>
+      <p style="font-size:14px;color:#64748B;margin-bottom:28px;max-width:680px">Flat fills only. Every ramp step below is a solid colour — no gradients, no shadows.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px">
+        <div style="border:1px solid #E2E8F0;background:#fff">
+          <div style="height:88px;background:#006B4D"></div>
+          <div style="padding:14px 16px"><div style="font-size:13px;font-weight:600">Deep Emerald</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B;margin-top:2px">#006B4D</div><div style="font-size:11.5px;color:#94A3B8;margin-top:6px">Headers, nav, primary buttons</div></div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff">
+          <div style="height:88px;background:#10B981"></div>
+          <div style="padding:14px 16px"><div style="font-size:13px;font-weight:600">Electric Mint</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B;margin-top:2px">#10B981</div><div style="font-size:11.5px;color:#94A3B8;margin-top:6px">Success states, PAID/DISPENSED badges</div></div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff">
+          <div style="height:88px;background:#F59E0B"></div>
+          <div style="padding:14px 16px"><div style="font-size:13px;font-weight:600">Flame Amber</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B;margin-top:2px">#F59E0B</div><div style="font-size:11.5px;color:#94A3B8;margin-top:6px">Pending fills and icons</div></div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff">
+          <div style="height:88px;background:#B45309"></div>
+          <div style="padding:14px 16px"><div style="font-size:13px;font-weight:600">Dark Amber</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B;margin-top:2px">#B45309</div><div style="font-size:11.5px;color:#94A3B8;margin-top:6px">Amber text, badge labels on light</div></div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff">
+          <div style="height:88px;background:#0F172A"></div>
+          <div style="padding:14px 16px"><div style="font-size:13px;font-weight:600">Slate Charcoal</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B;margin-top:2px">#0F172A</div><div style="font-size:11.5px;color:#94A3B8;margin-top:6px">Body text, dark surfaces</div></div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff">
+          <div style="height:88px;background:#F8FAFC;border-bottom:1px solid #E2E8F0"></div>
+          <div style="padding:14px 16px"><div style="font-size:13px;font-weight:600">Off-White</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B;margin-top:2px">#F8FAFC</div><div style="font-size:11.5px;color:#94A3B8;margin-top:6px">Backgrounds, cards, receipts</div></div>
+        </div>
+      </div>
+
+      <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin:36px 0 14px">Emerald ramp (primary)</h3>
+      <div style="display:grid;grid-template-columns:repeat(11,1fr);gap:0;border:1px solid #E2E8F0">
+        <div style="background:#E7F6F1;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">50</div>
+        <div style="background:#C6EADD;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">100</div>
+        <div style="background:#93D6BE;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">200</div>
+        <div style="background:#5FC29E;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">300</div>
+        <div style="background:#2CAE7E;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">400</div>
+        <div style="background:#0D9468;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">500</div>
+        <div style="background:#006B4D;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC;font-weight:700">600★</div>
+        <div style="background:#00553D;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">700</div>
+        <div style="background:#003F2D;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">800</div>
+        <div style="background:#002A1E;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">900</div>
+        <div style="background:#001510;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">950</div>
+      </div>
+
+      <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin:28px 0 14px">Mint ramp (accent)</h3>
+      <div style="display:grid;grid-template-columns:repeat(11,1fr);gap:0;border:1px solid #E2E8F0">
+        <div style="background:#ECFDF5;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">50</div>
+        <div style="background:#D1FAE5;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">100</div>
+        <div style="background:#A7F3D0;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">200</div>
+        <div style="background:#6EE7B7;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">300</div>
+        <div style="background:#34D399;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">400</div>
+        <div style="background:#10B981;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A;font-weight:700">500★</div>
+        <div style="background:#059669;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">600</div>
+        <div style="background:#047857;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">700</div>
+        <div style="background:#065F46;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">800</div>
+        <div style="background:#064E3B;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">900</div>
+        <div style="background:#022C22;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">950</div>
+      </div>
+
+      <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin:28px 0 14px">Neutral (slate) ramp — borders, secondary text</h3>
+      <div style="display:grid;grid-template-columns:repeat(11,1fr);gap:0;border:1px solid #E2E8F0">
+        <div style="background:#F8FAFC;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A;border-right:1px solid #E2E8F0">50</div>
+        <div style="background:#F1F5F9;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">100</div>
+        <div style="background:#E2E8F0;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">200</div>
+        <div style="background:#CBD5E1;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">300</div>
+        <div style="background:#94A3B8;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">400</div>
+        <div style="background:#64748B;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">500</div>
+        <div style="background:#475569;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">600</div>
+        <div style="background:#334155;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">700</div>
+        <div style="background:#1E293B;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">800</div>
+        <div style="background:#0F172A;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC;font-weight:700">900★</div>
+        <div style="background:#020617;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">950</div>
+      </div>
+
+      <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin:28px 0 14px">Destructive red</h3>
+      <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:0;border:1px solid #E2E8F0;margin-bottom:36px">
+        <div style="background:#FEF2F2;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">50</div>
+        <div style="background:#FEE2E2;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">100</div>
+        <div style="background:#FECACA;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">200</div>
+        <div style="background:#FCA5A5;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">300</div>
+        <div style="background:#F87171;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0F172A">400</div>
+        <div style="background:#EF4444;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">500</div>
+        <div style="background:#DC2626;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC;font-weight:700">600★</div>
+        <div style="background:#B91C1C;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">700</div>
+        <div style="background:#991B1B;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">800</div>
+        <div style="background:#7F1D1D;height:64px;display:flex;align-items:flex-end;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#F8FAFC">900</div>
+      </div>
+
+      <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px">Contrast pairings (WCAG AA — 4.5:1 normal text, 3:1 large text)</h3>
+      <div style="border:1px solid #E2E8F0;background:#fff">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;background:#F1F5F9;font-size:11px;font-weight:600;color:#475569;letter-spacing:0.04em;padding:10px 16px">
+          <div>PAIRING</div><div>SAMPLE</div><div>RATIO</div><div>RESULT</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:13.5px">
+          <div>Slate Charcoal on Off-White</div>
+          <div><span style="background:#F8FAFC;color:#0F172A;padding:3px 8px;border:1px solid #E2E8F0;font-size:12px">Aa</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace">17.1 : 1</div>
+          <div style="color:#00553D;font-weight:600">AAA</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:13.5px">
+          <div>Off-White on Deep Emerald</div>
+          <div><span style="background:#006B4D;color:#F8FAFC;padding:3px 8px;font-size:12px">Aa</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace">6.5 : 1</div>
+          <div style="color:#00553D;font-weight:600">AA</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:13.5px">
+          <div>Slate Charcoal on Electric Mint</div>
+          <div><span style="background:#10B981;color:#0F172A;padding:3px 8px;font-size:12px">Aa</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace">7.0 : 1</div>
+          <div style="color:#00553D;font-weight:600">AA</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:13.5px">
+          <div>White on Electric Mint <span style="color:#B91C1C">(avoid)</span></div>
+          <div><span style="background:#10B981;color:#fff;padding:3px 8px;font-size:12px">Aa</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace">2.5 : 1</div>
+          <div style="color:#B91C1C;font-weight:600">FAIL</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:13.5px">
+          <div>Slate Charcoal on Flame Amber</div>
+          <div><span style="background:#F59E0B;color:#0F172A;padding:3px 8px;font-size:12px">Aa</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace">8.3 : 1</div>
+          <div style="color:#00553D;font-weight:600">AA</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:13.5px">
+          <div>Dark Amber on Off-White</div>
+          <div><span style="background:#F8FAFC;color:#B45309;padding:3px 8px;border:1px solid #E2E8F0;font-size:12px">Aa</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace">4.8 : 1</div>
+          <div style="color:#00553D;font-weight:600">AA</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:13.5px">
+          <div>White on Red 600 (destructive)</div>
+          <div><span style="background:#DC2626;color:#fff;padding:3px 8px;font-size:12px">Aa</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace">4.8 : 1</div>
+          <div style="color:#00553D;font-weight:600">AA</div>
+        </div>
+      </div>
+      <p style="font-size:12.5px;color:#94A3B8;margin-top:10px;max-width:680px">Rule of thumb: Mint and Amber are fills — pair them with Slate Charcoal text, never white. Emerald and Red are dark enough to carry white text.</p>
+    </section>
+
+    <!-- ============ 03 TYPOGRAPHY ============ -->
+    <section id="type" style="margin-bottom:80px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">03 · Typography</h2>
+      <p style="font-size:14px;color:#64748B;margin-bottom:28px;max-width:720px">Archivo for headings (confident, grotesque, industrial). IBM Plex Sans for body copy (high legibility at small sizes). IBM Plex Mono for every figure — money, weights, codes, timestamps — so digits line up column to column.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:36px">
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:22px">
+          <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.06em;margin-bottom:12px">HEADINGS — ARCHIVO</div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:30px;color:#0F172A">Aa Gg 12</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:8px">700 / 800 weight only</div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:22px">
+          <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.06em;margin-bottom:12px">BODY — IBM PLEX SANS</div>
+          <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:30px;color:#0F172A">Aa Gg 12</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:8px">400 / 500 / 600 weight</div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:22px">
+          <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.06em;margin-bottom:12px">NUMERALS — IBM PLEX MONO</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:30px;color:#0F172A">₦12,450.00</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:8px">Tabular figures, always</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #E2E8F0;background:#fff">
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;background:#F1F5F9;font-size:11px;font-weight:600;color:#475569;letter-spacing:0.04em;padding:10px 16px">
+          <div>SIZE</div><div>SAMPLE</div><div>USAGE</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">48px</div><div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:48px;color:#0F172A">Display</div><div style="font-size:12.5px;color:#64748B">Dashboard hero totals</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">40px</div><div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:40px;color:#0F172A">Heading 1</div><div style="font-size:12.5px;color:#64748B">Page titles</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">32px</div><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:32px;color:#0F172A">Heading 1 small</div><div style="font-size:12.5px;color:#64748B">Section headers</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">28px</div><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:28px;color:#0F172A">Heading 2</div><div style="font-size:12.5px;color:#64748B">Card / panel titles</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">24px</div><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:24px;color:#0F172A">Heading 3</div><div style="font-size:12.5px;color:#64748B">Sub-sections</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">20px</div><div style="font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:20px;color:#0F172A">Subheading</div><div style="font-size:12.5px;color:#64748B">List group labels</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">18px</div><div style="font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:18px;color:#0F172A">Body large / lead</div><div style="font-size:12.5px;color:#64748B">Intro paragraphs</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">16px</div><div style="font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:16px;color:#0F172A">Body default</div><div style="font-size:12.5px;color:#64748B">Default paragraph text</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">14px</div><div style="font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:14px;color:#0F172A">Body small / table cell</div><div style="font-size:12.5px;color:#64748B">Minimum body size</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">12px</div><div style="font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:12px;color:#334155">Caption / helper text</div><div style="font-size:12.5px;color:#64748B">Field hints, timestamps label</div>
+        </div>
+        <div style="display:grid;grid-template-columns:90px 1fr 170px;padding:14px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#64748B">11px</div><div style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;color:#64748B;letter-spacing:0.04em">Micro mono — 09:41:02</div><div style="font-size:12.5px;color:#64748B">Fine-print codes, footers</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 04 BUTTONS ============ -->
+    <section id="buttons" style="margin-bottom:80px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">04 · Buttons</h2>
+      <p style="font-size:14px;color:#64748B;margin-bottom:28px">Flat fills, 2px focus-visible outline for tablet use, 48px min height for touch.</p>
+
+      <div style="border:1px solid #E2E8F0;background:#fff">
+        <div style="display:grid;grid-template-columns:120px 1fr 1fr 1fr;background:#F1F5F9;font-size:11px;font-weight:600;color:#475569;letter-spacing:0.04em;padding:10px 16px">
+          <div></div><div>DEFAULT</div><div>HOVER</div><div>DISABLED</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:120px 1fr 1fr 1fr;padding:18px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-size:12.5px;font-weight:600;color:#0F172A">Primary</div>
+          <div><button style="height:48px;padding:0 22px;background:#006B4D;color:#F8FAFC;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#00543D">Authorise fill</button></div>
+          <div><button style="height:48px;padding:0 22px;background:#00543D;color:#F8FAFC;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px">Authorise fill</button></div>
+          <div><button disabled style="height:48px;padding:0 22px;background:#E2E8F0;color:#94A3B8;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:not-allowed">Authorise fill</button></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:120px 1fr 1fr 1fr;padding:18px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-size:12.5px;font-weight:600;color:#0F172A">Secondary</div>
+          <div><button style="height:48px;padding:0 22px;background:#F8FAFC;color:#006B4D;border:1.5px solid #006B4D;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#E7F6F1">Print receipt</button></div>
+          <div><button style="height:48px;padding:0 22px;background:#E7F6F1;color:#006B4D;border:1.5px solid #006B4D;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px">Print receipt</button></div>
+          <div><button disabled style="height:48px;padding:0 22px;background:#F8FAFC;color:#94A3B8;border:1.5px solid #E2E8F0;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:not-allowed">Print receipt</button></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:120px 1fr 1fr 1fr;padding:18px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-size:12.5px;font-weight:600;color:#0F172A">Ghost</div>
+          <div><button style="height:48px;padding:0 22px;background:transparent;color:#006B4D;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#F1F5F9">View history</button></div>
+          <div><button style="height:48px;padding:0 22px;background:#F1F5F9;color:#006B4D;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px">View history</button></div>
+          <div><button disabled style="height:48px;padding:0 22px;background:transparent;color:#CBD5E1;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:not-allowed">View history</button></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:120px 1fr 1fr 1fr;padding:18px 16px;align-items:center;border-top:1px solid #E2E8F0">
+          <div style="font-size:12.5px;font-weight:600;color:#0F172A">Destructive</div>
+          <div><button style="height:48px;padding:0 22px;background:#DC2626;color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#B91C1C">Void transaction</button></div>
+          <div><button style="height:48px;padding:0 22px;background:#B91C1C;color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px">Void transaction</button></div>
+          <div><button disabled style="height:48px;padding:0 22px;background:#FEE2E2;color:#FCA5A5;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:not-allowed">Void transaction</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 05 BADGES ============ -->
+    <section id="badges" style="margin-bottom:80px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">05 · Status badges</h2>
+      <p style="font-size:14px;color:#64748B;margin-bottom:24px">Every badge stays flat with a 1px border for definition in bright light.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        <span style="display:inline-flex;align-items:center;height:30px;padding:0 14px;background:#10B981;color:#0F172A;border:1px solid #059669;font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:0.03em">PAID</span>
+        <span style="display:inline-flex;align-items:center;height:30px;padding:0 14px;background:#006B4D;color:#F8FAFC;border:1px solid #003F2D;font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:0.03em">DISPENSED</span>
+        <span style="display:inline-flex;align-items:center;height:30px;padding:0 14px;background:#F59E0B;color:#0F172A;border:1px solid #B45309;font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:0.03em">PENDING</span>
+        <span style="display:inline-flex;align-items:center;height:30px;padding:0 14px;background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:0.03em">UNFILLED</span>
+        <span style="display:inline-flex;align-items:center;height:30px;padding:0 14px;background:#FEE2E2;color:#B91C1C;border:1px solid #FCA5A5;font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:0.03em">VOIDED</span>
+        <span style="display:inline-flex;align-items:center;height:30px;padding:0 14px;background:#334155;color:#F8FAFC;border:1px solid #1E293B;font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:0.03em">OFFLINE</span>
+      </div>
+    </section>
+
+    <!-- ============ 06 FORMS ============ -->
+    <section id="forms" style="margin-bottom:80px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">06 · Forms</h2>
+      <p style="font-size:14px;color:#64748B;margin-bottom:24px">44px min hit-height for touch. Emerald focus ring, no soft grey text.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;max-width:900px">
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:6px">CYLINDER WEIGHT (KG)</label>
+          <input type="text" placeholder="12.5" style="width:100%;height:46px;padding:0 14px;border:1.5px solid #CBD5E1;background:#fff;font-family:'IBM Plex Mono',monospace;font-size:15px;color:#0F172A;outline:none" style-focus="border-color:#006B4D" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:6px">PLANT LOCATION</label>
+          <select style="width:100%;height:46px;padding:0 14px;border:1.5px solid #CBD5E1;background:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:#0F172A;outline:none;appearance:none" style-focus="border-color:#006B4D">
+            <option>Ikeja Depot</option>
+            <option>Apapa Plant</option>
+            <option>Ibadan Station</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:6px">SEND SMS RECEIPT</label>
+          <div style="display:flex;align-items:center;height:46px;gap:10px">
+            <div onClick="{{ onToggle }}" style="width:44px;height:26px;background:{{ toggleTrackColor }};border:1px solid #94A3B8;position:relative;cursor:pointer;flex:none">
+              <div style="width:20px;height:20px;background:#F8FAFC;border:1px solid #0F172A;position:absolute;top:2px;left:{{ toggleKnobLeft }};transition:left 0.12s"></div>
+            </div>
+            <span style="font-size:13px;color:#334155">{{ toggleLabel }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 07 CARDS & TABLES ============ -->
+    <section id="cards" style="margin-bottom:80px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">07 · Cards &amp; data tables</h2>
+      <p style="font-size:14px;color:#64748B;margin-bottom:24px">Numeric columns are always right-aligned, monospace, tabular — so figures compare cleanly down a column.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px">
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:20px">
+          <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.04em;margin-bottom:10px">TODAY'S TAKINGS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:28px;color:#0F172A">₦482,900.00</div>
+          <div style="font-size:12px;color:#059669;margin-top:6px">▲ 41 transactions</div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:20px">
+          <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.04em;margin-bottom:10px">TOTAL GAS DISPENSED</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:28px;color:#0F172A">312.40 <span style="font-size:15px;color:#64748B">kg</span></div>
+          <div style="font-size:12px;color:#64748B;margin-top:6px">Across 3 tanks</div>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:20px">
+          <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.04em;margin-bottom:10px">RECONCILIATION</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:28px;color:#B45309">₦1,200.00</div>
+          <div style="font-size:12px;color:#B45309;margin-top:6px">Unreconciled — flagged</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #E2E8F0;background:#fff">
+        <div style="display:grid;grid-template-columns:110px 1fr 130px 130px 130px;background:#F1F5F9;font-size:11px;font-weight:600;color:#475569;letter-spacing:0.05em;padding:11px 16px">
+          <div>CODE</div><div>CUSTOMER</div><div style="text-align:right">WEIGHT (KG)</div><div style="text-align:right">AMOUNT</div><div style="text-align:right">STATUS</div>
+        </div>
+        <div style="display:grid;grid-template-columns:110px 1fr 130px 130px 130px;padding:13px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;color:#0F172A">GX-4821</div><div>Adebayo Okafor</div><div style="text-align:right;font-family:'IBM Plex Mono',monospace">12.50</div><div style="text-align:right;font-family:'IBM Plex Mono',monospace">₦8,750.00</div>
+          <div style="text-align:right"><span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;background:#006B4D;color:#F8FAFC;font-weight:700;font-size:11px">DISPENSED</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:110px 1fr 130px 130px 130px;padding:13px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;color:#0F172A">GX-4822</div><div>Ngozi Umeh</div><div style="text-align:right;font-family:'IBM Plex Mono',monospace">6.00</div><div style="text-align:right;font-family:'IBM Plex Mono',monospace">₦4,200.00</div>
+          <div style="text-align:right"><span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;background:#10B981;color:#0F172A;font-weight:700;font-size:11px">PAID</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:110px 1fr 130px 130px 130px;padding:13px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;color:#0F172A">GX-4823</div><div>Chidi Nwosu</div><div style="text-align:right;font-family:'IBM Plex Mono',monospace">—</div><div style="text-align:right;font-family:'IBM Plex Mono',monospace">₦3,500.00</div>
+          <div style="text-align:right"><span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;background:#F59E0B;color:#0F172A;font-weight:700;font-size:11px">PENDING</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:110px 1fr 130px 130px 130px;padding:13px 16px;align-items:center;border-top:1px solid #E2E8F0;font-size:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;color:#0F172A">GX-4824</div><div>Fatima Bello</div><div style="text-align:right;font-family:'IBM Plex Mono',monospace">15.00</div><div style="text-align:right;font-family:'IBM Plex Mono',monospace;color:#B91C1C;text-decoration:line-through">₦10,500.00</div>
+          <div style="text-align:right"><span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;background:#FEE2E2;color:#B91C1C;font-weight:700;font-size:11px">VOIDED</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 08 STATES ============ -->
+    <section id="states" style="margin-bottom:80px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">08 · Empty, loading &amp; error states</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:40px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px">
+          <div style="width:52px;height:52px;border:2px solid #CBD5E1;display:flex;align-items:center;justify-content:center"><div style="width:20px;height:20px;border:2px solid #94A3B8;border-radius:50%"></div></div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;color:#0F172A">No transactions yet today</div>
+          <div style="font-size:13.5px;color:#64748B;max-width:320px">Fills authorised on the tablet will appear here as they happen.</div>
+          <button style="height:44px;padding:0 20px;background:#006B4D;color:#F8FAFC;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer" style-hover="background:#00543D">Authorise a fill</button>
+        </div>
+
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:40px;display:flex;flex-direction:column;justify-content:center;gap:14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:18px;height:18px;border:2.5px solid #E2E8F0;border-top-color:#006B4D;border-radius:50%;animation:spin 0.7s linear infinite"></div>
+            <span style="font-size:13.5px;color:#64748B">Reconciling today's takings…</span>
+          </div>
+          <div style="height:14px;width:88%;background:linear-gradient(90deg,#F1F5F9 25%,#E2E8F0 37%,#F1F5F9 63%);background-size:400px 100%;animation:shimmer 1.4s linear infinite"></div>
+          <div style="height:14px;width:64%;background:linear-gradient(90deg,#F1F5F9 25%,#E2E8F0 37%,#F1F5F9 63%);background-size:400px 100%;animation:shimmer 1.4s linear infinite"></div>
+          <div style="height:14px;width:76%;background:linear-gradient(90deg,#F1F5F9 25%,#E2E8F0 37%,#F1F5F9 63%);background-size:400px 100%;animation:shimmer 1.4s linear infinite"></div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #FCA5A5;background:#FEF2F2;padding:16px 20px;display:flex;align-items:flex-start;gap:12px">
+        <div style="width:22px;height:22px;flex:none;border:1.5px solid #B91C1C;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#B91C1C">!</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#7F1D1D">Could not confirm dispensed weight</div>
+          <div style="font-size:13.5px;color:#991B1B;margin-top:2px">Scale reading did not sync. Re-weigh the cylinder before releasing it to the customer.</div>
+        </div>
+        <button style="margin-left:auto;flex:none;height:36px;padding:0 16px;background:#DC2626;color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer" style-hover="background:#B91C1C">Retry</button>
+      </div>
+    </section>
+
+    <!-- ============ 09 KEYPAD ============ -->
+    <section id="keypad" style="margin-bottom:40px">
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">09 · Numeric keypad</h2>
+      <p style="font-size:14px;color:#64748B;margin-bottom:24px;max-width:640px">Staff-tablet component for entering weight / amount. 64px keys, thumb-reachable, high-contrast on a low-end screen.</p>
+
+      <div style="width:320px;border:1px solid #E2E8F0;background:#0F172A;padding:20px">
+        <div style="background:#0F172A;border:1.5px solid #334155;height:56px;display:flex;align-items:center;justify-content:flex-end;padding:0 16px;margin-bottom:16px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:28px;color:#F8FAFC">{{ keypadValue }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:#64748B;margin-left:6px">kg</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <button onClick="{{ onKey1 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">1</button>
+          <button onClick="{{ onKey2 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">2</button>
+          <button onClick="{{ onKey3 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">3</button>
+          <button onClick="{{ onKey4 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">4</button>
+          <button onClick="{{ onKey5 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">5</button>
+          <button onClick="{{ onKey6 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">6</button>
+          <button onClick="{{ onKey7 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">7</button>
+          <button onClick="{{ onKey8 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">8</button>
+          <button onClick="{{ onKey9 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">9</button>
+          <button onClick="{{ onKeyClear }}" style="height:64px;background:#334155;color:#CBD5E1;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#475569">C</button>
+          <button onClick="{{ onKey0 }}" style="height:64px;background:#1E293B;color:#F8FAFC;border:none;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px;cursor:pointer" style-hover="background:#334155">0</button>
+          <button onClick="{{ onKeyBack }}" style="height:64px;background:#334155;color:#CBD5E1;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:20px;cursor:pointer" style-hover="background:#475569">⌫</button>
+        </div>
+        <button style="width:100%;height:56px;margin-top:8px;background:#10B981;color:#0F172A;border:none;font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:15px;cursor:pointer" style-hover="background:#34D399">CONFIRM WEIGHT</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { keypad: '0', toggleOn: true };
+
+  pressDigit(d) {
+    this.setState(s => ({ keypad: s.keypad === '0' ? String(d) : (s.keypad.length >= 6 ? s.keypad : s.keypad + d) }));
+  }
+
+  renderVals() {
+    const today = new Date().toLocaleDateString('en-NG', { month: 'short', year: 'numeric' });
+    return {
+      today,
+      keypadValue: this.state.keypad,
+      onKey0: () => this.pressDigit(0), onKey1: () => this.pressDigit(1), onKey2: () => this.pressDigit(2),
+      onKey3: () => this.pressDigit(3), onKey4: () => this.pressDigit(4), onKey5: () => this.pressDigit(5),
+      onKey6: () => this.pressDigit(6), onKey7: () => this.pressDigit(7), onKey8: () => this.pressDigit(8),
+      onKey9: () => this.pressDigit(9),
+      onKeyClear: () => this.setState({ keypad: '0' }),
+      onKeyBack: () => this.setState(s => ({ keypad: s.keypad.length > 1 ? s.keypad.slice(0, -1) : '0' })),
+      toggleOn: this.state.toggleOn,
+      toggleTrackColor: this.state.toggleOn ? '#006B4D' : '#E2E8F0',
+      toggleKnobLeft: this.state.toggleOn ? '22px' : '2px',
+      toggleLabel: this.state.toggleOn ? 'Enabled' : 'Disabled',
+      onToggle: () => this.setState(s => ({ toggleOn: !s.toggleOn })),
+    };
+  }
+}
+</script>
+</body>
+</html>

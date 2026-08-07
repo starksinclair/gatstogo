@@ -1,0 +1,130 @@
+services:
+  # ======================
+  # Go Application
+  # ======================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: gatstogo-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: development
+      APP_PORT: 8080
+      APP_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
+      ADMIN_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
+    command: ["air", "-c", ".air.toml"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - .:/app
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    networks:
+      - gatstogo-network
+
+  # ======================
+  # PostgreSQL
+  # ======================
+  postgres:
+    image: postgres:16-alpine
+    container_name: gatstogo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gatstogo
+      POSTGRES_PASSWORD: gatstogo_secret
+      POSTGRES_DB: gatstogo
+    ports:
+      - "5432:5432"          # Only for local access (remove in production)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: run migrations automatically on first start
+      # - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gatstogo -d gatstogo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gatstogo-network
+
+  # ======================
+  # Migrations
+  # ======================
+  migrate:
+    image: postgres:16-alpine
+    container_name: gatstogo-migrate
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: gatstogo_secret
+    command:
+      - /bin/sh
+      - -c
+      - |
+        until pg_isready -h postgres -U gatstogo -d gatstogo; do
+          sleep 1;
+        done;
+        for file in /migrations/*.up.sql; do
+          echo "Applying $$file";
+          psql -v ON_ERROR_STOP=1 -h postgres -U gatstogo -d gatstogo -f "$$file";
+        done
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - gatstogo-network
+
+  # ======================
+  # Redis
+  # ======================
+  redis:
+    image: redis:7-alpine
+    container_name: gatstogo-redis
+    restart: unless-stopped
+    profiles:
+      - infra
+    ports:
+      - "6379:6379"          # Only for local access
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - gatstogo-network
+
+  # ======================
+  # Optional: Adminer (Database UI)
+  # ======================
+  adminer:
+    image: adminer:latest
+    container_name: gatstogo-adminer
+    restart: unless-stopped
+    profiles:
+      - tools
+    ports:
+      - "8083:8080"          # Only for local access
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    networks:
+      - gatstogo-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  go-mod-cache:
+  go-build-cache:
+
+networks:
+  gatstogo-network:
+    driver: bridge

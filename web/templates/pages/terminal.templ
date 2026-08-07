@@ -1,0 +1,392 @@
+package pages
+
+import (
+	"gatstogo/internal/domain"
+	"strings"
+)
+
+func terminalPlantName(plant *domain.Plant) string {
+	if plant == nil || strings.TrimSpace(plant.Name) == "" {
+		return "Gas plant"
+	}
+	return strings.TrimSpace(plant.Name)
+}
+
+templ StaffTerminal(plant *domain.Plant) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ terminalPlantName(plant) } staff terminal</title>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@500;600;700;800&family=IBM+Plex+Mono:wght@600;700;800&display=swap" rel="stylesheet"/>
+			<link rel="stylesheet" href="/static/css/terminal.css"/>
+			<script>
+				document.addEventListener("DOMContentLoaded", function () {
+					var state = {
+						screen: "start",
+						employee: "",
+						config: "combined",
+						tab: "fill",
+						pin: "",
+						openingCash: "",
+						code: "",
+						attempts: 0,
+						lockedUntil: 0,
+						lockTimer: null,
+						revealed: null,
+						message: "",
+						messageKind: "",
+						fills: 7,
+						kg: 84.5,
+						cashHeld: 128750,
+						cylinder: 12.5,
+						phone: "",
+						tokenNext: 49,
+						tokensOut: [42, 43, 47],
+						tokensReturned: [39, 41],
+						closingCash: ""
+					};
+					var validCodes = {
+						"2714": { initials: "A.N.", kg: 12.5, amount: 14375, method: "Bank transfer" },
+						"5089": { initials: "O.T.", kg: 6, amount: 6900, method: "Cash" },
+						"3341": { initials: "F.B.", kg: 25, amount: 28750, method: "POS terminal" }
+					};
+					var employees = [
+						{ id: "ngozi", name: "Ngozi Umeh", initials: "N.U.", role: "Manager", config: "combined" },
+						{ id: "ifeoma", name: "Ifeoma Chukwu", initials: "I.C.", role: "Cashier", config: "cashier" },
+						{ id: "chidi", name: "Chidi Okonkwo", initials: "C.O.", role: "Operator", config: "operator" },
+						{ id: "tunde", name: "Tunde Bakare", initials: "T.B.", role: "Cashier + Operator", config: "combined" }
+					];
+					var usedCodes = ["8842"];
+					var price = 1150;
+					var amberLimit = 150000;
+					var blockLimit = 300000;
+					var root = document.querySelector("[data-terminal]");
+					var plantName = root ? root.dataset.plant : "Gas plant";
+
+					function naira(n) {
+						return "₦" + Math.round(n).toLocaleString("en-NG");
+					}
+					function kg(n) {
+						return Number(n).toFixed(Number(n) % 1 === 0 ? 0 : 1) + " kg";
+					}
+					function setScreen(screen) {
+						state.screen = screen;
+						if (screen === "main" && state.config === "operator") state.tab = "fill";
+						render();
+					}
+					function setConfig(config) {
+						state.config = config;
+						state.tab = config === "operator" ? "fill" : state.tab;
+						render();
+					}
+					function setEmployee(id) {
+						var employee = employees.find(function (item) { return item.id === id; });
+						state.employee = id;
+						if (employee) {
+							state.config = employee.config;
+							state.tab = employee.config === "operator" ? "fill" : state.tab;
+						}
+						render();
+					}
+					function canStartShift() {
+						return state.employee !== "" && state.pin.length === 4 && state.openingCash.trim() !== "";
+					}
+					function syncStartButton() {
+						var button = root.querySelector('[data-action="start-shift"]');
+						if (button) button.disabled = !canStartShift();
+					}
+					function setTab(tab) {
+						if (state.config === "operator" && tab !== "fill") return;
+						state.tab = tab;
+						render();
+					}
+					function appendPin(value) {
+						if (state.pin.length < 4) state.pin += value;
+						render();
+					}
+					function backPin() {
+						state.pin = state.pin.slice(0, -1);
+						render();
+					}
+					function appendCode(value) {
+						if (Date.now() < state.lockedUntil || state.code.length >= 4 || state.revealed) return;
+						state.code += value;
+						if (state.code.length === 4) validateCode();
+						render();
+					}
+					function backCode() {
+						if (Date.now() < state.lockedUntil || state.revealed) return;
+						state.code = state.code.slice(0, -1);
+						state.message = "";
+						render();
+					}
+					function validateCode() {
+						if (usedCodes.indexOf(state.code) >= 0) {
+							state.message = "This code has already been filled today.";
+							state.messageKind = "used";
+							return;
+						}
+						if (validCodes[state.code]) {
+							state.revealed = validCodes[state.code];
+							state.message = "";
+							state.messageKind = "";
+							return;
+						}
+						state.attempts += 1;
+						if (state.attempts >= 5) {
+							state.lockedUntil = Date.now() + 20000;
+							state.message = "Terminal locked. It will reopen automatically.";
+							state.messageKind = "locked";
+							state.code = "";
+							clearInterval(state.lockTimer);
+							state.lockTimer = setInterval(function () {
+								if (Date.now() >= state.lockedUntil) {
+									clearInterval(state.lockTimer);
+									state.attempts = 0;
+									state.message = "";
+									state.messageKind = "";
+								}
+								render();
+							}, 250);
+							return;
+						}
+						state.message = "Incorrect code. " + (5 - state.attempts) + " attempts remaining.";
+						state.messageKind = "wrong";
+						setTimeout(function () {
+							if (state.messageKind === "wrong") {
+								state.code = "";
+								state.message = "";
+								state.messageKind = "";
+								render();
+							}
+						}, 900);
+					}
+					function confirmFill() {
+						if (!state.revealed) return;
+						usedCodes.push(state.code);
+						state.fills += 1;
+						state.kg += state.revealed.kg;
+						state.revealed = null;
+						state.code = "";
+						state.message = "Fill confirmed. Ready for the next customer.";
+						state.messageKind = "confirmed";
+						setTimeout(function () {
+							if (state.messageKind === "confirmed") {
+								state.message = "";
+								state.messageKind = "";
+								render();
+							}
+						}, 1600);
+						render();
+					}
+					function clearCode() {
+						state.code = "";
+						state.revealed = null;
+						state.message = "";
+						state.messageKind = "";
+						render();
+					}
+					function recordCash() {
+						if (state.cashHeld >= blockLimit) return;
+						state.cashHeld += state.cylinder * price;
+						if (state.config === "cashier") {
+							state.tokensOut.push(state.tokenNext);
+							state.tokenNext += 1;
+						}
+						state.phone = "";
+						state.message = state.config === "cashier" ? "Cash recorded. Give customer token #" + (state.tokenNext - 1) + "." : "Cash recorded and fill queued.";
+						state.messageKind = "confirmed";
+						setTimeout(function () {
+							if (state.messageKind === "confirmed") {
+								state.message = "";
+								state.messageKind = "";
+								render();
+							}
+						}, 1600);
+						render();
+					}
+					function returnToken(token) {
+						state.tokensOut = state.tokensOut.filter(function (item) { return item !== token; });
+						state.tokensReturned.push(token);
+						render();
+					}
+					function keypad(type) {
+						var labels = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"];
+						return labels.map(function (label) {
+							if (label === "clear") return '<button class="key key-soft" type="button" data-action="' + type + '-clear">Clear</button>';
+							if (label === "back") return '<button class="key key-soft" type="button" data-action="' + type + '-back">Back</button>';
+							return '<button class="key" type="button" data-action="' + type + '-digit" data-value="' + label + '">' + label + '</button>';
+						}).join("");
+					}
+					function cashClass() {
+						if (state.cashHeld >= blockLimit) return "danger";
+						if (state.cashHeld >= amberLimit) return "warn";
+						return "ok";
+					}
+					function lockSeconds() {
+						return Math.max(0, Math.ceil((state.lockedUntil - Date.now()) / 1000));
+					}
+					function renderStart() {
+						var canStart = canStartShift();
+						return '<main class="start-grid">' +
+							'<section class="terminal-card start-card">' +
+								'<div class="section-kicker">Shift start</div>' +
+								'<h1>Start terminal shift</h1>' +
+								'<p class="strong-help">Select the staffing setup for this device, enter PIN, then count opening cash.</p>' +
+								'<div class="staff-grid">' + employees.map(employeeButton).join("") + '</div>' +
+								'<div class="config-grid" role="group" aria-label="Terminal configuration">' +
+									configButton("combined", "Combined", "Fill + cash sale") +
+									configButton("cashier", "Cashier", "Cash, tokens, end count") +
+									configButton("operator", "Operator", "Fill only") +
+								'</div>' +
+								'<label class="field-label" for="opening-cash">Opening cash drawer</label>' +
+								'<input id="opening-cash" class="terminal-input mono" value="' + state.openingCash + '" placeholder="₦20,000" inputmode="numeric" data-action="opening-cash"/>' +
+								'<button class="primary-action" type="button" data-action="start-shift" ' + (canStart ? "" : "disabled") + '>Start shift</button>' +
+							'</section>' +
+							'<section class="terminal-card pin-card">' +
+								'<div class="section-kicker">Employee PIN</div>' +
+								'<div class="pin-dots">' + [0,1,2,3].map(function (i) { return '<span class="' + (i < state.pin.length ? "filled" : "") + '"></span>'; }).join("") + '</div>' +
+								'<div class="keypad small">' + keypad("pin") + '</div>' +
+							'</section>' +
+						'</main>';
+					}
+					function employeeButton(employee) {
+						return '<button class="staff-button ' + (state.employee === employee.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + employee.id + '"><span>' + employee.initials + '</span><strong>' + employee.name + '</strong><em>' + employee.role + '</em></button>';
+					}
+					function configButton(id, title, desc) {
+						return '<button class="config-button ' + (state.config === id ? "active" : "") + '" type="button" data-action="config" data-value="' + id + '"><strong>' + title + '</strong><span>' + desc + '</span></button>';
+					}
+					function renderMain() {
+						return '<header class="terminal-top">' +
+							'<div><div class="brand-row"><span class="brand-mark">G</span><strong>GATSTOGO</strong><span>' + plantName + '</span></div><div class="offline"><span></span>Working offline - 3 fills queued to sync</div></div>' +
+							'<div class="shift-strip"><strong>' + state.fills + ' fills</strong><strong>' + kg(state.kg) + '</strong><button type="button" data-action="end-screen">End shift</button></div>' +
+						'</header>' +
+						'<nav class="terminal-tabs">' +
+							tabButton("fill", "Fill") +
+							(state.config === "operator" ? "" : tabButton("cash", state.config === "cashier" ? "Cash sale + tokens" : "Cash sale")) +
+							tabButton("end", "End shift") +
+						'</nav>' +
+						'<main>' + (state.tab === "fill" ? renderFill() : state.tab === "cash" ? renderCash() : renderEnd()) + '</main>';
+					}
+					function tabButton(id, label) {
+						return '<button class="' + (state.tab === id ? "active" : "") + '" type="button" data-action="tab" data-value="' + id + '">' + label + '</button>';
+					}
+					function renderFill() {
+						var locked = Date.now() < state.lockedUntil;
+						if (locked) {
+							return '<section class="lock-panel terminal-card"><div class="section-kicker">Too many attempts</div><h1>Terminal locked</h1><div class="lock-time mono">0:' + String(lockSeconds()).padStart(2, "0") + '</div><p class="strong-help">This clears automatically. The terminal keeps the shift safe.</p></section>';
+						}
+						if (state.revealed) {
+							return '<section class="fill-grid">' +
+								'<div class="terminal-card authorised-card">' +
+									'<div class="section-kicker">Authorised fill</div>' +
+									'<div class="initials">' + state.revealed.initials + '</div>' +
+									'<div class="weight mono">' + kg(state.revealed.kg) + '</div>' +
+									'<div class="proof-row"><span>Amount paid</span><strong class="mono">' + naira(state.revealed.amount) + '</strong></div>' +
+									'<div class="proof-row"><span>Method</span><strong>' + state.revealed.method + '</strong></div>' +
+									'<button class="primary-action valve" type="button" data-action="confirm-fill">Open valve</button>' +
+								'</div>' +
+								'<aside class="terminal-card privacy-card"><div class="section-kicker">Privacy</div><p>No customer name, phone number, or ticket reference appears on this terminal.</p><button class="secondary-action" type="button" data-action="code-clear">Try another code</button></aside>' +
+							'</section>';
+						}
+						return '<section class="fill-grid">' +
+							'<div class="terminal-card code-card">' +
+								'<div class="section-kicker">Fill tab</div>' +
+								'<h1>Enter customer code</h1>' +
+								'<div class="code-boxes">' + [0,1,2,3].map(function (i) { return '<span class="mono">' + (state.code[i] || "-") + '</span>'; }).join("") + '</div>' +
+								(state.message ? '<div class="state-message ' + state.messageKind + '">' + state.message + '</div>' : '') +
+								'<div class="keypad">' + keypad("code") + '</div>' +
+							'</div>' +
+							'<aside class="terminal-card summary-card"><div class="section-kicker">Shift summary</div><div class="big-stat mono">' + state.fills + '</div><p>Fills completed</p><div class="big-stat mono">' + kg(state.kg) + '</div><p>Kg dispensed</p><div class="used-code">Already filled demo code: <strong class="mono">8842</strong></div></aside>' +
+						'</section>';
+					}
+					function renderCash() {
+						var amount = state.cylinder * price;
+						var blocked = state.cashHeld >= blockLimit;
+						return '<section class="cash-grid">' +
+							'<div class="terminal-card">' +
+								'<div class="section-kicker">Cash sale</div>' +
+								'<h1>Record cash and queue fill</h1>' +
+								'<div class="cylinder-grid">' + [3,6,12.5,25,50].map(function (size) { return '<button class="' + (state.cylinder === size ? "active" : "") + '" type="button" data-action="cylinder" data-value="' + size + '"><span class="mono">' + kg(size) + '</span></button>'; }).join("") + '</div>' +
+								'<label class="field-label" for="phone">Phone number optional</label>' +
+								'<input id="phone" class="terminal-input mono" value="' + state.phone + '" placeholder="0803 000 0000" inputmode="tel" data-action="phone"/>' +
+								'<div class="amount-panel"><span>Amount at ₦1,150/kg</span><strong class="mono">' + naira(amount) + '</strong><em>Not editable</em></div>' +
+								(blocked ? '<div class="state-message used">Cash limit reached. Record a deposit before taking more cash.</div>' : '') +
+								'<button class="primary-action" type="button" data-action="record-cash" ' + (blocked ? "disabled" : "") + '>' + (state.config === "cashier" ? "Record cash and issue token #" + state.tokenNext : "Record cash and queue fill") + '</button>' +
+								(state.message && state.messageKind === "confirmed" ? '<div class="state-message confirmed">' + state.message + '</div>' : '') +
+							'</div>' +
+							'<aside class="terminal-card cash-side">' +
+								'<div class="section-kicker">Cash holding</div>' +
+								'<div class="cash-held ' + cashClass() + '"><strong class="mono">' + naira(state.cashHeld) + '</strong><span>' + (cashClass() === "ok" ? "Normal" : cashClass() === "warn" ? "Deposit soon" : "Deposit required") + '</span></div>' +
+								(state.config === "cashier" ? renderTokens() : '<p class="strong-help">Combined staff can take cash and move straight to filling.</p>') +
+							'</aside>' +
+						'</section>';
+					}
+					function renderTokens() {
+						return '<div class="token-panel"><div class="section-kicker">Tokens out</div><div class="tokens">' +
+							(state.tokensOut.length ? state.tokensOut.map(function (token) { return '<button type="button" data-action="return-token" data-value="' + token + '">#' + token + '</button>'; }).join("") : '<span class="empty-token">No tokens out</span>') +
+							'</div><div class="section-kicker">Returned</div><div class="tokens returned">' +
+							(state.tokensReturned.length ? state.tokensReturned.map(function (token) { return '<span>#' + token + '</span>'; }).join("") : '<span class="empty-token">None returned yet</span>') +
+							'</div><p class="strong-help">Tap a token when the customer gives it back.</p></div>';
+					}
+					function renderEnd() {
+						var expected = state.cashHeld + (parseInt(state.openingCash.replace(/\D/g, ""), 10) || 0);
+						if (!state.closingCash) state.closingCash = naira(expected);
+						return '<section class="end-grid">' +
+							'<div class="terminal-card">' +
+								'<div class="section-kicker">Shift end</div>' +
+								'<h1>Count and close shift</h1>' +
+								'<label class="field-label" for="closing-cash">Closing cash count</label>' +
+								'<input id="closing-cash" class="terminal-input mono" value="' + state.closingCash + '" placeholder="' + naira(expected) + '" inputmode="numeric" data-action="closing-cash"/>' +
+								(state.config === "cashier" ? '<div class="state-message wrong">' + state.tokensOut.length + ' tokens still out: ' + state.tokensOut.map(function (t) { return "#" + t; }).join(", ") + '</div>' : '') +
+								'<button class="primary-action" type="button" data-action="finish-shift">Submit and end shift</button>' +
+							'</div>' +
+							'<aside class="terminal-card"><div class="section-kicker">Summary</div><div class="proof-row"><span>Fills completed</span><strong class="mono">' + state.fills + '</strong></div><div class="proof-row"><span>Kg dispensed</span><strong class="mono">' + kg(state.kg) + '</strong></div><div class="proof-row"><span>Cash recorded</span><strong class="mono">' + naira(state.cashHeld) + '</strong></div><div class="proof-row"><span>Expected close</span><strong class="mono">' + naira(expected) + '</strong></div></aside>' +
+						'</section>';
+					}
+					function render() {
+						root.innerHTML = '<div class="screen">' + (state.screen === "start" ? renderStart() : renderMain()) + '</div>';
+					}
+					root.addEventListener("click", function (event) {
+						var target = event.target.closest("[data-action]");
+						if (!target) return;
+						var action = target.dataset.action;
+						var value = target.dataset.value;
+						if (action === "config") setConfig(value);
+						if (action === "employee") setEmployee(value);
+						if (action === "start-shift" && canStartShift()) setScreen("main");
+						if (action === "tab") setTab(value);
+						if (action === "pin-digit") appendPin(value);
+						if (action === "pin-back") backPin();
+						if (action === "pin-clear") { state.pin = ""; render(); }
+						if (action === "code-digit") appendCode(value);
+						if (action === "code-back") backCode();
+						if (action === "code-clear") clearCode();
+						if (action === "confirm-fill") confirmFill();
+						if (action === "cylinder") { state.cylinder = Number(value); render(); }
+						if (action === "record-cash") recordCash();
+						if (action === "return-token") returnToken(Number(value));
+						if (action === "end-screen") setTab("end");
+						if (action === "finish-shift") { state.screen = "start"; state.pin = ""; state.code = ""; state.revealed = null; render(); }
+					});
+					root.addEventListener("input", function (event) {
+						var action = event.target.dataset.action;
+						if (action === "opening-cash") state.openingCash = event.target.value;
+						if (action === "phone") state.phone = event.target.value;
+						if (action === "closing-cash") state.closingCash = event.target.value;
+						if (action === "opening-cash") syncStartButton();
+					});
+					render();
+				});
+			</script>
+		</head>
+		<body>
+			<div class="terminal-page">
+				<div data-terminal data-plant={ terminalPlantName(plant) }></div>
+			</div>
+		</body>
+	</html>
+}
