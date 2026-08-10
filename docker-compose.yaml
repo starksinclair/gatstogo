@@ -17,9 +17,9 @@ services:
       APP_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
       ADMIN_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
     command: ["air", "-c", ".air.toml"]
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
+#    depends_on:
+#      migrate:
+#        condition: service_completed_successfully
     volumes:
       - .:/app
       - go-mod-cache:/go/pkg/mod
@@ -39,7 +39,7 @@ services:
       POSTGRES_PASSWORD: gatstogo_secret
       POSTGRES_DB: gatstogo
     ports:
-      - "5432:5432"          # Only for local access (remove in production)
+      - "5435:5432"          # Only for local access (remove in production)
     volumes:
       - postgres_data:/var/lib/postgresql/data
       # Optional: run migrations automatically on first start
@@ -55,30 +55,30 @@ services:
   # ======================
   # Migrations
   # ======================
-  migrate:
-    image: postgres:16-alpine
-    container_name: gatstogo-migrate
-    restart: "no"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PGPASSWORD: gatstogo_secret
-    command:
-      - /bin/sh
-      - -c
-      - |
-        until pg_isready -h postgres -U gatstogo -d gatstogo; do
-          sleep 1;
-        done;
-        for file in /migrations/*.up.sql; do
-          echo "Applying $$file";
-          psql -v ON_ERROR_STOP=1 -h postgres -U gatstogo -d gatstogo -f "$$file";
-        done
-    volumes:
-      - ./migrations:/migrations
-    networks:
-      - gatstogo-network
+#  migrate:
+#    image: postgres:16-alpine
+#    container_name: gatstogo-migrate
+#    restart: "no"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    environment:
+#      PGPASSWORD: gatstogo_secret
+#    command:
+#      - /bin/sh
+#      - -c
+#      - |
+#        until pg_isready -h postgres -U gatstogo -d gatstogo; do
+#          sleep 1;
+#        done;
+#        for file in /migrations/*.up.sql; do
+#          echo "Applying $$file";
+#          psql -v ON_ERROR_STOP=1 -h postgres -U gatstogo -d gatstogo -f "$$file";
+#        done
+#    volumes:
+#      - ./migrations:/migrations
+#    networks:
+#      - gatstogo-network
 
   # ======================
   # Redis

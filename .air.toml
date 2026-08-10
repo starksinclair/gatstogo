@@ -2,8 +2,8 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "templ generate && go build -o ./tmp/server ./cmd/server"
-bin = "tmp/server"
+cmd = "go run github.com/a-h/templ/cmd/templ@v0.3.1020 generate && go build -o ./tmp/server ./cmd/server"
+entrypoint = ["./tmp/server"]
 delay = 1000
 include_ext = ["go", "templ"]
 exclude_dir = ["tmp", "vendor", ".git"]

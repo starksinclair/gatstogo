@@ -6,7 +6,8 @@ FROM golang:1.26-alpine AS builder
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
 
-ENV PATH="/root/go/bin:${PATH}"
+ENV GOBIN=/go/bin
+ENV PATH="/go/bin:${PATH}"
 
 WORKDIR /app
 
@@ -17,7 +18,7 @@ RUN go mod download
 # Copy the rest of the source code
 COPY . .
 
-RUN go install github.com/a-h/templ/cmd/templ@latest && templ generate
+RUN go install github.com/a-h/templ/cmd/templ@v0.3.1020 && templ generate
 
 # Build the binary
 # - CGO_ENABLED=0 → pure static binary
@@ -30,9 +31,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /app/server 
 FROM golang:1.26-alpine AS dev
 
 RUN apk add --no-cache git ca-certificates tzdata
-RUN go install github.com/air-verse/air@latest && go install github.com/a-h/templ/cmd/templ@latest
-
-ENV PATH="/root/go/bin:${PATH}"
+ENV GOBIN=/go/bin
+ENV PATH="/go/bin:${PATH}"
+RUN go install github.com/air-verse/air@latest && go install github.com/a-h/templ/cmd/templ@v0.3.1020
 
 WORKDIR /app
 
