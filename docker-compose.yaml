@@ -17,9 +17,9 @@ services:
       APP_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
       ADMIN_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
     command: ["air", "-c", ".air.toml"]
-#    depends_on:
-#      migrate:
-#        condition: service_completed_successfully
+    depends_on:
+      postgres:
+        condition: service_healthy
     volumes:
       - .:/app
       - go-mod-cache:/go/pkg/mod
