@@ -1,0 +1,230 @@
+package main
+
+import (
+	"context"
+	"log"
+	"net/http"
+	"strings"
+
+	"gatstogo/internal/auth"
+	"gatstogo/internal/middleware"
+	"gatstogo/internal/session"
+	"gatstogo/internal/tenantdb"
+	"gatstogo/web/templates/pages"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+)
+
+// ---- Owner / manager login (tenant-scoped) ----
+
+func ownerLoginPageHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		if plant == nil {
+			http.Error(w, "Plant not found", http.StatusNotFound)
+			return
+		}
+		if err := pages.OwnerLogin(plant.Name, "").Render(r.Context(), w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		if plant == nil {
+			http.Error(w, "Plant not found", http.StatusNotFound)
+			return
+		}
+		if err := r.ParseForm(); err != nil {
+			renderOwnerLoginError(r.Context(), w, plant.Name, "Could not read that submission. Try again.")
+			return
+		}
+		phone := strings.TrimSpace(r.FormValue("phone"))
+		password := r.FormValue("password")
+		if phone == "" || password == "" {
+			renderOwnerLoginError(r.Context(), w, plant.Name, "Enter your phone number and password.")
+			return
+		}
+
+		var (
+			userID       uuid.UUID
+			name, role   string
+			passwordHash *string
+			active       bool
+			found        bool
+		)
+		err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			row := q.QueryRow(ctx, `
+				SELECT id, name, role, password_hash, active
+				FROM users
+				WHERE plant_id = $1 AND phone = $2 AND role IN ('owner', 'manager')
+			`, plant.ID, phone)
+			switch scanErr := row.Scan(&userID, &name, &role, &passwordHash, &active); scanErr {
+			case nil:
+				found = true
+				return nil
+			case pgx.ErrNoRows:
+				found = false
+				return nil
+			default:
+				return scanErr
+			}
+		})
+		if err != nil {
+			log.Println("owner login: query failed:", err)
+			renderOwnerLoginError(r.Context(), w, plant.Name, "Something went wrong. Try again.")
+			return
+		}
+
+		hash := ""
+		if passwordHash != nil {
+			hash = *passwordHash
+		}
+		if !found || !active || !auth.VerifyPassword(hash, password) {
+			renderOwnerLoginError(r.Context(), w, plant.Name, "Incorrect phone number or password.")
+			return
+		}
+
+		token, err := s.Sessions.Create(r.Context(), session.Data{
+			UserID:  userID.String(),
+			Role:    session.Role(role),
+			Name:    name,
+			PlantID: plant.ID.String(),
+		}, session.OwnerTTL)
+		if err != nil {
+			log.Println("owner login: create session failed:", err)
+			renderOwnerLoginError(r.Context(), w, plant.Name, "Something went wrong. Try again.")
+			return
+		}
+
+		session.WriteCookie(w, token, session.OwnerTTL)
+		http.Redirect(w, r, "/owner", http.StatusSeeOther)
+	}
+}
+
+func renderOwnerLoginError(ctx context.Context, w http.ResponseWriter, plantName, message string) {
+	w.WriteHeader(http.StatusUnauthorized)
+	if err := pages.OwnerLogin(plantName, message).Render(ctx, w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func ownerLogoutHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if token, ok := session.ReadCookie(r); ok {
+			_ = s.Sessions.Delete(r.Context(), token)
+		}
+		session.ClearCookie(w)
+		http.Redirect(w, r, "/owner/login", http.StatusSeeOther)
+	}
+}
+
+// ---- Admin login (platform-wide, not tenant-scoped) ----
+
+func adminLoginPageHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := pages.AdminLogin("").Render(r.Context(), w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func adminLoginSubmitHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			renderAdminLoginError(r.Context(), w, "Could not read that submission. Try again.")
+			return
+		}
+		phone := strings.TrimSpace(r.FormValue("phone"))
+		password := r.FormValue("password")
+		if phone == "" || password == "" {
+			renderAdminLoginError(r.Context(), w, "Enter your phone number and password.")
+			return
+		}
+
+		// users.phone is only unique per (plant_id, phone), not globally --
+		// an admin user's phone could in principle collide with an admin
+		// row at a different plant. Rather than assume at most one match,
+		// check every 'admin'-role row with this phone and accept the
+		// first one whose password actually verifies.
+		rows, err := s.AdminDB.Query(r.Context(), `
+			SELECT id, name, password_hash, active
+			FROM users
+			WHERE phone = $1 AND role = 'admin'
+			LIMIT 5
+		`, phone)
+		if err != nil {
+			log.Println("admin login: query failed:", err)
+			renderAdminLoginError(r.Context(), w, "Something went wrong. Try again.")
+			return
+		}
+
+		var (
+			userID  uuid.UUID
+			name    string
+			matched bool
+		)
+		for rows.Next() {
+			var (
+				id           uuid.UUID
+				rowName      string
+				passwordHash *string
+				active       bool
+			)
+			if scanErr := rows.Scan(&id, &rowName, &passwordHash, &active); scanErr != nil {
+				continue
+			}
+			hash := ""
+			if passwordHash != nil {
+				hash = *passwordHash
+			}
+			if active && auth.VerifyPassword(hash, password) {
+				userID, name, matched = id, rowName, true
+				break
+			}
+		}
+		rows.Close()
+
+		if !matched {
+			renderAdminLoginError(r.Context(), w, "Incorrect phone number or password.")
+			return
+		}
+
+		token, err := s.Sessions.Create(r.Context(), session.Data{
+			UserID: userID.String(),
+			Role:   session.RoleAdmin,
+			Name:   name,
+			// PlantID intentionally left empty: admin sessions are
+			// platform-wide, not scoped to whichever plant this admin
+			// user's row happens to live under (see session.Data doc).
+		}, session.OwnerTTL)
+		if err != nil {
+			log.Println("admin login: create session failed:", err)
+			renderAdminLoginError(r.Context(), w, "Something went wrong. Try again.")
+			return
+		}
+
+		session.WriteCookie(w, token, session.OwnerTTL)
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	}
+}
+
+func renderAdminLoginError(ctx context.Context, w http.ResponseWriter, message string) {
+	w.WriteHeader(http.StatusUnauthorized)
+	if err := pages.AdminLogin(message).Render(ctx, w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func adminLogoutHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if token, ok := session.ReadCookie(r); ok {
+			_ = s.Sessions.Delete(r.Context(), token)
+		}
+		session.ClearCookie(w)
+		http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+	}
+}

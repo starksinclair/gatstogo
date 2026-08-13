@@ -406,3 +406,54 @@ td {
 	.info-row { grid-template-columns: 1fr; gap: 4px; }
 	.receipt-code { font-size: 38px; }
 }
+
+/* ---- Auth (owner + admin login) ---- */
+.full-width { width: 100%; }
+.login-page {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+}
+.login-card {
+	width: 100%;
+	max-width: 380px;
+	padding: 28px 26px;
+	display: grid;
+	gap: 16px;
+}
+.login-brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-family: Archivo, sans-serif;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	color: var(--ink);
+}
+.login-brand .mark {
+	width: 32px;
+	height: 32px;
+	display: grid;
+	place-items: center;
+	border: 2px solid var(--ink);
+	color: var(--ink);
+	position: relative;
+}
+.login-brand .mark:before {
+	content: "";
+	position: absolute;
+	top: -2px;
+	left: -2px;
+	width: 9px;
+	height: 9px;
+	border-top: 2px solid var(--mint);
+	border-left: 2px solid var(--mint);
+}
+.login-card h1 {
+	font-family: Archivo, sans-serif;
+	font-size: 20px;
+	margin: 0;
+}
+.login-error { justify-self: start; }

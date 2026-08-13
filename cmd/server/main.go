@@ -137,11 +137,19 @@ func (s *Server) MountHandlers() {
 	//s.Router.Get("/", attendant.Test)
 	s.Router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
-	s.Router.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
-		data := loadAdminConsole(r.Context(), s.AdminDB)
-		if err := pages.AdminConsole(data).Render(r.Context(), w); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+	s.Router.Get("/admin/login", adminLoginPageHandler(s))
+	s.Router.Post("/admin/login", adminLoginSubmitHandler(s))
+	s.Router.Post("/admin/logout", adminLogoutHandler(s))
+
+	s.Router.Group(func(r chi.Router) {
+		r.Use(middleware.RequireAdminSession(s.Sessions))
+
+		r.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
+			data := loadAdminConsole(r.Context(), s.AdminDB)
+			if err := pages.AdminConsole(data).Render(r.Context(), w); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		})
 	})
 
 	s.Router.Group(func(r chi.Router) {
@@ -199,8 +207,15 @@ func (s *Server) MountHandlers() {
 			}
 		})
 
-		r.Get("/owner", ownerDashboardHandler(s))
-		r.Get("/owner/dashboard", ownerDashboardHandler(s))
+		r.Get("/owner/login", ownerLoginPageHandler(s))
+		r.Post("/owner/login", ownerLoginSubmitHandler(s))
+		r.Post("/owner/logout", ownerLogoutHandler(s))
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequireOwnerSession(s.Sessions))
+			r.Get("/owner", ownerDashboardHandler(s))
+			r.Get("/owner/dashboard", ownerDashboardHandler(s))
+		})
 
 		r.Get("/home/summary", func(w http.ResponseWriter, r *http.Request) {
 			plant := middleware.GetPlant(r.Context())

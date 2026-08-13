@@ -1,0 +1,37 @@
+package pages
+
+templ OwnerLogin(plantName string, errorMsg string) {
+	@authShell(plantName+" owner sign in", "Owner sign in", errorMsg, "/owner/login")
+}
+
+templ authShell(title string, heading string, errorMsg string, action string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title }</title>
+			<link rel="stylesheet" href="/static/css/owner-admin.css"/>
+		</head>
+		<body>
+			<div class="login-page">
+				<form class="panel panel-pad login-card" method="post" action={ templ.SafeURL(action) }>
+					<div class="login-brand"><span class="mark">G</span><span>GATSTOGO</span></div>
+					<h1>{ heading }</h1>
+					if errorMsg != "" {
+						<div class="badge badge-danger login-error">{ errorMsg }</div>
+					}
+					<div class="field">
+						<label>Phone number</label>
+						<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required autofocus/>
+					</div>
+					<div class="field">
+						<label>Password</label>
+						<input type="password" name="password" autocomplete="current-password" required/>
+					</div>
+					<button class="btn primary full-width" type="submit">Sign in</button>
+				</form>
+			</div>
+		</body>
+	</html>
+}
