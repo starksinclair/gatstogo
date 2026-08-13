@@ -9,6 +9,7 @@ import (
 	//"gatstogo/internal/handlers/attendant"
 	"gatstogo/internal/domain"
 	"gatstogo/internal/middleware"
+	"gatstogo/internal/tenantdb"
 	"gatstogo/web/templates/components"
 	"gatstogo/web/templates/pages"
 	"log"
@@ -122,7 +123,15 @@ func (s *Server) MountHandlers() {
 	})
 
 	s.Router.Group(func(r chi.Router) {
-		r.Use(middleware.Tenant(s.AppDB)) // apply tenant middleware
+		// The tenant lookup below (slug -> plant) is intentionally run on
+		// AdminDB (the RLS-bypassing role). It's a pre-tenant, directory-style
+		// lookup -- it's how a plant_id is discovered in the first place, so
+		// it can't itself be scoped by the plants_isolation policy (id =
+		// current_plant_id()), which needs a plant_id to already be known.
+		// Every tenant-scoped query that runs *after* this middleware goes
+		// through tenantdb.WithTenant(ctx, s.AppDB, plant.ID, ...) instead,
+		// using the restricted pool with the plant_id actually set.
+		r.Use(middleware.Tenant(s.AdminDB))
 
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			plant := middleware.GetPlant(r.Context())
@@ -168,29 +177,8 @@ func (s *Server) MountHandlers() {
 			}
 		})
 
-		r.Get("/owner", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			data := loadOwnerDashboard(r.Context(), s.AdminDB, plant)
-			if err := pages.OwnerDashboard(data).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
-
-		r.Get("/owner/dashboard", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			data := loadOwnerDashboard(r.Context(), s.AdminDB, plant)
-			if err := pages.OwnerDashboard(data).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
+		r.Get("/owner", ownerDashboardHandler(s))
+		r.Get("/owner/dashboard", ownerDashboardHandler(s))
 
 		r.Get("/home/summary", func(w http.ResponseWriter, r *http.Request) {
 			plant := middleware.GetPlant(r.Context())
@@ -231,7 +219,37 @@ func writeBytes(w http.ResponseWriter, data []byte) {
 	}
 }
 
-func loadOwnerDashboard(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant) pages.OwnerDashboardData {
+// ownerDashboardHandler serves both /owner and /owner/dashboard. All reads
+// run inside tenantdb.WithTenant against the restricted AppDB pool, scoped
+// to the resolved plant, instead of the RLS-bypassing AdminDB pool the two
+// routes used before -- normal tenant traffic has no reason to hold a
+// bypass-RLS connection.
+func ownerDashboardHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		if plant == nil {
+			http.Error(w, "Plant not found", http.StatusNotFound)
+			return
+		}
+
+		var data pages.OwnerDashboardData
+		err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			data = loadOwnerDashboard(ctx, q, plant)
+			return nil
+		})
+		if err != nil {
+			log.Println("owner dashboard: tenant-scoped query failed:", err)
+			http.Error(w, "Could not load dashboard", http.StatusInternalServerError)
+			return
+		}
+
+		if err := pages.OwnerDashboard(data).Render(r.Context(), w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) pages.OwnerDashboardData {
 	data := pages.OwnerDashboardData{
 		PlantName:    fallbackString(plant.Name, "Your plant"),
 		PlantSlug:    fallbackString(plant.Slug, "plant-slug"),
@@ -286,7 +304,7 @@ func loadOwnerDashboard(ctx context.Context, db *pgxpool.Pool, plant *domain.Pla
 	return data
 }
 
-func loadOwnerTickets(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant) []pages.OwnerTicketRow {
+func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerTicketRow {
 	rows, err := db.Query(ctx, `
 		SELECT reference, code, COALESCE(customer_name, ''), COALESCE(customer_phone, ''),
 		       size_grams, COALESCE(net_grams, 0), rate_per_kg, amount, channel, status,
@@ -334,7 +352,7 @@ func loadOwnerTickets(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant
 	return out
 }
 
-func loadOwnerStaff(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant) []pages.OwnerStaffRow {
+func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerStaffRow {
 	rows, err := db.Query(ctx, `
 		SELECT u.name, u.phone, u.role, u.active, u.created_at,
 		       COUNT(DISTINCT t.id),
@@ -375,7 +393,7 @@ func loadOwnerStaff(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant) 
 	return out
 }
 
-func loadOwnerShifts(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant) []pages.OwnerShiftRow {
+func loadOwnerShifts(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerShiftRow {
 	rows, err := db.Query(ctx, `
 		SELECT u.name, COALESCE(s.device_id, ''), s.opened_at, s.closed_at, COUNT(DISTINCT t.id),
 		       s.opening_cash_kobo, s.closing_cash_kobo, s.tokens_issued, s.tokens_returned, COALESCE(s.notes, '')
@@ -429,7 +447,7 @@ func loadOwnerShifts(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant)
 	return out
 }
 
-func loadOwnerCashMovements(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant) []pages.OwnerCashRow {
+func loadOwnerCashMovements(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerCashRow {
 	rows, err := db.Query(ctx, `
 		SELECT cm.created_at, cm.kind, cm.amount_kobo, cm.counted_kobo,
 		       COALESCE(u.name, ''), COALESCE(t.code, ''), COALESCE(cm.note, '')
@@ -475,7 +493,7 @@ func loadOwnerCashMovements(ctx context.Context, db *pgxpool.Pool, plant *domain
 	return out
 }
 
-func loadOwnerPriceHistory(ctx context.Context, db *pgxpool.Pool, plant *domain.Plant) []pages.OwnerPriceRow {
+func loadOwnerPriceHistory(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerPriceRow {
 	rows, err := db.Query(ctx, `
 		SELECT p.effective_from, p.price_per_kg, COALESCE(u.name, ''), p.created_at
 		FROM prices p
@@ -509,7 +527,7 @@ func loadOwnerPriceHistory(ctx context.Context, db *pgxpool.Pool, plant *domain.
 	return out
 }
 
-func loadAdminConsole(ctx context.Context, db *pgxpool.Pool) pages.AdminConsoleData {
+func loadAdminConsole(ctx context.Context, db tenantdb.Querier) pages.AdminConsoleData {
 	data := pages.AdminConsoleData{}
 
 	_ = db.QueryRow(ctx, `
@@ -542,7 +560,7 @@ func loadAdminConsole(ctx context.Context, db *pgxpool.Pool) pages.AdminConsoleD
 	return data
 }
 
-func loadAdminPlants(ctx context.Context, db *pgxpool.Pool) []pages.AdminPlantRow {
+func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlantRow {
 	rows, err := db.Query(ctx, `
 		SELECT p.name, COALESCE(p.city, ''), COALESCE(p.address, ''), COALESCE(p.phone, ''),
 		       p.slug, p.status, COALESCE(p.custom_domain, ''), p.domain_status,
@@ -606,7 +624,7 @@ func loadAdminPlants(ctx context.Context, db *pgxpool.Pool) []pages.AdminPlantRo
 	return out
 }
 
-func loadPlatformStaff(ctx context.Context, db *pgxpool.Pool) []pages.AdminStaffRow {
+func loadPlatformStaff(ctx context.Context, db tenantdb.Querier) []pages.AdminStaffRow {
 	rows, err := db.Query(ctx, `
 		SELECT name, phone, active, COUNT(DISTINCT plant_id)
 		FROM users
@@ -639,7 +657,7 @@ func loadPlatformStaff(ctx context.Context, db *pgxpool.Pool) []pages.AdminStaff
 	return out
 }
 
-func loadSystemTables(ctx context.Context, db *pgxpool.Pool) []pages.AdminSystemTable {
+func loadSystemTables(ctx context.Context, db tenantdb.Querier) []pages.AdminSystemTable {
 	defs := []pages.AdminSystemTable{
 		{Name: "plants", Role: "Tenant profile, branding, domain, and lifecycle.", Description: "One row per gas plant."},
 		{Name: "reserved_slugs", Role: "Protected subdomains that plants cannot claim.", Description: "Keeps admin, api, support, and system names safe."},
@@ -657,7 +675,7 @@ func loadSystemTables(ctx context.Context, db *pgxpool.Pool) []pages.AdminSystem
 	return defs
 }
 
-func countRows(ctx context.Context, db *pgxpool.Pool, table string) int64 {
+func countRows(ctx context.Context, db tenantdb.Querier, table string) int64 {
 	allowed := map[string]bool{
 		"plants":         true,
 		"reserved_slugs": true,
@@ -676,7 +694,7 @@ func countRows(ctx context.Context, db *pgxpool.Pool, table string) int64 {
 	return count
 }
 
-func loadActivity(ctx context.Context, db *pgxpool.Pool, plantID any, limit int) []pages.OwnerActivityRow {
+func loadActivity(ctx context.Context, db tenantdb.Querier, plantID any, limit int) []pages.OwnerActivityRow {
 	query := `
 		SELECT action, COALESCE(subject, ''), created_at
 		FROM activity_log
@@ -716,7 +734,7 @@ func loadActivity(ctx context.Context, db *pgxpool.Pool, plantID any, limit int)
 	return out
 }
 
-func loadReservedSlugs(ctx context.Context, db *pgxpool.Pool) []string {
+func loadReservedSlugs(ctx context.Context, db tenantdb.Querier) []string {
 	rows, err := db.Query(ctx, `SELECT slug FROM reserved_slugs ORDER BY slug LIMIT 40`)
 	if err != nil {
 		return nil
