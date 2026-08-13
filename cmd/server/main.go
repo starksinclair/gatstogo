@@ -11,6 +11,7 @@ import (
 	"gatstogo/internal/csrf"
 	"gatstogo/internal/domain"
 	"gatstogo/internal/middleware"
+	"gatstogo/internal/payments"
 	"gatstogo/internal/session"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/web/templates/components"
@@ -37,6 +38,7 @@ type Server struct {
 	AdminDB  *pgxpool.Pool // used for platform admin (bypasses RLS)
 	Redis    *redis.Client
 	Sessions *session.Store
+	Paystack *payments.Client
 }
 
 func main() {
@@ -126,12 +128,23 @@ func CreateNewServer() (*Server, error) {
 	}
 	csrf.Secret = secret
 
+	// 5. Paystack. Required: a server that can't take payment isn't
+	// meaningfully "up" for this app's purpose.
+	paystackSecretKey := os.Getenv("PAYSTACK_SECRET_KEY")
+	if paystackSecretKey == "" {
+		appDB.Close()
+		adminDB.Close()
+		_ = rdb.Close()
+		return nil, fmt.Errorf("PAYSTACK_SECRET_KEY is required")
+	}
+
 	s := &Server{
 		Router:   chi.NewRouter(),
 		AppDB:    appDB,
 		AdminDB:  adminDB,
 		Redis:    rdb,
 		Sessions: session.New(rdb),
+		Paystack: payments.NewClient(paystackSecretKey),
 	}
 	return s, nil
 }
@@ -149,6 +162,11 @@ func (s *Server) MountHandlers() {
 
 	//s.Router.Get("/", attendant.Test)
 	s.Router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+
+	// Server-to-server; no session, no cookies, and deliberately no CSRF
+	// middleware -- authenticity here comes entirely from the
+	// X-Paystack-Signature HMAC check inside the handler itself.
+	s.Router.Post("/webhooks/paystack", paystackWebhookHandler(s))
 
 	s.Router.Get("/admin/login", adminLoginPageHandler(s))
 	s.Router.With(middleware.CSRF).Post("/admin/login", adminLoginSubmitHandler(s))
@@ -185,27 +203,10 @@ func (s *Server) MountHandlers() {
 		// using the restricted pool with the plant_id actually set.
 		r.Use(middleware.Tenant(s.AdminDB))
 
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			if err := pages.CustomerHome(plant).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
-
-		r.Get("/home", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			if err := pages.CustomerHome(plant).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
+		r.Get("/", customerHomeHandler(s))
+		r.Get("/home", customerHomeHandler(s))
+		r.With(middleware.CSRF).Post("/tickets", buyGasSubmitHandler(s))
+		r.Get("/tickets/{reference}/callback", ticketCallbackHandler(s))
 
 		r.Get("/receipts", func(w http.ResponseWriter, r *http.Request) {
 			plant := middleware.GetPlant(r.Context())
@@ -242,6 +243,7 @@ func (s *Server) MountHandlers() {
 			r.Get("/owner", ownerDashboardHandler(s))
 			r.Get("/owner/dashboard", ownerDashboardHandler(s))
 			r.Post("/owner/logout", ownerLogoutHandler(s))
+			r.Post("/tickets/{reference}/void", ticketVoidHandler(s))
 		})
 
 		r.Get("/home/summary", func(w http.ResponseWriter, r *http.Request) {
@@ -337,6 +339,54 @@ func ownerDashboardHandler(s *Server) http.HandlerFunc {
 		if err := pages.OwnerDashboard(data).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+	}
+}
+
+// customerHomeHandler serves both / and /home. Loads the plant's live
+// price (the same query loadOwnerDashboard's "Current price" tile uses)
+// instead of the hardcoded ₦1,150/kg the buy form previously showed
+// regardless of what was actually in the prices table, and sets the
+// public double-submit CSRF cookie the form's hidden field needs.
+func customerHomeHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		if plant == nil {
+			http.Error(w, "Plant not found", http.StatusNotFound)
+			return
+		}
+
+		var pricePerKg int64
+		_ = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			_, pricePerKg, _ = loadCurrentPrice(ctx, q, plant.ID)
+			return nil
+		})
+
+		csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
+		errorMsg := buyGasErrorMessage(r.URL.Query().Get("error"))
+
+		if err := pages.CustomerHome(plant, pricePerKg, csrfToken, errorMsg).Render(r.Context(), w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+// buyGasErrorMessage maps the short ?error= code buyGasSubmitHandler
+// redirects back with to a human-readable message. A code with no known
+// mapping (or none at all) renders no banner.
+func buyGasErrorMessage(code string) string {
+	switch code {
+	case "amount":
+		return "Enter a valid amount greater than zero."
+	case "details":
+		return "Enter your name and phone number."
+	case "channel":
+		return "Choose how you will pay."
+	case "payment":
+		return "We could not start your payment just now. Please try again."
+	case "form", "server":
+		return "Something went wrong. Please try again."
+	default:
+		return ""
 	}
 }
 

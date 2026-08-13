@@ -39,6 +39,9 @@ services:
       # HMAC key for authenticated-session CSRF tokens (internal/csrf).
       # Generate one with: openssl rand -base64 32
       SESSION_HMAC_SECRET: "${SESSION_HMAC_SECRET:?set SESSION_HMAC_SECRET in .env}"
+      # https://dashboard.paystack.com/#/settings/developers -- use a test
+      # secret key for local development. Also verifies webhook signatures.
+      PAYSTACK_SECRET_KEY: "${PAYSTACK_SECRET_KEY:?set PAYSTACK_SECRET_KEY in .env}"
     command: ["air", "-c", ".air.toml"]
     depends_on:
       postgres:

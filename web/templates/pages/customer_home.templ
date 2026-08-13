@@ -32,7 +32,6 @@ const (
 	customerDefaultButtonText  = "#F8FAFC"
 	customerDefaultText        = "#0F172A"
 	customerDefaultPlaceholder = "Coming soon"
-	customerPricePerKg         = 1150
 )
 
 func customerTheme(plant *domain.Plant) customerHomeTheme {
@@ -194,13 +193,47 @@ func customerCSSVars(theme customerHomeTheme) string {
 		";--brand-subtle:" + theme.SubtleTint
 }
 
-func buyGasAlpineInit() string {
-	return "buyGasForm(" + strconv.Itoa(customerPricePerKg) + ")"
+// buyGasAlpineInit passes the live price per kg to the client-side kg
+// preview. Converted to whole naira (the Alpine component's own unit,
+// matching its formatNaira helper) with integer division -- this only
+// affects the live preview text; the actual amount charged is computed
+// server-side from the precise kobo value (cmd/server/tickets.go).
+func buyGasAlpineInit(pricePerKgKobo int64) string {
+	return "buyGasForm(" + strconv.FormatInt(pricePerKgKobo/100, 10) + ")"
 }
 
-templ CustomerHome(plant *domain.Plant) {
+// formatPricePerKg and formatThousands mirror cmd/server/main.go's
+// formatNaira/formatWholeNumber. They can't be shared directly -- main.go
+// is package main -- so this is a small, deliberate duplication rather
+// than a shared internal/format package for two ~10-line helpers.
+func formatPricePerKg(kobo int64) string {
+	if kobo <= 0 {
+		return "Price coming soon"
+	}
+	return "₦" + formatThousands(kobo/100)
+}
+
+func formatThousands(n int64) string {
+	s := strconv.FormatInt(n, 10)
+	if len(s) <= 3 {
+		return s
+	}
+	var out []byte
+	prefix := len(s) % 3
+	if prefix == 0 {
+		prefix = 3
+	}
+	out = append(out, s[:prefix]...)
+	for i := prefix; i < len(s); i += 3 {
+		out = append(out, ',')
+		out = append(out, s[i:i+3]...)
+	}
+	return string(out)
+}
+
+templ CustomerHome(plant *domain.Plant, pricePerKgKobo int64, csrfToken string, errorMsg string) {
 	{{ theme := customerTheme(plant) }}
-	@customerPageShell(theme, theme.Name+" | Buy gas", customerHomeContent(theme))
+	@customerPageShell(theme, theme.Name+" | Buy gas", customerHomeContent(theme, pricePerKgKobo, csrfToken, errorMsg))
 }
 
 templ CustomerReceipts(plant *domain.Plant) {
@@ -265,7 +298,7 @@ templ customerBrand(theme customerHomeTheme) {
 	</div>
 }
 
-templ customerHomeContent(theme customerHomeTheme) {
+templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfToken string, errorMsg string) {
 	<div class="page has-sticky-pay">
 		<div class="wrap buy-main">
 			<header class="topbar">
@@ -277,61 +310,78 @@ templ customerHomeContent(theme customerHomeTheme) {
 				<span class="status-pill quiet"><span class="dot"></span>We have gas</span>
 			</div>
 			<main>
-				<section class="card panel" aria-label="Buy gas" x-data={ buyGasAlpineInit() }>
+				<section class="card panel" aria-label="Buy gas" x-data={ buyGasAlpineInit(pricePerKgKobo) }>
 					<div class="form-heading">
 						<div class="form-heading-row">
 							<h1>Buy gas</h1>
-							<div class="price-chip">₦1,150 <span>/kg</span></div>
+							<div class="price-chip">{ formatPricePerKg(pricePerKgKobo) } <span>/kg</span></div>
 						</div>
 						<p>No signup. Enter how much you want to spend, then your name and phone.</p>
 					</div>
-					<div class="step-label"><span class="step-num">1</span> How much do you want to buy?</div>
-					<div class="amount-field">
-						<span class="amount-prefix">₦</span>
-						<input
-							type="number"
-							inputmode="numeric"
-							min="1"
-							step="1"
-							placeholder="14375"
-							x-model="amount"
-							aria-label="Amount in naira"
-						/>
-					</div>
-					<p class="kg-preview">
-						<span x-show="naira <= 0">Enter an amount to see how many kg you will get.</span>
-						<span x-show="naira > 0" x-cloak>
-							You will get <strong x-text="formatKg(kg)">0.00 kg</strong>.
-						</span>
-					</p>
-					<div class="step-label"><span class="step-num">2</span> Your details</div>
-					<div class="field-grid">
-						<div class="field">
-							<div class="label">Your name</div>
-							<input type="text" placeholder="Full name" autocomplete="name"/>
+					if errorMsg != "" {
+						<div class="form-error">{ errorMsg }</div>
+					}
+					<form method="post" action="/tickets">
+						<input type="hidden" name="csrf_token" value={ csrfToken }/>
+						<div class="step-label"><span class="step-num">1</span> How much do you want to buy?</div>
+						<div class="amount-field">
+							<span class="amount-prefix">₦</span>
+							<input
+								type="number"
+								name="amount"
+								inputmode="numeric"
+								min="1"
+								step="1"
+								placeholder="14375"
+								x-model="amount"
+								aria-label="Amount in naira"
+								required
+							/>
 						</div>
-						<div class="field">
-							<div class="label">Phone number</div>
-							<input type="tel" placeholder="0803 000 0000" autocomplete="tel"/>
+						<p class="kg-preview">
+							<span x-show="naira <= 0">Enter an amount to see how many kg you will get.</span>
+							<span x-show="naira > 0" x-cloak>
+								You will get <strong x-text="formatKg(kg)">0.00 kg</strong>.
+							</span>
+						</p>
+						<div class="step-label"><span class="step-num">2</span> Your details</div>
+						<div class="field-grid">
+							<div class="field">
+								<div class="label">Your name</div>
+								<input type="text" name="name" placeholder="Full name" autocomplete="name" required/>
+							</div>
+							<div class="field">
+								<div class="label">Phone number</div>
+								<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required/>
+							</div>
 						</div>
-					</div>
-					<div class="step-label"><span class="step-num">3</span> How will you pay?</div>
-					<div class="payment-list">
-						<div class="payment is-selected"><span class="radio"></span><span>Bank transfer</span></div>
-						<div class="payment"><span class="radio"></span><span>POS terminal</span></div>
-						<div class="payment"><span class="radio"></span><span>USSD</span></div>
-					</div>
-					<p class="help">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p>
-					<div class="pay-bar">
-						<button
-							class="button button-primary full-width"
-							type="button"
-							:disabled="naira <= 0"
-							x-text="naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'"
-						>
-							Enter amount to pay
-						</button>
-					</div>
+						<div class="step-label"><span class="step-num">3</span> How will you pay?</div>
+						<div class="payment-list" role="radiogroup" aria-label="Payment method">
+							<label class="payment">
+								<input type="radio" name="channel" value="transfer" class="sr-only" checked/>
+								<span class="radio"></span><span>Bank transfer</span>
+							</label>
+							<label class="payment">
+								<input type="radio" name="channel" value="terminal" class="sr-only"/>
+								<span class="radio"></span><span>POS terminal</span>
+							</label>
+							<label class="payment">
+								<input type="radio" name="channel" value="ussd" class="sr-only"/>
+								<span class="radio"></span><span>USSD</span>
+							</label>
+						</div>
+						<p class="help">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p>
+						<div class="pay-bar">
+							<button
+								class="button button-primary full-width"
+								type="submit"
+								:disabled="naira <= 0"
+								x-text="naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'"
+							>
+								Enter amount to pay
+							</button>
+						</div>
+					</form>
 					<div class="confirm-box">
 						<div class="label">After payment</div>
 						<strong>Your 4-digit code appears here.</strong>

@@ -40,7 +40,6 @@ const (
 	customerDefaultButtonText  = "#F8FAFC"
 	customerDefaultText        = "#0F172A"
 	customerDefaultPlaceholder = "Coming soon"
-	customerPricePerKg         = 1150
 )
 
 func customerTheme(plant *domain.Plant) customerHomeTheme {
@@ -202,11 +201,45 @@ func customerCSSVars(theme customerHomeTheme) string {
 		";--brand-subtle:" + theme.SubtleTint
 }
 
-func buyGasAlpineInit() string {
-	return "buyGasForm(" + strconv.Itoa(customerPricePerKg) + ")"
+// buyGasAlpineInit passes the live price per kg to the client-side kg
+// preview. Converted to whole naira (the Alpine component's own unit,
+// matching its formatNaira helper) with integer division -- this only
+// affects the live preview text; the actual amount charged is computed
+// server-side from the precise kobo value (cmd/server/tickets.go).
+func buyGasAlpineInit(pricePerKgKobo int64) string {
+	return "buyGasForm(" + strconv.FormatInt(pricePerKgKobo/100, 10) + ")"
 }
 
-func CustomerHome(plant *domain.Plant) templ.Component {
+// formatPricePerKg and formatThousands mirror cmd/server/main.go's
+// formatNaira/formatWholeNumber. They can't be shared directly -- main.go
+// is package main -- so this is a small, deliberate duplication rather
+// than a shared internal/format package for two ~10-line helpers.
+func formatPricePerKg(kobo int64) string {
+	if kobo <= 0 {
+		return "Price coming soon"
+	}
+	return "₦" + formatThousands(kobo/100)
+}
+
+func formatThousands(n int64) string {
+	s := strconv.FormatInt(n, 10)
+	if len(s) <= 3 {
+		return s
+	}
+	var out []byte
+	prefix := len(s) % 3
+	if prefix == 0 {
+		prefix = 3
+	}
+	out = append(out, s[:prefix]...)
+	for i := prefix; i < len(s); i += 3 {
+		out = append(out, ',')
+		out = append(out, s[i:i+3]...)
+	}
+	return string(out)
+}
+
+func CustomerHome(plant *domain.Plant, pricePerKgKobo int64, csrfToken string, errorMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -228,7 +261,7 @@ func CustomerHome(plant *domain.Plant) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		theme := customerTheme(plant)
-		templ_7745c5c3_Err = customerPageShell(theme, theme.Name+" | Buy gas", customerHomeContent(theme)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = customerPageShell(theme, theme.Name+" | Buy gas", customerHomeContent(theme, pricePerKgKobo, csrfToken, errorMsg)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -294,7 +327,7 @@ func customerPageShell(theme customerHomeTheme, title string, content templ.Comp
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 217, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 250, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -307,7 +340,7 @@ func customerPageShell(theme customerHomeTheme, title string, content templ.Comp
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(customerCSSVars(theme))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 242, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 275, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -362,7 +395,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(theme.LogoPath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 252, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 285, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 			if templ_7745c5c3_Err != nil {
@@ -380,7 +413,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Initial)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 254, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 287, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -398,7 +431,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 258, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 291, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -411,7 +444,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Address)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 260, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 293, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -424,7 +457,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 		var templ_7745c5c3_Var11 templ.SafeURL
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(theme.PhoneHref)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 262, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 295, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -437,7 +470,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Phone)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 262, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 295, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -451,7 +484,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 	})
 }
 
-func customerHomeContent(theme customerHomeTheme) templ.Component {
+func customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfToken string, errorMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -485,15 +518,64 @@ func customerHomeContent(theme customerHomeTheme) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(buyGasAlpineInit())
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(buyGasAlpineInit(pricePerKgKobo))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 280, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 313, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><div class=\"form-heading\"><div class=\"form-heading-row\"><h1>Buy gas</h1><div class=\"price-chip\">₦1,150 <span>/kg</span></div></div><p>No signup. Enter how much you want to spend, then your name and phone.</p></div><div class=\"step-label\"><span class=\"step-num\">1</span> How much do you want to buy?</div><div class=\"amount-field\"><span class=\"amount-prefix\">₦</span> <input type=\"number\" inputmode=\"numeric\" min=\"1\" step=\"1\" placeholder=\"14375\" x-model=\"amount\" aria-label=\"Amount in naira\"></div><p class=\"kg-preview\"><span x-show=\"naira <= 0\">Enter an amount to see how many kg you will get.</span> <span x-show=\"naira > 0\" x-cloak>You will get <strong x-text=\"formatKg(kg)\">0.00 kg</strong>.</span></p><div class=\"step-label\"><span class=\"step-num\">2</span> Your details</div><div class=\"field-grid\"><div class=\"field\"><div class=\"label\">Your name</div><input type=\"text\" placeholder=\"Full name\" autocomplete=\"name\"></div><div class=\"field\"><div class=\"label\">Phone number</div><input type=\"tel\" placeholder=\"0803 000 0000\" autocomplete=\"tel\"></div></div><div class=\"step-label\"><span class=\"step-num\">3</span> How will you pay?</div><div class=\"payment-list\"><div class=\"payment is-selected\"><span class=\"radio\"></span><span>Bank transfer</span></div><div class=\"payment\"><span class=\"radio\"></span><span>POS terminal</span></div><div class=\"payment\"><span class=\"radio\"></span><span>USSD</span></div></div><p class=\"help\">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p><div class=\"pay-bar\"><button class=\"button button-primary full-width\" type=\"button\" :disabled=\"naira <= 0\" x-text=\"naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'\">Enter amount to pay</button></div><div class=\"confirm-box\"><div class=\"label\">After payment</div><strong>Your 4-digit code appears here.</strong><div class=\"code\">7042</div><p class=\"help\" style=\"margin-bottom: 0;\">Join the queue as normal. Read this code to the attendant when you reach the front.</p></div></section></main></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><div class=\"form-heading\"><div class=\"form-heading-row\"><h1>Buy gas</h1><div class=\"price-chip\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var15 string
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(formatPricePerKg(pricePerKgKobo))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 317, Col: 65}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " <span>/kg</span></div></div><p>No signup. Enter how much you want to spend, then your name and phone.</p></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if errorMsg != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"form-error\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var16 string
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(errorMsg)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 322, Col: 40}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<form method=\"post\" action=\"/tickets\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 325, Col: 62}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"><div class=\"step-label\"><span class=\"step-num\">1</span> How much do you want to buy?</div><div class=\"amount-field\"><span class=\"amount-prefix\">₦</span> <input type=\"number\" name=\"amount\" inputmode=\"numeric\" min=\"1\" step=\"1\" placeholder=\"14375\" x-model=\"amount\" aria-label=\"Amount in naira\" required></div><p class=\"kg-preview\"><span x-show=\"naira <= 0\">Enter an amount to see how many kg you will get.</span> <span x-show=\"naira > 0\" x-cloak>You will get <strong x-text=\"formatKg(kg)\">0.00 kg</strong>.</span></p><div class=\"step-label\"><span class=\"step-num\">2</span> Your details</div><div class=\"field-grid\"><div class=\"field\"><div class=\"label\">Your name</div><input type=\"text\" name=\"name\" placeholder=\"Full name\" autocomplete=\"name\" required></div><div class=\"field\"><div class=\"label\">Phone number</div><input type=\"tel\" name=\"phone\" placeholder=\"0803 000 0000\" autocomplete=\"tel\" required></div></div><div class=\"step-label\"><span class=\"step-num\">3</span> How will you pay?</div><div class=\"payment-list\" role=\"radiogroup\" aria-label=\"Payment method\"><label class=\"payment\"><input type=\"radio\" name=\"channel\" value=\"transfer\" class=\"sr-only\" checked> <span class=\"radio\"></span><span>Bank transfer</span></label> <label class=\"payment\"><input type=\"radio\" name=\"channel\" value=\"terminal\" class=\"sr-only\"> <span class=\"radio\"></span><span>POS terminal</span></label> <label class=\"payment\"><input type=\"radio\" name=\"channel\" value=\"ussd\" class=\"sr-only\"> <span class=\"radio\"></span><span>USSD</span></label></div><p class=\"help\">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p><div class=\"pay-bar\"><button class=\"button button-primary full-width\" type=\"submit\" :disabled=\"naira <= 0\" x-text=\"naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'\">Enter amount to pay</button></div></form><div class=\"confirm-box\"><div class=\"label\">After payment</div><strong>Your 4-digit code appears here.</strong><div class=\"code\">7042</div><p class=\"help\" style=\"margin-bottom: 0;\">Join the queue as normal. Read this code to the attendant when you reach the front.</p></div></section></main></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -517,12 +599,12 @@ func customerReceiptsContent(theme customerHomeTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var18 == nil {
+			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"page\"><div class=\"wrap\"><header class=\"topbar\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div class=\"page\"><div class=\"wrap\"><header class=\"topbar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -530,20 +612,20 @@ func customerReceiptsContent(theme customerHomeTheme) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<a class=\"nav-link\" href=\"/\">Buy gas</a></header><main class=\"receipts-grid\"><aside class=\"card panel\" aria-label=\"Recent receipts\"><h1 class=\"page-title\">Receipts</h1><p class=\"help\">Recent purchases saved on this phone.</p><div class=\"receipt-list\"><div class=\"receipt-item\"><div><strong>12.5 kg</strong><small>28 Jul 2026</small></div><div class=\"amount\">₦14,375</div></div><div class=\"receipt-item\"><div><strong>6.0 kg</strong><small>22 Jul 2026</small></div><div class=\"amount\">₦6,840</div></div><div class=\"receipt-item\"><div><strong>12.5 kg</strong><small>14 Jul 2026</small></div><div class=\"amount\">₦14,250</div></div></div><p class=\"help\">Changed phones? Enter your number to see purchases linked to you.</p><div class=\"field\"><div class=\"label\">Phone number</div><input type=\"tel\" placeholder=\"0803 000 0000\" autocomplete=\"tel\"></div><button class=\"button button-primary full-width\" type=\"button\" style=\"margin-top: 12px;\">Send SMS code</button></aside><section class=\"card panel\" aria-label=\"Receipt proof\"><div class=\"receipt-top\"><div><h1 class=\"page-title\">Gas received</h1><div class=\"brand-meta\">28 Jul 2026, 4:12pm</div><div class=\"brand-meta\">Ticket 40217</div></div><span class=\"badge badge-success\">RECEIVED</span></div><div class=\"weight-hero\"><div class=\"label\">Gas you received</div><div class=\"weight\">12.50<span>kg</span></div></div><div class=\"rows\"><div class=\"row\"><span>Cylinder empty weight</span><span>15.20 kg</span></div><div class=\"row\"><span>Weight after filling</span><span>27.70 kg</span></div><div class=\"row\"><span>Rate per kg</span><span>₦1,150</span></div><div class=\"row\"><span>Amount paid</span><span>₦14,375</span></div><div class=\"row\"><span>Paid by</span><span>Bank transfer</span></div><div class=\"row\"><span>Served by</span><span>T.A.</span></div></div><div class=\"trust\"><strong>What is empty weight?</strong><br>We weigh your empty cylinder first, then again after filling. The difference is the gas you received.</div><div class=\"state-grid\" aria-label=\"Receipt states\"><div class=\"state-card\"><span class=\"badge badge-pending\">AWAITING FILL</span><strong>Code 7042</strong><p>Show this code to the attendant after payment.</p></div><div class=\"state-card\"><span class=\"badge badge-danger\">SHORT MEASURE</span><strong>0.50 kg short</strong><p>Report this so the plant can review the fill.</p></div><div class=\"state-card\"><span class=\"badge badge-pending\">CONFIRM</span><strong>Tap to confirm</strong><p>Close the ticket after receiving your gas.</p></div></div><div class=\"sms\"><div class=\"sms-bubble\"><strong>You received 12.50 kg of gas.</strong><br>Ticket 40217 · ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<a class=\"nav-link\" href=\"/\">Buy gas</a></header><main class=\"receipts-grid\"><aside class=\"card panel\" aria-label=\"Recent receipts\"><h1 class=\"page-title\">Receipts</h1><p class=\"help\">Recent purchases saved on this phone.</p><div class=\"receipt-list\"><div class=\"receipt-item\"><div><strong>12.5 kg</strong><small>28 Jul 2026</small></div><div class=\"amount\">₦14,375</div></div><div class=\"receipt-item\"><div><strong>6.0 kg</strong><small>22 Jul 2026</small></div><div class=\"amount\">₦6,840</div></div><div class=\"receipt-item\"><div><strong>12.5 kg</strong><small>14 Jul 2026</small></div><div class=\"amount\">₦14,250</div></div></div><p class=\"help\">Changed phones? Enter your number to see purchases linked to you.</p><div class=\"field\"><div class=\"label\">Phone number</div><input type=\"tel\" placeholder=\"0803 000 0000\" autocomplete=\"tel\"></div><button class=\"button button-primary full-width\" type=\"button\" style=\"margin-top: 12px;\">Send SMS code</button></aside><section class=\"card panel\" aria-label=\"Receipt proof\"><div class=\"receipt-top\"><div><h1 class=\"page-title\">Gas received</h1><div class=\"brand-meta\">28 Jul 2026, 4:12pm</div><div class=\"brand-meta\">Ticket 40217</div></div><span class=\"badge badge-success\">RECEIVED</span></div><div class=\"weight-hero\"><div class=\"label\">Gas you received</div><div class=\"weight\">12.50<span>kg</span></div></div><div class=\"rows\"><div class=\"row\"><span>Cylinder empty weight</span><span>15.20 kg</span></div><div class=\"row\"><span>Weight after filling</span><span>27.70 kg</span></div><div class=\"row\"><span>Rate per kg</span><span>₦1,150</span></div><div class=\"row\"><span>Amount paid</span><span>₦14,375</span></div><div class=\"row\"><span>Paid by</span><span>Bank transfer</span></div><div class=\"row\"><span>Served by</span><span>T.A.</span></div></div><div class=\"trust\"><strong>What is empty weight?</strong><br>We weigh your empty cylinder first, then again after filling. The difference is the gas you received.</div><div class=\"state-grid\" aria-label=\"Receipt states\"><div class=\"state-card\"><span class=\"badge badge-pending\">AWAITING FILL</span><strong>Code 7042</strong><p>Show this code to the attendant after payment.</p></div><div class=\"state-card\"><span class=\"badge badge-danger\">SHORT MEASURE</span><strong>0.50 kg short</strong><p>Report this so the plant can review the fill.</p></div><div class=\"state-card\"><span class=\"badge badge-pending\">CONFIRM</span><strong>Tap to confirm</strong><p>Close the ticket after receiving your gas.</p></div></div><div class=\"sms\"><div class=\"sms-bubble\"><strong>You received 12.50 kg of gas.</strong><br>Ticket 40217 · ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Name)
+		var templ_7745c5c3_Var19 string
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 398, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 448, Col: 109}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, ".<br>Amount paid: ₦14,375.<br>View receipt: /receipts</div></div><div class=\"receipt-actions\"><button class=\"button button-primary\" type=\"button\">Confirm received</button> <a class=\"button button-secondary\" href=\"/\">Buy again</a></div></section></main></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, ".<br>Amount paid: ₦14,375.<br>View receipt: /receipts</div></div><div class=\"receipt-actions\"><button class=\"button button-primary\" type=\"button\">Confirm received</button> <a class=\"button button-secondary\" href=\"/\">Buy again</a></div></section></main></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

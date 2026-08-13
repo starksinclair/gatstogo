@@ -305,13 +305,23 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<div class="section-title"><h2>Sales and receipts</h2><span class="badge badge-ok">tickets</span></div>
 				<div class="table-wrap">
 					<table>
-						<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th>Paid kg</th><th>Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th></tr></thead>
+						<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th>Paid kg</th><th>Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead>
 						<tbody>
 							if len(data.RecentTickets) == 0 {
-								<tr><td colspan="9"><div class="empty">No sales yet. Placeholder: a paid customer ticket will show reference, code, phone, weight, payment channel, and status here.</div></td></tr>
+								<tr><td colspan="10"><div class="empty">No sales yet. Placeholder: a paid customer ticket will show reference, code, phone, weight, payment channel, and status here.</div></td></tr>
 							}
 							for _, row := range data.RecentTickets {
-								<tr><td class="mono">{ row.Reference }</td><td>{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="mono">{ row.Kg }</td><td class="mono">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td></tr>
+								<tr>
+									<td class="mono">{ row.Reference }</td><td>{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="mono">{ row.Kg }</td><td class="mono">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td>
+									<td>
+										if row.Status == "PENDING" || row.Status == "PAID" {
+											<form method="post" action={ templ.SafeURL("/tickets/" + row.Reference + "/void") } onsubmit="return confirm('Void this ticket? This cannot be undone.')">
+												<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+												<button class="btn" type="submit">Void</button>
+											</form>
+										}
+									</td>
+								</tr>
 							}
 						</tbody>
 					</table>

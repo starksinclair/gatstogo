@@ -1,0 +1,42 @@
+package pages
+
+import "gatstogo/internal/domain"
+
+templ TicketConfirmation(plant *domain.Plant, paid bool, code string, amount string, sizeKg string) {
+	{{ theme := customerTheme(plant) }}
+	@customerPageShell(theme, theme.Name+" | Payment", ticketConfirmationContent(theme, paid, code, amount, sizeKg))
+}
+
+templ ticketConfirmationContent(theme customerHomeTheme, paid bool, code string, amount string, sizeKg string) {
+	<div class="page">
+		<div class="wrap buy-main">
+			<header class="topbar">
+				@customerBrand(theme)
+				<a class="nav-link" href="/receipts">My receipts</a>
+			</header>
+			<main>
+				<section class="card panel" aria-label="Payment status">
+					if paid {
+						<div class="form-heading">
+							<h1>Payment received</h1>
+							<p>You paid { amount }. That covers { sizeKg } of gas. Show this code to the attendant when you reach the front.</p>
+						</div>
+						<div class="confirm-box">
+							<div class="label">Your code</div>
+							<div class="code">{ code }</div>
+							<p class="help" style="margin-top: 12px; margin-bottom: 0;">Keep this code. You will also need it if you look up this purchase on the receipts page.</p>
+						</div>
+					} else {
+						<div class="form-heading">
+							<h1>Payment not confirmed yet</h1>
+							<p>We have not received confirmation of your payment yet. If money left your account, this page will not update itself -- check <a href="/receipts">My receipts</a> in a minute, or contact the plant if it still has not arrived.</p>
+						</div>
+					}
+					<div class="pay-bar">
+						<a class="button button-primary full-width" href="/">Buy again</a>
+					</div>
+				</section>
+			</main>
+		</div>
+	</div>
+}
