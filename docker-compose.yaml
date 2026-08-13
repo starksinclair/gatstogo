@@ -35,12 +35,15 @@ services:
       # Platform-level reads/writes: the gatstogo_admin role, which bypasses
       # Row Level Security. Same password-sync note as above.
       ADMIN_DATABASE_URL: postgres://gatstogo_admin:${GATSTOGO_ADMIN_ROLE_PASSWORD:?set GATSTOGO_ADMIN_ROLE_PASSWORD in .env}@postgres:5432/gatstogo?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
     command: ["air", "-c", ".air.toml"]
     depends_on:
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     volumes:
       - .:/app
       - go-mod-cache:/go/pkg/mod
@@ -103,14 +106,15 @@ services:
       - gatstogo-network
 
   # ======================
-  # Redis
+  # Redis (login sessions)
   # ======================
+  # No longer profile-gated: login sessions (internal/session) depend on
+  # this being up, so it's a required part of the default stack now, not an
+  # optional extra.
   redis:
     image: redis:7-alpine
     container_name: gatstogo-redis
     restart: unless-stopped
-    profiles:
-      - infra
     ports:
       - "6379:6379"          # Only for local access
     volumes:

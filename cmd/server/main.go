@@ -9,6 +9,7 @@ import (
 	//"gatstogo/internal/handlers/attendant"
 	"gatstogo/internal/domain"
 	"gatstogo/internal/middleware"
+	"gatstogo/internal/session"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/web/templates/components"
 	"gatstogo/web/templates/pages"
@@ -25,12 +26,15 @@ import (
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
 type Server struct {
-	Router  *chi.Mux
-	AppDB   *pgxpool.Pool // used for normal plant traffic (RLS enforced)
-	AdminDB *pgxpool.Pool // used for platform admin (bypasses RLS)
+	Router   *chi.Mux
+	AppDB    *pgxpool.Pool // used for normal plant traffic (RLS enforced)
+	AdminDB  *pgxpool.Pool // used for platform admin (bypasses RLS)
+	Redis    *redis.Client
+	Sessions *session.Store
 }
 
 func main() {
@@ -93,10 +97,28 @@ func CreateNewServer() (*Server, error) {
 		adminDB.Close()
 		return nil, err
 	}
+
+	// 3. Redis (login sessions)
+	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/0")
+	redisOpts, err := redis.ParseURL(redisURL)
+	if err != nil {
+		appDB.Close()
+		adminDB.Close()
+		return nil, fmt.Errorf("invalid REDIS_URL: %w", err)
+	}
+	rdb := redis.NewClient(redisOpts)
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		appDB.Close()
+		adminDB.Close()
+		return nil, fmt.Errorf("redis ping: %w", err)
+	}
+
 	s := &Server{
-		Router:  chi.NewRouter(),
-		AppDB:   appDB,
-		AdminDB: adminDB,
+		Router:   chi.NewRouter(),
+		AppDB:    appDB,
+		AdminDB:  adminDB,
+		Redis:    rdb,
+		Sessions: session.New(rdb),
 	}
 	return s, nil
 }
@@ -210,6 +232,9 @@ func (s *Server) Close() {
 	}
 	if s.AdminDB != nil {
 		s.AdminDB.Close()
+	}
+	if s.Redis != nil {
+		_ = s.Redis.Close()
 	}
 }
 func writeBytes(w http.ResponseWriter, data []byte) {
