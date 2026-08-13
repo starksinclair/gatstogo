@@ -1,5 +1,5 @@
 package pages
 
-templ AdminLogin(errorMsg string) {
-	@authShell("GatsToGo admin sign in", "Admin sign in", errorMsg, "/admin/login")
+templ AdminLogin(errorMsg string, csrfToken string) {
+	@authShell("GatsToGo admin sign in", "Admin sign in", errorMsg, "/admin/login", csrfToken)
 }

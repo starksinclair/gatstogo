@@ -1,10 +1,10 @@
 package pages
 
-templ OwnerLogin(plantName string, errorMsg string) {
-	@authShell(plantName+" owner sign in", "Owner sign in", errorMsg, "/owner/login")
+templ OwnerLogin(plantName string, errorMsg string, csrfToken string) {
+	@authShell(plantName+" owner sign in", "Owner sign in", errorMsg, "/owner/login", csrfToken)
 }
 
-templ authShell(title string, heading string, errorMsg string, action string) {
+templ authShell(title string, heading string, errorMsg string, action string, csrfToken string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -21,6 +21,7 @@ templ authShell(title string, heading string, errorMsg string, action string) {
 					if errorMsg != "" {
 						<div class="badge badge-danger login-error">{ errorMsg }</div>
 					}
+					<input type="hidden" name="csrf_token" value={ csrfToken }/>
 					<div class="field">
 						<label>Phone number</label>
 						<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required autofocus/>

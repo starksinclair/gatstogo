@@ -118,6 +118,7 @@ a { color: inherit; text-decoration: none; }
 	color: #C9D2DA;
 }
 .rail-note strong { display: block; color: #FFFFFF; margin-bottom: 4px; }
+.rail-signout { margin: 0; }
 .main {
 	min-width: 0;
 	padding: 26px;

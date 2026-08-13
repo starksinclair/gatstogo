@@ -11,11 +11,14 @@ import (
 // by the Role stored against it in Redis, not by which cookie carried it.
 const CookieName = "gtg_session"
 
-// secureCookies reports whether the Secure flag should be set. Defaults to
-// true (fail safe) so a misconfigured APP_ENV never accidentally ships a
-// cookie over plain HTTP in production; opts out only for the local dev
-// loop (http://sunrise.localhost:8080), where there's no TLS to require.
-func secureCookies() bool {
+// SecureCookies reports whether the Secure flag should be set on cookies.
+// Defaults to true (fail safe) so a misconfigured APP_ENV never
+// accidentally ships a cookie over plain HTTP in production; opts out only
+// for the local dev loop (http://sunrise.localhost:8080), where there's no
+// TLS to require. Exported so internal/middleware's CSRF double-submit
+// cookie (which has the same requirement but isn't a login session) stays
+// consistent with this instead of duplicating the check.
+func SecureCookies() bool {
 	return os.Getenv("APP_ENV") != "development"
 }
 
@@ -40,7 +43,7 @@ func WriteCookie(w http.ResponseWriter, token string, ttl time.Duration) {
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   secureCookies(),
+		Secure:   SecureCookies(),
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   int(ttl.Seconds()),
 	})
@@ -55,7 +58,7 @@ func ClearCookie(w http.ResponseWriter) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   secureCookies(),
+		Secure:   SecureCookies(),
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 	})

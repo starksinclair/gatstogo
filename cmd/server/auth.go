@@ -25,7 +25,8 @@ func ownerLoginPageHandler(s *Server) http.HandlerFunc {
 			http.Error(w, "Plant not found", http.StatusNotFound)
 			return
 		}
-		if err := pages.OwnerLogin(plant.Name, "").Render(r.Context(), w); err != nil {
+		csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
+		if err := pages.OwnerLogin(plant.Name, "", csrfToken).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -39,13 +40,13 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		if err := r.ParseForm(); err != nil {
-			renderOwnerLoginError(r.Context(), w, plant.Name, "Could not read that submission. Try again.")
+			renderOwnerLoginError(w, r, plant.Name, "Could not read that submission. Try again.")
 			return
 		}
 		phone := strings.TrimSpace(r.FormValue("phone"))
 		password := r.FormValue("password")
 		if phone == "" || password == "" {
-			renderOwnerLoginError(r.Context(), w, plant.Name, "Enter your phone number and password.")
+			renderOwnerLoginError(w, r, plant.Name, "Enter your phone number and password.")
 			return
 		}
 
@@ -75,7 +76,7 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 		})
 		if err != nil {
 			log.Println("owner login: query failed:", err)
-			renderOwnerLoginError(r.Context(), w, plant.Name, "Something went wrong. Try again.")
+			renderOwnerLoginError(w, r, plant.Name, "Something went wrong. Try again.")
 			return
 		}
 
@@ -84,7 +85,7 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 			hash = *passwordHash
 		}
 		if !found || !active || !auth.VerifyPassword(hash, password) {
-			renderOwnerLoginError(r.Context(), w, plant.Name, "Incorrect phone number or password.")
+			renderOwnerLoginError(w, r, plant.Name, "Incorrect phone number or password.")
 			return
 		}
 
@@ -96,7 +97,7 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 		}, session.OwnerTTL)
 		if err != nil {
 			log.Println("owner login: create session failed:", err)
-			renderOwnerLoginError(r.Context(), w, plant.Name, "Something went wrong. Try again.")
+			renderOwnerLoginError(w, r, plant.Name, "Something went wrong. Try again.")
 			return
 		}
 
@@ -105,9 +106,10 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 	}
 }
 
-func renderOwnerLoginError(ctx context.Context, w http.ResponseWriter, plantName, message string) {
+func renderOwnerLoginError(w http.ResponseWriter, r *http.Request, plantName, message string) {
+	csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
 	w.WriteHeader(http.StatusUnauthorized)
-	if err := pages.OwnerLogin(plantName, message).Render(ctx, w); err != nil {
+	if err := pages.OwnerLogin(plantName, message, csrfToken).Render(r.Context(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -126,7 +128,8 @@ func ownerLogoutHandler(s *Server) http.HandlerFunc {
 
 func adminLoginPageHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := pages.AdminLogin("").Render(r.Context(), w); err != nil {
+		csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
+		if err := pages.AdminLogin("", csrfToken).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -135,13 +138,13 @@ func adminLoginPageHandler(s *Server) http.HandlerFunc {
 func adminLoginSubmitHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			renderAdminLoginError(r.Context(), w, "Could not read that submission. Try again.")
+			renderAdminLoginError(w, r, "Could not read that submission. Try again.")
 			return
 		}
 		phone := strings.TrimSpace(r.FormValue("phone"))
 		password := r.FormValue("password")
 		if phone == "" || password == "" {
-			renderAdminLoginError(r.Context(), w, "Enter your phone number and password.")
+			renderAdminLoginError(w, r, "Enter your phone number and password.")
 			return
 		}
 
@@ -158,7 +161,7 @@ func adminLoginSubmitHandler(s *Server) http.HandlerFunc {
 		`, phone)
 		if err != nil {
 			log.Println("admin login: query failed:", err)
-			renderAdminLoginError(r.Context(), w, "Something went wrong. Try again.")
+			renderAdminLoginError(w, r, "Something went wrong. Try again.")
 			return
 		}
 
@@ -189,7 +192,7 @@ func adminLoginSubmitHandler(s *Server) http.HandlerFunc {
 		rows.Close()
 
 		if !matched {
-			renderAdminLoginError(r.Context(), w, "Incorrect phone number or password.")
+			renderAdminLoginError(w, r, "Incorrect phone number or password.")
 			return
 		}
 
@@ -203,7 +206,7 @@ func adminLoginSubmitHandler(s *Server) http.HandlerFunc {
 		}, session.OwnerTTL)
 		if err != nil {
 			log.Println("admin login: create session failed:", err)
-			renderAdminLoginError(r.Context(), w, "Something went wrong. Try again.")
+			renderAdminLoginError(w, r, "Something went wrong. Try again.")
 			return
 		}
 
@@ -212,9 +215,10 @@ func adminLoginSubmitHandler(s *Server) http.HandlerFunc {
 	}
 }
 
-func renderAdminLoginError(ctx context.Context, w http.ResponseWriter, message string) {
+func renderAdminLoginError(w http.ResponseWriter, r *http.Request, message string) {
+	csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
 	w.WriteHeader(http.StatusUnauthorized)
-	if err := pages.AdminLogin(message).Render(ctx, w); err != nil {
+	if err := pages.AdminLogin(message, csrfToken).Render(r.Context(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

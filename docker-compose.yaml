@@ -36,6 +36,9 @@ services:
       # Row Level Security. Same password-sync note as above.
       ADMIN_DATABASE_URL: postgres://gatstogo_admin:${GATSTOGO_ADMIN_ROLE_PASSWORD:?set GATSTOGO_ADMIN_ROLE_PASSWORD in .env}@postgres:5432/gatstogo?sslmode=disable
       REDIS_URL: redis://redis:6379/0
+      # HMAC key for authenticated-session CSRF tokens (internal/csrf).
+      # Generate one with: openssl rand -base64 32
+      SESSION_HMAC_SECRET: "${SESSION_HMAC_SECRET:?set SESSION_HMAC_SECRET in .env}"
     command: ["air", "-c", ".air.toml"]
     depends_on:
       postgres:

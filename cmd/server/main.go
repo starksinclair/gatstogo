@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	//"gatstogo/internal/config"
 	//"gatstogo/internal/handlers/attendant"
+	"gatstogo/internal/csrf"
 	"gatstogo/internal/domain"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/session"
@@ -113,6 +115,17 @@ func CreateNewServer() (*Server, error) {
 		return nil, fmt.Errorf("redis ping: %w", err)
 	}
 
+	// 4. CSRF secret. Required, not defaulted: an empty/predictable HMAC
+	// key would make every authenticated CSRF token forgeable.
+	secret, err := loadSessionHMACSecret()
+	if err != nil {
+		appDB.Close()
+		adminDB.Close()
+		_ = rdb.Close()
+		return nil, err
+	}
+	csrf.Secret = secret
+
 	s := &Server{
 		Router:   chi.NewRouter(),
 		AppDB:    appDB,
@@ -138,18 +151,27 @@ func (s *Server) MountHandlers() {
 	s.Router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
 	s.Router.Get("/admin/login", adminLoginPageHandler(s))
-	s.Router.Post("/admin/login", adminLoginSubmitHandler(s))
-	s.Router.Post("/admin/logout", adminLogoutHandler(s))
+	s.Router.With(middleware.CSRF).Post("/admin/login", adminLoginSubmitHandler(s))
 
 	s.Router.Group(func(r chi.Router) {
 		r.Use(middleware.RequireAdminSession(s.Sessions))
+		// Mounted *after* RequireAdminSession so GetActor(ctx) is already
+		// populated when a POST reaches it -- CSRF then uses the
+		// authenticated, session-derived check rather than the public
+		// double-submit one. GET requests (the console itself) pass
+		// through CSRF unconditionally either way.
+		r.Use(middleware.CSRF)
 
 		r.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
 			data := loadAdminConsole(r.Context(), s.AdminDB)
+			actor := middleware.GetActor(r.Context())
+			data.CSRFToken, _ = csrf.Token(actor.Token)
 			if err := pages.AdminConsole(data).Render(r.Context(), w); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		})
+
+		r.Post("/admin/logout", adminLogoutHandler(s))
 	})
 
 	s.Router.Group(func(r chi.Router) {
@@ -208,13 +230,18 @@ func (s *Server) MountHandlers() {
 		})
 
 		r.Get("/owner/login", ownerLoginPageHandler(s))
-		r.Post("/owner/login", ownerLoginSubmitHandler(s))
-		r.Post("/owner/logout", ownerLogoutHandler(s))
+		r.With(middleware.CSRF).Post("/owner/login", ownerLoginSubmitHandler(s))
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.RequireOwnerSession(s.Sessions))
+			// Same ordering rationale as the admin group above: mounted
+			// after RequireOwnerSession so POSTs in this group are checked
+			// against the authenticated session's CSRF token.
+			r.Use(middleware.CSRF)
+
 			r.Get("/owner", ownerDashboardHandler(s))
 			r.Get("/owner/dashboard", ownerDashboardHandler(s))
+			r.Post("/owner/logout", ownerLogoutHandler(s))
 		})
 
 		r.Get("/home/summary", func(w http.ResponseWriter, r *http.Request) {
@@ -239,6 +266,26 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// loadSessionHMACSecret reads SESSION_HMAC_SECRET (a base64-encoded value,
+// e.g. from `openssl rand -base64 32` -- see .env.example) and decodes it
+// for use as the CSRF HMAC key. Requires at least 16 bytes decoded, so a
+// short/placeholder value fails startup instead of quietly weakening every
+// authenticated CSRF token.
+func loadSessionHMACSecret() ([]byte, error) {
+	raw := os.Getenv("SESSION_HMAC_SECRET")
+	if raw == "" {
+		return nil, fmt.Errorf("SESSION_HMAC_SECRET is required (generate one with: openssl rand -base64 32)")
+	}
+	secret, err := base64.StdEncoding.DecodeString(raw)
+	if err != nil {
+		return nil, fmt.Errorf("SESSION_HMAC_SECRET must be base64-encoded: %w", err)
+	}
+	if len(secret) < 16 {
+		return nil, fmt.Errorf("SESSION_HMAC_SECRET must decode to at least 16 bytes, got %d", len(secret))
+	}
+	return secret, nil
 }
 
 func (s *Server) Close() {
@@ -281,6 +328,10 @@ func ownerDashboardHandler(s *Server) http.HandlerFunc {
 			log.Println("owner dashboard: tenant-scoped query failed:", err)
 			http.Error(w, "Could not load dashboard", http.StatusInternalServerError)
 			return
+		}
+
+		if actor := middleware.GetActor(r.Context()); actor != nil {
+			data.CSRFToken, _ = csrf.Token(actor.Token)
 		}
 
 		if err := pages.OwnerDashboard(data).Render(r.Context(), w); err != nil {
