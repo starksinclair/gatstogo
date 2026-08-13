@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#F8FAFC;font-family:'IBM Plex Sans',sans-serif}
+  a{color:#006B4D}
+  a:hover{color:#00543D}
+  ::selection{background:#10B981;color:#0F172A}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:{{ rootDir }};min-height:100vh;color:#0F172A;font-size:13.5px">
+
+  <nav style="width:{{ navWidth }};flex:none;background:#0F172A;padding:{{ navPadding }};display:flex;flex-direction:{{ navInnerDir }};align-items:{{ navAlign }};gap:{{ navGap }};position:{{ navPos }};top:0;height:{{ navHeight }};overflow-x:{{ navOverflowX }}">
+    <div style="padding:{{ navBrandPadding }};display:flex;align-items:center;gap:8px;border-bottom:{{ navBrandBorderBottom }};border-right:{{ navBrandBorderRight }};margin-bottom:{{ navBrandMarginBottom }};margin-right:{{ navBrandMarginRight }};flex:none">
+      <div style="width:22px;height:22px;border:1.5px solid #F8FAFC;display:flex;align-items:center;justify-content:center;position:relative;flex:none">
+        <div style="position:absolute;top:-1.5px;left:-1.5px;width:6px;height:6px;border-top:1.5px solid #10B981;border-left:1.5px solid #10B981"></div>
+        <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;color:#F8FAFC">G</span>
+      </div>
+      <sc-if value="{{ showBrandText }}" hint-placeholder-val="{{ true }}">
+        <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:12.5px;color:#F8FAFC;letter-spacing:0.01em;white-space:nowrap">GATSTOGO <span style="color:#64748B;font-weight:500">ADMIN</span></div>
+      </sc-if>
+    </div>
+    <div onClick="{{ goList }}" style="padding:{{ navItemPadding }};font-size:13px;font-weight:600;cursor:pointer;color:{{ navPlantsColor }};background:{{ navPlantsBg }};border-left:{{ navPlantsBorderLeft }};white-space:nowrap;flex:none">{{ navPlantsLabel }}</div>
+    <div onClick="{{ goFleet }}" style="padding:{{ navItemPadding }};font-size:13px;font-weight:600;cursor:pointer;color:{{ navFleetColor }};background:{{ navFleetBg }};border-left:{{ navFleetBorderLeft }};white-space:nowrap;flex:none">{{ navFleetLabel }}</div>
+    <sc-if value="{{ navShowFooter }}" hint-placeholder-val="{{ true }}">
+      <div style="margin-top:auto;padding:16px 20px 0;border-top:1px solid #1E293B">
+        <div style="font-size:11px;color:#475569">Signed in as</div>
+        <div style="font-size:12.5px;color:#CBD5E1;margin-top:2px">ops@gatstogo.com</div>
+      </div>
+    </sc-if>
+  </nav>
+
+  <main style="flex:1;min-width:0;padding:{{ mainPadding }}">
+
+    <!-- ===================== SCREEN: PLANTS LIST ===================== -->
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:24px">Plants</h1>
+          <div style="font-size:13px;color:#64748B;margin-top:4px">{{ plantCount }} plants on the platform</div>
+        </div>
+        <button onClick="{{ startCreate }}" style="height:40px;padding:0 18px;background:#006B4D;color:#F8FAFC;border:none;font-weight:600;font-size:13.5px;cursor:pointer" style-hover="background:#00543D">+ New plant</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <div onClick="{{ setFilterAll }}" style="padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid {{ chipAllBorder }};background:{{ chipAllBg }};color:{{ chipAllColor }};white-space:nowrap;flex:none">All {{ countAll }}</div>
+        <div onClick="{{ setFilterLive }}" style="padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid {{ chipLiveBorder }};background:{{ chipLiveBg }};color:{{ chipLiveColor }};white-space:nowrap;flex:none">Live {{ countLive }}</div>
+        <div onClick="{{ setFilterOnboarding }}" style="padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid {{ chipOnbBorder }};background:{{ chipOnbBg }};color:{{ chipOnbColor }};white-space:nowrap;flex:none">Onboarding {{ countOnb }}</div>
+        <div onClick="{{ setFilterStalled }}" style="padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid {{ chipStalledBorder }};background:{{ chipStalledBg }};color:{{ chipStalledColor }};white-space:nowrap;flex:none">Stalled {{ countStalled }}</div>
+        <div onClick="{{ setFilterSuspended }}" style="padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid {{ chipSuspBorder }};background:{{ chipSuspBg }};color:{{ chipSuspColor }};white-space:nowrap;flex:none">Suspended {{ countSusp }}</div>
+        <input value="{{ search }}" onChange="{{ onSearch }}" placeholder="Search plant or city…" style="margin-left:{{ searchMarginLeft }};height:32px;padding:0 12px;border:1px solid #CBD5E1;font-size:12.5px;width:{{ searchWidth }};outline:none" style-focus="border-color:#006B4D" />
+      </div>
+
+      <sc-if value="{{ showTableView }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px solid #E2E8F0;background:#fff;overflow-x:auto">
+          <div style="min-width:820px">
+            <div style="display:grid;grid-template-columns:1.6fr 1fr 1.2fr 1.1fr 1fr 0.9fr 1.1fr;background:#F1F5F9;font-size:11px;font-weight:600;color:#475569;letter-spacing:0.04em;padding:9px 14px">
+              <div>PLANT</div><div>CITY</div><div>SUBDOMAIN</div><div>STATUS</div><div>FIRST TXN</div><div style="text-align:right">TXNS 7D</div><div style="text-align:right">MONTHLY VOL.</div>
+            </div>
+            <sc-for list="{{ rows }}" as="p" hint-placeholder-count="6">
+              <div onClick="{{ p.onOpen }}" style="display:grid;grid-template-columns:1.6fr 1fr 1.2fr 1.1fr 1fr 0.9fr 1.1fr;padding:{{ rowPadV }} 14px;align-items:center;border-top:1px solid #E2E8F0;background:{{ p.rowBg }};cursor:pointer" style-hover="background:#F1F5F9">
+                <div style="font-weight:600">{{ p.name }}</div>
+                <div style="color:#334155">{{ p.city }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;color:#64748B;font-size:12.5px">{{ p.subdomain }}</div>
+                <div><span style="display:inline-flex;align-items:center;height:22px;padding:0 9px;font-weight:700;font-size:10.5px;letter-spacing:0.03em;background:{{ p.statusBg }};color:{{ p.statusColor }};border:1px solid {{ p.statusBorder }}">{{ p.statusLabel }}</span></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:{{ p.firstTxnColor }}">{{ p.firstTxnStr }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:right">{{ p.txns7d }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:right;font-weight:600">{{ p.volumeStr }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showCardView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ rows }}" as="p" hint-placeholder-count="6">
+            <div onClick="{{ p.onOpen }}" style="border:1px solid #E2E8F0;background:{{ p.rowBg }};padding:14px;cursor:pointer">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+                <div style="font-weight:700;font-size:14.5px">{{ p.name }}</div>
+                <span style="display:inline-flex;align-items:center;height:22px;padding:0 9px;font-weight:700;font-size:10.5px;letter-spacing:0.03em;background:{{ p.statusBg }};color:{{ p.statusColor }};border:1px solid {{ p.statusBorder }};flex:none">{{ p.statusLabel }}</span>
+              </div>
+              <div style="font-size:12.5px;color:#64748B;margin-bottom:10px">{{ p.city }} · <span style="font-family:'IBM Plex Mono',monospace">{{ p.subdomain }}</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
+                <div><div style="color:#94A3B8;margin-bottom:2px">FIRST TXN</div><div style="font-family:'IBM Plex Mono',monospace;color:{{ p.firstTxnColor }}">{{ p.firstTxnStr }}</div></div>
+                <div><div style="color:#94A3B8;margin-bottom:2px">TXNS 7D</div><div style="font-family:'IBM Plex Mono',monospace">{{ p.txns7d }}</div></div>
+                <div><div style="color:#94A3B8;margin-bottom:2px">MONTHLY VOL.</div><div style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ p.volumeStr }}</div></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ===================== SCREEN: CREATE PLANT ===================== -->
+    <sc-if value="{{ isCreate }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:20px">
+        <span onClick="{{ goList }}" style="font-size:13px;color:#64748B;cursor:pointer">Plants</span>
+        <span style="color:#CBD5E1">/</span>
+        <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px">New plant</h1>
+      </div>
+
+      <div style="display:flex;flex-direction:{{ wizardContainerDir }};gap:28px">
+        <div style="width:{{ wizardSidebarWidth }};flex:none;display:flex;flex-direction:{{ wizardStepsDir }};flex-wrap:wrap;gap:2px">
+          <sc-for list="{{ wizardSteps }}" as="s" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;font-size:12.5px;font-weight:600;color:{{ s.color }};background:{{ s.bg }};flex:{{ s.flex }}">
+              <div style="width:18px;height:18px;flex:none;border:1.5px solid {{ s.dotBorder }};background:{{ s.dotBg }};color:{{ s.dotColor }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">{{ s.dotContent }}</div>
+              {{ s.label }}
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="flex:1;max-width:560px">
+
+          <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:24px">
+              <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">Plant details</div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">BUSINESS NAME</label><input value="{{ form.businessName }}" onChange="{{ setBusinessName }}" placeholder="Chukwu Gas Ltd" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:14px;outline:none" style-focus="border-color:#006B4D" /></div>
+                <div><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">OWNER NAME</label><input value="{{ form.ownerName }}" onChange="{{ setOwnerName }}" placeholder="Chukwu Eze" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:14px;outline:none" style-focus="border-color:#006B4D" /></div>
+                <div style="display:flex;flex-direction:{{ formRowDir }};gap:14px">
+                  <div style="flex:1"><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">PHONE</label><input value="{{ form.phone }}" onChange="{{ setPhone }}" placeholder="0803 000 0000" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-family:'IBM Plex Mono',monospace;font-size:13.5px;outline:none" style-focus="border-color:#006B4D" /></div>
+                  <div style="flex:1"><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">CITY</label><input value="{{ form.city }}" onChange="{{ setCity }}" placeholder="Lagos" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:14px;outline:none" style-focus="border-color:#006B4D" /></div>
+                </div>
+                <div><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">ADDRESS</label><input value="{{ form.address }}" onChange="{{ setAddress }}" placeholder="14 Adeola Odeku St" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:14px;outline:none" style-focus="border-color:#006B4D" /></div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:24px">
+              <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">Subdomain</div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">SUBDOMAIN</label>
+              <div style="display:flex;align-items:center;border:1.5px solid {{ subdomainBorderColor }};height:42px">
+                <input value="{{ form.subdomain }}" onChange="{{ setSubdomain }}" placeholder="chukwu" style="flex:1;height:100%;padding:0 12px;border:none;font-family:'IBM Plex Mono',monospace;font-size:14px;outline:none" />
+                <span style="padding:0 12px;color:#64748B;font-family:'IBM Plex Mono',monospace;font-size:13px;border-left:1px solid #E2E8F0">.gatstogo.com</span>
+              </div>
+              <div style="margin-top:8px;font-size:12.5px;font-weight:600;color:{{ subdomainStatusColor }}">{{ subdomainStatusText }}</div>
+
+              <div style="margin-top:20px"><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">CUSTOM DOMAIN (OPTIONAL)</label><input value="{{ form.customDomain }}" onChange="{{ setCustomDomain }}" placeholder="app.chukwugas.ng" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-family:'IBM Plex Mono',monospace;font-size:13.5px;outline:none" style-focus="border-color:#006B4D" /></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:24px">
+              <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">Branding</div>
+              <div style="display:flex;gap:16px;margin-bottom:20px">
+                <div style="width:88px;flex:none"><image-slot id="plant-logo" style="width:88px;height:88px" shape="rounded" radius="8" placeholder="Logo"></image-slot></div>
+                <div style="flex:1"><image-slot id="plant-photo-1" style="width:100%;height:88px" shape="rounded" radius="8" placeholder="Storefront photo"></image-slot></div>
+                <div style="flex:1"><image-slot id="plant-photo-2" style="width:100%;height:88px" shape="rounded" radius="8" placeholder="Tank / yard photo"></image-slot></div>
+              </div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:8px">COLOUR THEME</label>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <sc-for list="{{ themes }}" as="t" hint-placeholder-count="6">
+                  <div onClick="{{ t.onSelect }}" style="border:1.5px solid {{ t.borderColor }};padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;gap:4px"><div style="width:20px;height:20px;background:{{ t.c1 }}"></div><div style="width:20px;height:20px;background:{{ t.c2 }}"></div></div>
+                    <div style="font-size:11.5px;font-weight:600">{{ t.name }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:24px">
+              <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px">Payments</div>
+              <div style="font-size:12.5px;color:#64748B;margin-bottom:16px">Verification can take several days. The plant cannot go live until this shows Verified.</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #FDE68A;background:#FFFBEB;padding:12px 14px;margin-bottom:18px">
+                <div style="font-size:13px;font-weight:600;color:#92400E">Paystack subaccount verification</div>
+                <span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;font-weight:700;font-size:11px;background:#F59E0B;color:#0F172A;border:1px solid #B45309">PENDING</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">BANK NAME</label><input value="{{ form.bankName }}" onChange="{{ setBankName }}" placeholder="GTBank" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:14px;outline:none" style-focus="border-color:#006B4D" /></div>
+                <div><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">ACCOUNT NUMBER</label><input value="{{ form.accountNumber }}" onChange="{{ setAccountNumber }}" placeholder="0123456789" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-family:'IBM Plex Mono',monospace;font-size:14px;outline:none" style-focus="border-color:#006B4D" /></div>
+                <div><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">SPLIT — GATSTOGO % OF EACH FILL</label><input value="{{ form.split }}" onChange="{{ setSplit }}" placeholder="3.5" style="width:120px;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-family:'IBM Plex Mono',monospace;font-size:14px;outline:none" style-focus="border-color:#006B4D" /></div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:24px">
+              <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">Seed users</div>
+              <div style="font-size:12px;font-weight:600;color:#334155;margin-bottom:8px">OWNER ACCOUNT</div>
+              <div style="display:flex;gap:10px;margin-bottom:18px">
+                <input value="{{ form.ownerName }}" onChange="{{ setOwnerName }}" placeholder="Owner name" style="flex:1;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:14px;outline:none" style-focus="border-color:#006B4D" />
+                <input value="{{ form.phone }}" onChange="{{ setPhone }}" placeholder="Phone" style="flex:1;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-family:'IBM Plex Mono',monospace;font-size:13.5px;outline:none" style-focus="border-color:#006B4D" />
+              </div>
+              <div style="font-size:12px;font-weight:600;color:#334155;margin-bottom:8px">STAFF</div>
+              <sc-for list="{{ form.staff }}" as="st" hint-placeholder-count="1">
+                <div style="display:flex;gap:10px;margin-bottom:10px">
+                  <input value="{{ st.name }}" onChange="{{ st.setName }}" placeholder="Staff name" style="flex:1;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:14px;outline:none" style-focus="border-color:#006B4D" />
+                  <input value="{{ st.phone }}" onChange="{{ st.setPhone }}" placeholder="Phone" style="flex:1;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-family:'IBM Plex Mono',monospace;font-size:13.5px;outline:none" style-focus="border-color:#006B4D" />
+                  <button onClick="{{ st.remove }}" style="width:42px;height:42px;background:#F1F5F9;border:1.5px solid #CBD5E1;color:#64748B;cursor:pointer;font-size:16px">×</button>
+                </div>
+              </sc-for>
+              <button onClick="{{ addStaff }}" style="height:36px;padding:0 14px;background:#F1F5F9;border:1px solid #CBD5E1;color:#006B4D;font-weight:600;font-size:12.5px;cursor:pointer" style-hover="background:#E7F6F1">+ Add staff member</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isStep6 }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:24px">
+              <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">Review and provision</div>
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+                <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Business</span><span style="font-weight:600">{{ reviewBusiness }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Owner</span><span style="font-weight:600">{{ reviewOwner }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">City</span><span style="font-weight:600">{{ reviewCity }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Subdomain</span><span style="font-weight:600;font-family:'IBM Plex Mono',monospace">{{ reviewSubdomain }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Theme</span><span style="font-weight:600">{{ reviewTheme }}</span></div>
+                <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Paystack split</span><span style="font-weight:600;font-family:'IBM Plex Mono',monospace">{{ reviewSplit }}%</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:#64748B">Staff seeded</span><span style="font-weight:600">{{ reviewStaffCount }}</span></div>
+              </div>
+              <div style="margin-top:20px;padding:12px 14px;background:#FFFBEB;border:1px solid #FDE68A;font-size:12.5px;color:#92400E">Provisioning creates the tenant and owner login immediately. The plant stays in <b>Onboarding</b> status until Paystack verification clears and staff are trained.</div>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;justify-content:space-between;margin-top:20px">
+            <button onClick="{{ prevStep }}" disabled="{{ isStep1 }}" style="height:42px;padding:0 18px;background:#F8FAFC;color:#334155;border:1.5px solid #CBD5E1;font-weight:600;font-size:13.5px;cursor:pointer">Back</button>
+            <sc-if value="{{ isStep6 }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ provision }}" style="height:42px;padding:0 22px;background:#006B4D;color:#F8FAFC;border:none;font-weight:600;font-size:13.5px;cursor:pointer" style-hover="background:#00543D">Provision plant</button>
+            </sc-if>
+            <sc-if value="{{ isStep6 }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ nextStep }}" style="height:42px;padding:0 22px;background:#006B4D;color:#F8FAFC;border:none;font-weight:600;font-size:13.5px;cursor:pointer" style-hover="background:#00543D">Next</button>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===================== SCREEN: PLANT DETAIL ===================== -->
+    <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:18px">
+        <span onClick="{{ goList }}" style="font-size:13px;color:#64748B;cursor:pointer">Plants</span>
+        <span style="color:#CBD5E1">/</span>
+        <span style="font-size:13px;color:#0F172A;font-weight:600">{{ selected.name }}</span>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:24px">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;line-height:1.25;min-width:0">{{ selected.name }}</h1>
+            <span style="display:inline-flex;align-items:center;height:22px;padding:0 9px;font-weight:700;font-size:10.5px;letter-spacing:0.03em;background:{{ selected.statusBg }};color:{{ selected.statusColor }};border:1px solid {{ selected.statusBorder }};flex:none">{{ selected.statusLabel }}</span>
+          </div>
+          <div style="font-size:13px;color:#64748B;margin-top:6px">{{ selected.city }} · <span style="font-family:'IBM Plex Mono',monospace">{{ selected.subdomain }}.gatstogo.com</span> · Owner: {{ selected.owner }}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button style="height:38px;padding:0 14px;background:#F8FAFC;color:#334155;border:1.5px solid #CBD5E1;font-weight:600;font-size:12.5px;cursor:pointer" style-hover="background:#F1F5F9">Resend invite</button>
+          <button style="height:38px;padding:0 14px;background:#F8FAFC;color:#006B4D;border:1.5px solid #006B4D;font-weight:600;font-size:12.5px;cursor:pointer" style-hover="background:#E7F6F1">Impersonate owner (read-only)</button>
+          <button style="height:38px;padding:0 14px;background:#F8FAFC;color:#B91C1C;border:1.5px solid #FCA5A5;font-weight:600;font-size:12.5px;cursor:pointer" style-hover="background:#FEF2F2">Suspend</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:{{ detailGridCols }};gap:20px">
+        <div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Onboarding checklist</div>
+          <div style="border:1px solid #E2E8F0;background:#fff;margin-bottom:16px">
+            <sc-for list="{{ selected.checklist }}" as="c" hint-placeholder-count="7">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-top:1px solid #F1F5F9">
+                <div style="width:18px;height:18px;flex:none;border:1.5px solid {{ c.dotBorder }};background:{{ c.dotBg }};color:{{ c.dotColor }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">{{ c.dotContent }}</div>
+                <div style="flex:1;font-size:13.5px;color:{{ c.textColor }}">{{ c.label }}</div>
+                <div style="font-size:11.5px;font-weight:600;color:{{ c.statusColor }}">{{ c.statusText }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="border:2px solid {{ selected.milestoneBorder }};background:{{ selected.milestoneBg }};padding:22px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:{{ selected.milestoneLabelColor }};margin-bottom:6px">THE MILESTONE THAT MATTERS</div>
+            <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;color:{{ selected.milestoneTextColor }}">FIRST REAL TRANSACTION</div>
+            <div style="font-size:13.5px;color:{{ selected.milestoneSubColor }};margin-top:6px">{{ selected.milestoneSub }}</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Live health</div>
+          <div style="border:1px solid #E2E8F0;background:#fff;display:flex;flex-direction:column;gap:0">
+            <div style="padding:14px 16px;border-bottom:1px solid #F1F5F9"><div style="font-size:11.5px;color:#64748B;margin-bottom:4px">TERMINAL</div><span style="display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:{{ selected.terminalColor }}"><span style="width:8px;height:8px;border-radius:50%;background:{{ selected.terminalDot }}"></span>{{ selected.terminalLabel }}</span></div>
+            <div style="padding:14px 16px;border-bottom:1px solid #F1F5F9"><div style="font-size:11.5px;color:#64748B;margin-bottom:4px">LAST TRANSACTION</div><div style="font-family:'IBM Plex Mono',monospace;font-size:13.5px">{{ selected.lastTxn }}</div></div>
+            <div style="padding:14px 16px"><div style="font-size:11.5px;color:#64748B;margin-bottom:4px">LAST SYNC</div><div style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:{{ selected.syncColor }}">{{ selected.lastSync }}</div></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===================== SCREEN: FLEET HEALTH ===================== -->
+    <sc-if value="{{ isFleet }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:24px;margin-bottom:6px">Fleet health</h1>
+      <div style="font-size:13px;color:#64748B;margin-bottom:16px">Terminal status across every plant</div>
+
+      <sc-if value="{{ hasOffline }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;border:1px solid #FCA5A5;background:#FEF2F2;padding:12px 16px;margin-bottom:18px">
+          <span style="width:9px;height:9px;border-radius:50%;background:#DC2626;animation:pulse 1.4s ease-in-out infinite;flex:none"></span>
+          <span style="font-size:13.5px;font-weight:600;color:#7F1D1D">{{ offlineCount }} terminals offline right now</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showTableView }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px solid #E2E8F0;background:#fff;overflow-x:auto">
+          <div style="min-width:700px">
+            <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;background:#F1F5F9;font-size:11px;font-weight:600;color:#475569;letter-spacing:0.04em;padding:9px 14px">
+              <div>PLANT</div><div>SUBDOMAIN</div><div>TERMINAL</div><div>LAST SYNC</div><div>LAST TRANSACTION</div>
+            </div>
+            <sc-for list="{{ fleetRows }}" as="p" hint-placeholder-count="9">
+              <div onClick="{{ p.onOpen }}" style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;padding:{{ rowPadV }} 14px;align-items:center;border-top:1px solid #E2E8F0;background:{{ p.rowBg }};cursor:pointer" style-hover="background:#F1F5F9">
+                <div style="font-weight:600">{{ p.name }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;color:#64748B;font-size:12.5px">{{ p.subdomain }}</div>
+                <div><span style="display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;color:{{ p.terminalColor }}"><span style="width:8px;height:8px;border-radius:50%;background:{{ p.terminalDot }};flex:none"></span>{{ p.terminalLabel }}</span></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:{{ p.syncColor }};font-weight:{{ p.syncWeight }}">{{ p.lastSync }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#334155">{{ p.lastTxn }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showCardView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ fleetRows }}" as="p" hint-placeholder-count="9">
+            <div onClick="{{ p.onOpen }}" style="border:1px solid #E2E8F0;background:{{ p.rowBg }};padding:14px;cursor:pointer">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+                <div style="font-weight:700;font-size:14.5px">{{ p.name }}</div>
+                <span style="display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;color:{{ p.terminalColor }}"><span style="width:8px;height:8px;border-radius:50%;background:{{ p.terminalDot }};flex:none"></span>{{ p.terminalLabel }}</span>
+              </div>
+              <div style="font-size:12.5px;color:#64748B;margin-bottom:10px;font-family:'IBM Plex Mono',monospace">{{ p.subdomain }}</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+                <div><div style="color:#94A3B8;margin-bottom:2px">LAST SYNC</div><div style="font-family:'IBM Plex Mono',monospace;color:{{ p.syncColor }};font-weight:{{ p.syncWeight }}">{{ p.lastSync }}</div></div>
+                <div><div style="color:#94A3B8;margin-bottom:2px">LAST TRANSACTION</div><div style="font-family:'IBM Plex Mono',monospace">{{ p.lastTxn }}</div></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </sc-if>
+
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tableDensity&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;comfortable&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;sidebarCollapsed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;stalledHighlight&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+const THEMES = [
+  { name: 'Emerald', c1: '#006B4D', c2: '#10B981' },
+  { name: 'Harbor Blue', c1: '#0C4A6E', c2: '#38BDF8' },
+  { name: 'Charcoal', c1: '#0F172A', c2: '#64748B' },
+  { name: 'Amber Sun', c1: '#B45309', c2: '#F59E0B' },
+  { name: 'Forest', c1: '#14532D', c2: '#4ADE80' },
+  { name: 'Maroon', c1: '#7C2D12', c2: '#EA580C' },
+];
+
+const RAW_PLANTS = [
+  { id: 1, name: 'Chukwu Gas Ltd', owner: 'Chukwu Eze', city: 'Lagos', subdomain: 'chukwu', status: 'live', firstTxn: '2026-03-14', txns7d: 132, volume: 1842000, terminalOnline: true, lastSyncMin: 2, lastTxnAgo: '4 min ago' },
+  { id: 2, name: 'Adeyemi LPG', owner: 'Tunde Adeyemi', city: 'Ibadan', subdomain: 'adeyemi', status: 'live', firstTxn: '2026-05-02', txns7d: 58, volume: 612400, terminalOnline: true, lastSyncMin: 6, lastTxnAgo: '22 min ago' },
+  { id: 3, name: 'Emeka Gas Depot', owner: 'Emeka Chukwu', city: 'Enugu', subdomain: 'emekagas', status: 'onboarding', firstTxn: null, txns7d: 0, volume: 0, terminalOnline: false, lastSyncMin: null, lastTxnAgo: '—', daysInOnboarding: 4 },
+  { id: 4, name: 'Bello Cooking Gas', owner: 'Musa Bello', city: 'Kano', subdomain: 'bellogas', status: 'stalled', firstTxn: null, txns7d: 0, volume: 0, terminalOnline: false, lastSyncMin: null, lastTxnAgo: '—', daysInOnboarding: 21 },
+  { id: 5, name: 'Okonkwo Energy', owner: 'Ifeanyi Okonkwo', city: 'Onitsha', subdomain: 'okonkwoenergy', status: 'stalled', firstTxn: null, txns7d: 0, volume: 0, terminalOnline: false, lastSyncMin: null, lastTxnAgo: '—', daysInOnboarding: 34 },
+  { id: 6, name: 'Fatima Gas Point', owner: 'Fatima Sani', city: 'Abuja', subdomain: 'fatimagas', status: 'live', firstTxn: '2026-01-20', txns7d: 89, volume: 945000, terminalOnline: false, lastSyncMin: 840, lastTxnAgo: '14 hrs ago' },
+  { id: 7, name: 'Ibrahim Filling Station', owner: 'Ibrahim Yakubu', city: 'Kaduna', subdomain: 'ibrahimfs', status: 'onboarding', firstTxn: null, txns7d: 0, volume: 0, terminalOnline: false, lastSyncMin: null, lastTxnAgo: '—', daysInOnboarding: 2 },
+  { id: 8, name: 'Grace LPG Hub', owner: 'Grace Okafor', city: 'Port Harcourt', subdomain: 'gracelpg', status: 'live', firstTxn: '2025-11-02', txns7d: 204, volume: 2310500, terminalOnline: true, lastSyncMin: 1, lastTxnAgo: '3 min ago' },
+  { id: 9, name: 'Yusuf Gas Traders', owner: 'Yusuf Abdullahi', city: 'Jos', subdomain: 'yusufgas', status: 'suspended', firstTxn: '2025-09-10', txns7d: 0, volume: 0, terminalOnline: false, lastSyncMin: 17280, lastTxnAgo: '12 days ago' },
+];
+
+const STATUS_STYLE = {
+  live: { label: 'LIVE', bg: '#10B981', color: '#0F172A', border: '#059669' },
+  onboarding: { label: 'ONBOARDING', bg: '#F1F5F9', color: '#475569', border: '#CBD5E1' },
+  stalled: { label: 'STALLED', bg: '#F59E0B', color: '#0F172A', border: '#B45309' },
+  suspended: { label: 'SUSPENDED', bg: '#FEE2E2', color: '#B91C1C', border: '#FCA5A5' },
+};
+
+function fmtMoney(n) { return '\u20A6' + n.toLocaleString('en-NG', { minimumFractionDigits: 0 }); }
+function fmtSync(min) {
+  if (min == null) return '—';
+  if (min < 60) return min + ' min ago';
+  if (min < 1440) return Math.round(min / 60) + ' hrs ago';
+  return Math.round(min / 1440) + ' days ago';
+}
+
+function buildChecklist(status) {
+  const items = ['Tenant provisioned', 'Branding set', 'Paystack verified', 'SMS sender ID approved', 'Google Maps listing live', 'Staff trained', 'Tablet enrolled'];
+  let states;
+  if (status === 'live') states = items.map(() => 'done');
+  else if (status === 'suspended') states = items.map(() => 'done');
+  else if (status === 'onboarding') states = ['done', 'done', 'pending', 'not_started', 'not_started', 'not_started', 'not_started'];
+  else states = ['done', 'done', 'blocked', 'pending', 'not_started', 'not_started', 'not_started']; // stalled
+  return items.map((label, i) => {
+    const st = states[i];
+    const map = {
+      done: { dotBorder: '#059669', dotBg: '#10B981', dotColor: '#0F172A', dotContent: '✓', textColor: '#0F172A', statusColor: '#00543D', statusText: 'Done' },
+      pending: { dotBorder: '#B45309', dotBg: '#F59E0B', dotColor: '#0F172A', dotContent: '·', textColor: '#334155', statusColor: '#B45309', statusText: 'Pending' },
+      blocked: { dotBorder: '#DC2626', dotBg: '#FEE2E2', dotColor: '#B91C1C', dotContent: '!', textColor: '#334155', statusColor: '#B91C1C', statusText: 'Blocked' },
+      not_started: { dotBorder: '#CBD5E1', dotBg: '#F8FAFC', dotColor: '#94A3B8', dotContent: '', textColor: '#94A3B8', statusColor: '#94A3B8', statusText: 'Not started' },
+    };
+    return { label, ...map[st] };
+  });
+}
+
+class Component extends DCLogic {
+  state = {
+    screen: 'list', selectedId: 1, filterStatus: 'all', search: '', createStep: 1, vw: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    form: { businessName: '', ownerName: '', phone: '', city: '', address: '', subdomain: '', customDomain: '', theme: 0, bankName: '', accountNumber: '', split: '3.5', staff: [{ name: '', phone: '' }] },
+  };
+
+  componentDidMount() {
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onResize);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._onResize);
+  }
+
+  goList = () => this.setState({ screen: 'list' });
+  goFleet = () => this.setState({ screen: 'fleet' });
+  startCreate = () => this.setState({ screen: 'create', createStep: 1 });
+  openPlant = (id) => this.setState({ screen: 'detail', selectedId: id });
+  nextStep = () => this.setState(s => ({ createStep: Math.min(6, s.createStep + 1) }));
+  prevStep = () => this.setState(s => ({ createStep: Math.max(1, s.createStep - 1) }));
+  provision = () => this.setState({ screen: 'list' });
+
+  setField(key) { return (e) => { const v = e && e.target ? e.target.value : e; this.setState(s => ({ form: { ...s.form, [key]: v } })); }; }
+  addStaff = () => this.setState(s => ({ form: { ...s.form, staff: [...s.form.staff, { name: '', phone: '' }] } }));
+
+  renderVals() {
+    const s = this.state;
+    const density = this.props.tableDensity ?? 'comfortable';
+    const sidebarCollapsed = (this.props.sidebarCollapsed ?? false);
+    const stalledHighlight = this.props.stalledHighlight ?? true;
+    const vw = s.vw;
+    const isMobile = vw < 640;
+    const isTablet = vw >= 640 && vw < 1024;
+    const collapsed = sidebarCollapsed && !isMobile;
+    const rowPadV = density === 'compact' ? '7px' : '11px';
+
+    const rowsAll = RAW_PLANTS.map(p => {
+      const st = STATUS_STYLE[p.status];
+      return {
+        ...p, statusLabel: st.label, statusBg: st.bg, statusColor: st.color, statusBorder: st.border,
+        rowBg: (stalledHighlight && p.status === 'stalled') ? '#FFFBEB' : '#fff',
+        firstTxnStr: p.firstTxn || '—', firstTxnColor: p.firstTxn ? '#0F172A' : '#94A3B8',
+        volumeStr: fmtMoney(p.volume), lastSync: fmtSync(p.lastSyncMin),
+        terminalLabel: p.terminalOnline ? 'Online' : 'Offline', terminalColor: p.terminalOnline ? '#00543D' : '#B91C1C',
+        terminalDot: p.terminalOnline ? '#10B981' : '#DC2626',
+        onOpen: () => this.openPlant(p.id),
+      };
+    });
+
+    const filtered = rowsAll.filter(p => {
+      if (s.filterStatus !== 'all' && p.status !== s.filterStatus) return false;
+      const q = s.search.toLowerCase();
+      if (q && !p.name.toLowerCase().includes(q) && !p.city.toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    const chip = (key) => ({
+      Bg: s.filterStatus === key ? '#0F172A' : '#fff', Color: s.filterStatus === key ? '#F8FAFC' : '#334155', Border: s.filterStatus === key ? '#0F172A' : '#CBD5E1',
+    });
+    const cAll = chip('all'), cLive = chip('live'), cOnb = chip('onboarding'), cStalled = chip('stalled'), cSusp = chip('suspended');
+
+    const selectedRaw = RAW_PLANTS.find(p => p.id === s.selectedId) || RAW_PLANTS[0];
+    const selSt = STATUS_STYLE[selectedRaw.status];
+    const milestoneAchieved = !!selectedRaw.firstTxn;
+    const selected = {
+      ...selectedRaw, statusLabel: selSt.label, statusBg: selSt.bg, statusColor: selSt.color, statusBorder: selSt.border,
+      checklist: buildChecklist(selectedRaw.status),
+      terminalLabel: selectedRaw.terminalOnline ? 'Online' : 'Offline', terminalColor: selectedRaw.terminalOnline ? '#00543D' : '#B91C1C', terminalDot: selectedRaw.terminalOnline ? '#10B981' : '#DC2626',
+      lastTxn: selectedRaw.lastTxnAgo, lastSync: fmtSync(selectedRaw.lastSyncMin), syncColor: (selectedRaw.lastSyncMin || 0) > 60 ? '#B45309' : '#0F172A',
+      milestoneBorder: milestoneAchieved ? '#10B981' : '#E2E8F0', milestoneBg: milestoneAchieved ? '#ECFDF5' : '#F8FAFC',
+      milestoneLabelColor: milestoneAchieved ? '#00543D' : '#94A3B8', milestoneTextColor: milestoneAchieved ? '#00543D' : '#94A3B8',
+      milestoneSub: milestoneAchieved ? ('Achieved ' + selectedRaw.firstTxn) : 'Not yet achieved — everything above this line is preamble.',
+      milestoneSubColor: milestoneAchieved ? '#334155' : '#94A3B8',
+    };
+
+    const fleetRows = rowsAll.slice().sort((a, b) => (a.terminalOnline === b.terminalOnline) ? 0 : (a.terminalOnline ? 1 : -1)).map(p => ({
+      ...p, syncWeight: p.terminalOnline ? 400 : 700, syncColor: p.terminalOnline ? '#334155' : '#B91C1C',
+    }));
+    const offlineCount = rowsAll.filter(p => !p.terminalOnline).length;
+
+    const wizardLabels = ['Plant details', 'Subdomain', 'Branding', 'Payments', 'Seed users', 'Review'];
+    const wizardSteps = wizardLabels.map((label, i) => {
+      const n = i + 1, active = n === s.createStep, done = n < s.createStep;
+      return {
+        label, color: active ? '#0F172A' : '#64748B', bg: active ? '#F1F5F9' : 'transparent', flex: isMobile ? '1 1 auto' : '0 0 auto',
+        dotBorder: done ? '#059669' : (active ? '#006B4D' : '#CBD5E1'), dotBg: done ? '#10B981' : (active ? '#006B4D' : '#fff'),
+        dotColor: done ? '#0F172A' : (active ? '#F8FAFC' : '#94A3B8'), dotContent: done ? '✓' : String(n),
+      };
+    });
+
+    const themes = THEMES.map((t, i) => ({ ...t, borderColor: s.form.theme === i ? '#006B4D' : '#E2E8F0', onSelect: () => this.setState(st => ({ form: { ...st.form, theme: i } })) }));
+
+    const subdomain = s.form.subdomain.trim().toLowerCase();
+    const subAvailable = subdomain && !subdomain.includes('taken');
+    const staffRows = s.form.staff.map((st, i) => ({
+      ...st,
+      setName: (e) => this.setState(state => { const arr = state.form.staff.slice(); arr[i] = { ...arr[i], name: e.target.value }; return { form: { ...state.form, staff: arr } }; }),
+      setPhone: (e) => this.setState(state => { const arr = state.form.staff.slice(); arr[i] = { ...arr[i], phone: e.target.value }; return { form: { ...state.form, staff: arr } }; }),
+      remove: () => this.setState(state => ({ form: { ...state.form, staff: state.form.staff.filter((_, j) => j !== i) } })),
+    }));
+
+    const navPlantsActive = (s.screen === 'list' || s.screen === 'create' || s.screen === 'detail');
+
+    return {
+      isList: s.screen === 'list', isCreate: s.screen === 'create', isDetail: s.screen === 'detail', isFleet: s.screen === 'fleet',
+      rootDir: isMobile ? 'column' : 'row',
+      navWidth: isMobile ? '100%' : (collapsed ? '56px' : (isTablet ? '176px' : '200px')),
+      navHeight: isMobile ? 'auto' : '100vh',
+      navPos: isMobile ? 'static' : 'sticky',
+      navPadding: isMobile ? '10px 12px' : '20px 0',
+      navInnerDir: isMobile ? 'row' : 'column',
+      navAlign: isMobile ? 'center' : 'stretch',
+      navGap: isMobile ? '4px' : '0px',
+      navOverflowX: isMobile ? 'auto' : 'visible',
+      navBrandPadding: isMobile ? '0 8px' : (collapsed ? '0 0 22px 17px' : '0 20px 22px'),
+      navBrandBorderBottom: isMobile ? 'none' : '1px solid #1E293B',
+      navBrandBorderRight: isMobile ? '1px solid #1E293B' : 'none',
+      navBrandMarginBottom: isMobile ? '0' : '14px',
+      navBrandMarginRight: isMobile ? '8px' : '0',
+      navItemPadding: isMobile ? '8px 12px' : (collapsed ? '9px 0 9px 17px' : '9px 20px'),
+      showBrandText: isMobile || !collapsed,
+      navShowFooter: !isMobile,
+      navPlantsLabel: (isMobile || collapsed) ? 'P' : 'Plants',
+      navFleetLabel: (isMobile || collapsed) ? 'F' : 'Fleet health',
+      mainPadding: isMobile ? '16px' : (isTablet ? '20px 24px 40px' : '28px 36px 60px'),
+      showTableView: !isMobile, showCardView: isMobile, rowPadV,
+      searchMarginLeft: isMobile ? '0' : 'auto', searchWidth: isMobile ? '100%' : '220px',
+      wizardContainerDir: isMobile ? 'column' : 'row',
+      wizardSidebarWidth: isMobile ? '100%' : '180px',
+      wizardStepsDir: isMobile ? 'row' : 'column',
+      formRowDir: isMobile ? 'column' : 'row',
+      detailGridCols: (isMobile || isTablet) ? '1fr' : '2fr 1fr',
+      navPlantsColor: navPlantsActive ? '#F8FAFC' : '#94A3B8',
+      navPlantsBg: navPlantsActive ? '#1E293B' : 'transparent',
+      navPlantsBorderLeft: isMobile ? 'none' : ('2px solid ' + (navPlantsActive ? '#10B981' : 'transparent')),
+      navFleetColor: s.screen === 'fleet' ? '#F8FAFC' : '#94A3B8', navFleetBg: s.screen === 'fleet' ? '#1E293B' : 'transparent',
+      navFleetBorderLeft: isMobile ? 'none' : ('2px solid ' + (s.screen === 'fleet' ? '#10B981' : 'transparent')),
+      goList: this.goList, goFleet: this.goFleet, startCreate: this.startCreate,
+      plantCount: RAW_PLANTS.length,
+      countAll: RAW_PLANTS.length, countLive: RAW_PLANTS.filter(p => p.status === 'live').length, countOnb: RAW_PLANTS.filter(p => p.status === 'onboarding').length,
+      countStalled: RAW_PLANTS.filter(p => p.status === 'stalled').length, countSusp: RAW_PLANTS.filter(p => p.status === 'suspended').length,
+      chipAllBg: cAll.Bg, chipAllColor: cAll.Color, chipAllBorder: cAll.Border, setFilterAll: () => this.setState({ filterStatus: 'all' }),
+      chipLiveBg: cLive.Bg, chipLiveColor: cLive.Color, chipLiveBorder: cLive.Border, setFilterLive: () => this.setState({ filterStatus: 'live' }),
+      chipOnbBg: cOnb.Bg, chipOnbColor: cOnb.Color, chipOnbBorder: cOnb.Border, setFilterOnboarding: () => this.setState({ filterStatus: 'onboarding' }),
+      chipStalledBg: cStalled.Bg, chipStalledColor: cStalled.Color, chipStalledBorder: cStalled.Border, setFilterStalled: () => this.setState({ filterStatus: 'stalled' }),
+      chipSuspBg: cSusp.Bg, chipSuspColor: cSusp.Color, chipSuspBorder: cSusp.Border, setFilterSuspended: () => this.setState({ filterStatus: 'suspended' }),
+      search: s.search, onSearch: (e) => this.setState({ search: e.target.value }),
+      rows: filtered,
+      isStep1: s.createStep === 1, isStep2: s.createStep === 2, isStep3: s.createStep === 3, isStep4: s.createStep === 4, isStep5: s.createStep === 5, isStep6: s.createStep === 6,
+      wizardSteps, nextStep: this.nextStep, prevStep: this.prevStep, provision: this.provision,
+      form: s.form,
+      setBusinessName: this.setField('businessName'), setOwnerName: this.setField('ownerName'), setPhone: this.setField('phone'), setCity: this.setField('city'), setAddress: this.setField('address'),
+      setSubdomain: this.setField('subdomain'), setCustomDomain: this.setField('customDomain'), setBankName: this.setField('bankName'), setAccountNumber: this.setField('accountNumber'), setSplit: this.setField('split'),
+      subdomainBorderColor: !subdomain ? '#CBD5E1' : (subAvailable ? '#059669' : '#DC2626'),
+      subdomainStatusText: !subdomain ? '' : (subAvailable ? ('✓ ' + subdomain + '.gatstogo.com is available') : '✕ That subdomain is taken'),
+      subdomainStatusColor: subAvailable ? '#00543D' : '#B91C1C',
+      themes, addStaff: this.addStaff,
+      form: { ...s.form, staff: staffRows },
+      reviewBusiness: s.form.businessName || '—', reviewOwner: s.form.ownerName || '—', reviewCity: s.form.city || '—',
+      reviewSubdomain: (s.form.subdomain || '—') + '.gatstogo.com', reviewTheme: THEMES[s.form.theme].name, reviewSplit: s.form.split || '—', reviewStaffCount: s.form.staff.length,
+      selected,
+      fleetRows, hasOffline: offlineCount > 0, offlineCount,
+    };
+  }
+}
+</script>
+</body>
+</html>

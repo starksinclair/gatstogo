@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#EEF2F6}
+  ::selection{background:#10B981;color:#0F172A}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#EEF2F6;padding:40px;font-family:'IBM Plex Sans',sans-serif;color:#0F172A;overflow-x:auto">
+
+  <div style="max-width:1100px;margin:0 auto 20px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:#00543D;background:#E7F6F1;display:inline-block;padding:4px 10px;border:1px solid #93D6BE;margin-bottom:12px;white-space:nowrap">STAFF TERMINAL — INTERACTIVE PROTOTYPE</div>
+    <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px">GatsToGo staff terminal</h1>
+    <p style="font-size:13.5px;color:#334155;line-height:1.6">Pick an employee to start a shift. Their role decides the config: Manager or Tunde (Cashier+Operator) get the Combined view, Ifeoma (Cashier) gets Cash sale + tokens, Chidi (Operator) gets Fill only. Try a wrong code a few times to see the lockout, or push cash-on-hand past the amber and blocked thresholds.</p>
+  </div>
+
+  <div style="background:#0F172A;padding:18px 18px 30px;border-radius:26px;width:1136px;margin:0 auto">
+    <div style="width:8px;height:8px;border-radius:50%;background:#334155;margin:0 auto 12px"></div>
+    <div style="width:1100px;height:700px;border-radius:6px;overflow:hidden;position:relative;background:#F8FAFC">
+
+      <!-- ============ SHIFT START ============ -->
+      <sc-if value="{{ isStart }}" hint-placeholder-val="{{ true }}">
+        <div style="height:64px;background:#0F172A;display:flex;align-items:center;padding:0 28px;gap:10px">
+          <div style="width:18px;height:18px;border:1.5px solid #F8FAFC;display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:9px;color:#F8FAFC">G</span></div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:#F8FAFC">GATSTOGO</div>
+        </div>
+        <div style="padding:32px 44px">
+          <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:4px">Start your shift</div>
+          <div style="font-size:14px;color:#334155;margin-bottom:20px">Select your name to begin.</div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+            <sc-for list="{{ employees }}" as="e" hint-placeholder-count="4">
+              <div onClick="{{ e.onSelect }}" style="border:{{ e.cardBorder }};background:{{ e.cardBg }};padding:14px;text-align:center;cursor:pointer">
+                <div style="width:40px;height:40px;border:1.5px solid {{ e.avatarBorder }};background:{{ e.avatarBg }};color:{{ e.avatarColor }};border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700;font-size:14px">{{ e.initials }}</div>
+                <div style="font-weight:700;font-size:13.5px">{{ e.name }}</div>
+                <div style="font-size:11px;color:{{ e.roleColor }};font-weight:600;margin-top:2px">{{ e.roleLabel }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;gap:32px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">ENTER YOUR PIN</div>
+              <div style="display:flex;gap:10px;margin-bottom:12px">
+                <sc-for list="{{ pinDots }}" as="d" hint-placeholder-count="4">
+                  <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid #0F172A;background:{{ d.bg }}"></div>
+                </sc-for>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:220px">
+                <sc-for list="{{ pinKeypad }}" as="k" hint-placeholder-count="12">
+                  <div onClick="{{ k.onClick }}" style="height:44px;display:flex;align-items:center;justify-content:center;border:{{ k.border }};background:{{ k.bg }};font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;cursor:pointer">{{ k.l }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="flex:1;max-width:260px">
+              <div style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">COUNT YOUR OPENING CASH DRAWER</div>
+              <input value="{{ openingCash }}" onChange="{{ setOpeningCash }}" placeholder="₦20,000" style="width:100%;height:48px;border:1.5px solid #CBD5E1;background:#fff;padding:0 14px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;outline:none" style-focus="border-color:#006B4D" />
+              <button onClick="{{ startShift }}" disabled="{{ startDisabled }}" style="margin-top:20px;width:100%;height:60px;background:{{ startBtnBg }};color:{{ startBtnColor }};border:none;font-weight:700;font-size:16px;cursor:pointer">START SHIFT</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ MAIN (FILL / CASH) ============ -->
+      <sc-if value="{{ isMain }}" hint-placeholder-val="{{ false }}">
+        <div style="height:64px;background:#0F172A;display:flex;align-items:center;justify-content:space-between;padding:0 28px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:18px;height:18px;border:1.5px solid #F8FAFC;display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:9px;color:#F8FAFC">G</span></div>
+            <div style="font-weight:700;font-size:14px;color:#F8FAFC">GATSTOGO <span style="color:#64748B;font-weight:500">· {{ configLabel }}</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#94A3B8">{{ shiftSummaryStr }}</div>
+            <button onClick="{{ openEndShift }}" style="height:38px;padding:0 16px;background:transparent;color:#F8FAFC;border:1.5px solid #475569;font-weight:700;font-size:12px;letter-spacing:0.03em;cursor:pointer">END SHIFT</button>
+          </div>
+        </div>
+        <sc-if value="{{ showOffline }}" hint-placeholder-val="{{ true }}">
+          <div style="height:40px;background:#F1F5F9;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid #E2E8F0">
+            <div style="width:7px;height:7px;border-radius:50%;background:#0F172A;flex:none;animation:blink 2s ease-in-out infinite"></div>
+            <div style="font-size:12px;font-weight:600;color:#334155">Working offline — fills and sales are queued to sync when back online</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isCombined }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;height:56px">
+            <div onClick="{{ setTabFill }}" style="flex:1;display:flex;align-items:center;justify-content:center;background:{{ fillTabBg }};color:{{ fillTabColor }};font-weight:700;font-size:15px;cursor:pointer;border-bottom:{{ fillTabBorderBottom }};border-right:1px solid #E2E8F0">FILL</div>
+            <div onClick="{{ setTabCash }}" style="flex:1;display:flex;align-items:center;justify-content:center;background:{{ cashTabBg }};color:{{ cashTabColor }};font-weight:700;font-size:15px;cursor:pointer;border-bottom:{{ cashTabBorderBottom }}">CASH SALE</div>
+          </div>
+        </sc-if>
+
+        <!-- FILL SCREEN -->
+        <sc-if value="{{ showFill }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ fillIsLocked }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;justify-content:center;padding:40px 0">
+              <div style="width:440px;border:2px solid #F59E0B;background:#FFFBEB;padding:36px;text-align:center">
+                <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;color:#92400E;margin-bottom:16px">Terminal locked</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:52px;color:#B45309;margin-bottom:16px">0:{{ lockSecondsStr }}</div>
+                <div style="font-size:13.5px;color:#334155;line-height:1.6">Too many incorrect codes. This clears automatically — no need to call anyone.</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ fillIsLocked }}" hint-placeholder-val="{{ true }}">
+            <sc-if value="{{ fillIsConfirmed }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;justify-content:center;padding:60px 0">
+                <div style="text-align:center">
+                  <div style="width:64px;height:64px;border:3px solid #10B981;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:30px;color:#059669;font-weight:700">✓</div>
+                  <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:24px">Fill confirmed</div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ fillIsConfirmed }}" hint-placeholder-val="{{ true }}">
+              <sc-if value="{{ fillIsReveal }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;justify-content:center;padding:28px 0">
+                  <div style="width:480px;border:2px solid #10B981;background:#ECFDF5;padding:28px">
+                    <div style="text-align:center;margin-bottom:16px">
+                      <div style="font-size:11px;font-weight:700;color:#64748B;letter-spacing:0.05em;margin-bottom:4px">CUSTOMER</div>
+                      <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:32px">{{ revealInitials }}</div>
+                    </div>
+                    <div style="text-align:center;margin-bottom:16px">
+                      <div style="font-size:11px;font-weight:700;color:#64748B;letter-spacing:0.05em;margin-bottom:4px">AUTHORISED WEIGHT — FIXED</div>
+                      <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:52px;line-height:1">{{ revealKgStr }} <span style="font-size:22px;color:#64748B">kg</span></div>
+                    </div>
+                    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:22px">
+                      <div style="border:1px solid #A7F3D0;background:#fff;padding:8px 16px;text-align:center"><div style="font-size:10.5px;color:#64748B;margin-bottom:2px">AMOUNT PAID</div><div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px">{{ revealAmountStr }}</div></div>
+                      <div style="border:1px solid #A7F3D0;background:#fff;padding:8px 16px;text-align:center"><div style="font-size:10.5px;color:#64748B;margin-bottom:2px">METHOD</div><div style="font-weight:700;font-size:13px;margin-top:5px">{{ revealMethod }}</div></div>
+                    </div>
+                    <button onClick="{{ confirmFill }}" style="width:100%;height:68px;background:#006B4D;color:#F8FAFC;border:none;font-weight:700;font-size:19px;cursor:pointer">OPEN VALVE</button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ fillIsReveal }}" hint-placeholder-val="{{ true }}">
+                <div style="padding:22px 0;text-align:center">
+                  <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;margin-bottom:14px">Enter customer code</div>
+                  <div style="display:flex;justify-content:center;gap:12px;margin-bottom:14px">
+                    <sc-for list="{{ codeBoxes }}" as="b" hint-placeholder-count="4">
+                      <div style="width:56px;height:64px;border:{{ b.border }};background:{{ b.bg }};display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:30px;color:{{ b.color }}">{{ b.text }}</div>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ fillIsWrong }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:inline-flex;align-items:center;gap:8px;background:#FFFBEB;border:1.5px solid #F59E0B;padding:8px 16px;margin-bottom:14px">
+                      <div style="width:18px;height:18px;border:1.5px solid #B45309;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#B45309;flex:none">!</div>
+                      <div style="font-weight:700;font-size:13.5px;color:#92400E">Incorrect code — {{ attemptsRemaining }} attempts remaining</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ fillIsAlreadyUsed }}" hint-placeholder-val="{{ false }}">
+                    <div style="width:420px;margin:0 auto 14px;background:#FFFBEB;border:1.5px solid #F59E0B;padding:16px">
+                      <div style="font-weight:700;font-size:14.5px;color:#92400E;margin-bottom:6px">This code has already been used for a fill today.</div>
+                      <div style="font-size:12.5px;color:#92400E;line-height:1.5;margin-bottom:12px">Check with the cashier or ask the customer for their receipt.</div>
+                      <button onClick="{{ tryAnotherCode }}" style="height:44px;padding:0 20px;background:#fff;color:#0F172A;border:2px solid #0F172A;font-weight:700;font-size:13.5px;cursor:pointer">TRY ANOTHER CODE</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ fillIsAlreadyUsed }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:320px;margin:0 auto">
+                      <sc-for list="{{ codeKeypad }}" as="k" hint-placeholder-count="12">
+                        <div onClick="{{ k.onClick }}" style="height:52px;display:flex;align-items:center;justify-content:center;border:{{ k.border }};background:{{ k.bg }};font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;cursor:pointer">{{ k.l }}</div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </sc-if>
+          </sc-if>
+        </sc-if>
+
+        <!-- CASH SALE SCREEN -->
+        <sc-if value="{{ showCash }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ cashIsBlocked }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;justify-content:center;padding:60px 0">
+              <div style="width:480px;border:2px solid #B45309;background:#FEF3C7;padding:34px;text-align:center">
+                <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;color:#92400E;margin-bottom:12px">Cash sale locked</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:30px;color:#92400E;margin-bottom:14px">{{ cashHeldStr }}</div>
+                <div style="font-size:13.5px;color:#92400E;line-height:1.6;margin-bottom:20px">Cash on hand has reached the limit for this plant. Record a deposit before taking more cash.</div>
+                <button onClick="{{ recordDeposit }}" style="height:56px;padding:0 24px;background:#0F172A;color:#F8FAFC;border:none;font-weight:700;font-size:15px;cursor:pointer">I'VE RECORDED A DEPOSIT</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ cashIsBlocked }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 320px;height:{{ cashBodyHeight }}">
+              <div style="padding:26px 36px;overflow-y:auto">
+                <div style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:10px">CYLINDER SIZE</div>
+                <div style="display:flex;gap:8px;margin-bottom:22px">
+                  <sc-for list="{{ cylinders }}" as="cy" hint-placeholder-count="5">
+                    <div onClick="{{ cy.onClick }}" style="flex:1;height:56px;display:flex;align-items:center;justify-content:center;border:{{ cy.border }};background:{{ cy.bg }};color:{{ cy.color }};font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;cursor:pointer">{{ cy.label }}</div>
+                  </sc-for>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">PHONE NUMBER — OPTIONAL, FOR RECEIPT</div>
+                <input value="{{ phone }}" onChange="{{ setPhone }}" placeholder="0803 000 0000" style="width:100%;height:48px;border:1.5px solid #CBD5E1;background:#fff;padding:0 14px;font-family:'IBM Plex Mono',monospace;font-size:15px;outline:none;margin-bottom:22px" style-focus="border-color:#006B4D" />
+                <div style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">AMOUNT — AT ₦1,150/KG, NOT EDITABLE</div>
+                <div style="height:60px;background:#F1F5F9;border:1.5px solid #CBD5E1;display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:26px;margin-bottom:18px">{{ amountStr }}</div>
+                <button onClick="{{ recordCash }}" style="width:100%;height:60px;background:#006B4D;color:#F8FAFC;border:none;font-weight:700;font-size:15px;cursor:pointer">{{ recordButtonLabel }}</button>
+                <sc-if value="{{ confirmFlash }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:10px;font-size:12.5px;font-weight:700;color:#047857">✓ Recorded</div>
+                </sc-if>
+              </div>
+              <div style="padding:26px 22px;border-left:1px solid #E2E8F0;background:#F8FAFC;overflow-y:auto">
+                <div style="font-size:11.5px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">CASH YOU ARE HOLDING</div>
+                <div style="border:2px solid {{ cashBorder }};background:{{ cashBg }};padding:14px;margin-bottom:20px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:24px;color:{{ cashColor }}">{{ cashHeldStr }}</div>
+                  <div style="font-size:11px;color:{{ cashCaptionColor }};margin-top:6px;font-weight:600">{{ cashCaption }}</div>
+                </div>
+                <sc-if value="{{ isCashier }}" hint-placeholder-val="{{ true }}">
+                  <div style="font-size:11.5px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">TOKENS OUT — {{ tokensOutCount }}</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">
+                    <sc-for list="{{ tokensOut }}" as="tk" hint-placeholder-count="4">
+                      <div onClick="{{ tk.onClick }}" style="width:48px;height:36px;border:1.5px solid #B45309;background:#FFFBEB;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;color:#B45309;cursor:pointer">#{{ tk.num }}</div>
+                    </sc-for>
+                  </div>
+                  <div style="font-size:10px;color:#94A3B8;margin-bottom:6px">RETURNED (tap a token to return it)</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:5px">
+                    <sc-for list="{{ tokensReturned }}" as="tr" hint-placeholder-count="2">
+                      <div style="width:48px;height:36px;border:1.5px solid #CBD5E1;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;color:#94A3B8">#{{ tr }}</div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+        </sc-if>
+      </sc-if>
+
+      <!-- ============ SHIFT END ============ -->
+      <sc-if value="{{ isEnd }}" hint-placeholder-val="{{ false }}">
+        <div style="height:64px;background:#0F172A;display:flex;align-items:center;justify-content:space-between;padding:0 28px">
+          <div style="font-weight:700;font-size:14px;color:#F8FAFC">END SHIFT — {{ empName }} <span style="color:#64748B">· {{ configLabel }}</span></div>
+        </div>
+        <div style="padding:32px 44px;display:grid;grid-template-columns:1fr 1fr;gap:32px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">CLOSING CASH COUNT</div>
+            <input value="{{ closingCashInput }}" onChange="{{ setClosingCash }}" style="width:100%;height:60px;border:1.5px solid #CBD5E1;background:#fff;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:24px;outline:none;margin-bottom:20px" style-focus="border-color:#006B4D" />
+            <sc-if value="{{ isCashier }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">TOKENS RETURNED</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;margin-bottom:6px">{{ tokensReturnedStr }}</div>
+              <div style="font-size:12px;color:#B45309;margin-bottom:20px">{{ tokensOutstandingNote }}</div>
+            </sc-if>
+            <button onClick="{{ submitEndShift }}" style="width:100%;height:60px;background:#006B4D;color:#F8FAFC;border:none;font-weight:700;font-size:15px;cursor:pointer">SUBMIT AND END SHIFT</button>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.05em;margin-bottom:8px">SHIFT SUMMARY</div>
+            <div style="border:1px solid #E2E8F0;background:#fff">
+              <div style="display:flex;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Fills completed</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700">{{ fillsCompleted }}</span></div>
+              <div style="display:flex;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Kg dispensed</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700">{{ kgDispensedStr }}</span></div>
+              <div style="display:flex;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Cash recorded</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700">{{ cashHeldStr }}</span></div>
+              <div style="display:flex;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Opening float</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700">{{ openingCashStr }}</span></div>
+              <div style="display:flex;justify-content:space-between;padding:13px 18px"><span style="color:#0F172A;font-weight:700">Variance</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:{{ varianceColor }}">{{ varianceStr }}</span></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:850},&quot;amberThreshold&quot;:{&quot;editor&quot;:&quot;number&quot;,&quot;default&quot;:150000,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:20000,&quot;max&quot;:500000,&quot;step&quot;:5000,&quot;section&quot;:&quot;Cash thresholds (per plant)&quot;},&quot;blockedThreshold&quot;:{&quot;editor&quot;:&quot;number&quot;,&quot;default&quot;:300000,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:50000,&quot;max&quot;:1000000,&quot;step&quot;:5000,&quot;section&quot;:&quot;Cash thresholds (per plant)&quot;},&quot;showOfflineBanner&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+const EMPLOYEES = [
+  { id: 1, name: 'Ngozi Umeh', initials: 'NU', roles: ['Manager'] },
+  { id: 2, name: 'Ifeoma Chukwu', initials: 'IC', roles: ['Cashier'] },
+  { id: 3, name: 'Chidi Okonkwo', initials: 'CO', roles: ['Operator'] },
+  { id: 4, name: 'Tunde Bakare', initials: 'TB', roles: ['Cashier', 'Operator'] },
+];
+const VALID_CODES = {
+  '2714': { initials: 'A.N.', kg: 12.5, amount: 14375, method: 'ELECTRONIC' },
+  '5089': { initials: 'O.T.', kg: 6.0, amount: 6900, method: 'CASH' },
+  '3341': { initials: 'F.B.', kg: 25.0, amount: 28750, method: 'ELECTRONIC' },
+};
+const CYLINDERS = [3, 6, 12.5, 25, 50];
+const PRICE = 1150;
+function fmt(n) { return '₦' + Math.round(n).toLocaleString('en-NG'); }
+function configForRoles(roles) {
+  const hasC = roles.includes('Cashier'), hasO = roles.includes('Operator');
+  if (hasC && hasO) return 'combined'; if (hasC) return 'cashier'; if (hasO) return 'operator'; return 'combined';
+}
+
+const INITIAL_SHIFT_STATE = {
+  screen: 'start', selectedEmployeeId: null, pin: '', openingCash: '', activeTab: 'fill',
+  codeDigits: '', wrongAttempts: 0, locked: false, lockSecondsLeft: 20, usedCodes: [], revealCustomer: null,
+  fillJustConfirmed: false, errorType: null, cylinderIdx: 2, phone: '', cashHeld: 0, salesToday: 0,
+  tokensOut: [], tokensReturned: [], nextToken: 49, fillsCompleted: 0, kgDispensed: 0, confirmFlash: false, closingCashInput: '',
+};
+
+class Component extends DCLogic {
+  state = { ...INITIAL_SHIFT_STATE };
+
+  componentWillUnmount() { clearInterval(this._lockInterval); }
+
+  selectEmployee(id) { this.setState({ selectedEmployeeId: id }); }
+  setOpeningCash = (e) => this.setState({ openingCash: e.target.value });
+  canStart() { const s = this.state; return !!(s.selectedEmployeeId && s.pin.length === 4 && s.openingCash.trim() !== ''); }
+  startShift = () => { if (this.canStart()) this.setState({ screen: 'main' }); };
+
+  setTabFill = () => this.setState({ activeTab: 'fill' });
+  setTabCash = () => this.setState({ activeTab: 'cash' });
+
+  appendPin(d) { this.setState(s => s.pin.length < 4 ? { pin: s.pin + d } : s); }
+  backPin() { this.setState(s => ({ pin: s.pin.slice(0, -1) })); }
+
+  appendCode(d) {
+    const s = this.state; if (s.locked || s.codeDigits.length >= 4) return;
+    const next = s.codeDigits + d;
+    this.setState({ codeDigits: next, errorType: null }, () => { if (next.length === 4) this.validateCode(next); });
+  }
+  backCode() { if (this.state.locked) return; this.setState(s => ({ codeDigits: s.codeDigits.slice(0, -1) })); }
+
+  validateCode(code) {
+    const s = this.state;
+    if (s.usedCodes.includes(code)) { this.setState({ errorType: 'already_used' }); return; }
+    const cust = VALID_CODES[code];
+    if (cust) { this.setState({ revealCustomer: { ...cust, code }, errorType: null }); return; }
+    const attempts = s.wrongAttempts + 1;
+    if (attempts >= 5) { this.lockTerminal(); return; }
+    this.setState({ wrongAttempts: attempts, errorType: 'wrong' });
+    setTimeout(() => { this.setState(s2 => s2.errorType === 'wrong' ? { codeDigits: '' } : {}); }, 900);
+  }
+
+  lockTerminal() {
+    this.setState({ locked: true, lockSecondsLeft: 20, errorType: null, codeDigits: '' });
+    clearInterval(this._lockInterval);
+    this._lockInterval = setInterval(() => {
+      this.setState(s => {
+        const left = s.lockSecondsLeft - 1;
+        if (left <= 0) { clearInterval(this._lockInterval); return { locked: false, lockSecondsLeft: 20, wrongAttempts: 0 }; }
+        return { lockSecondsLeft: left };
+      });
+    }, 1000);
+  }
+
+  tryAnotherCode = () => this.setState({ codeDigits: '', errorType: null });
+
+  confirmFill = () => {
+    const cust = this.state.revealCustomer; if (!cust) return;
+    this.setState(prev => ({
+      usedCodes: [...prev.usedCodes, cust.code], fillsCompleted: prev.fillsCompleted + 1,
+      kgDispensed: Math.round((prev.kgDispensed + cust.kg) * 10) / 10, revealCustomer: null, fillJustConfirmed: true,
+    }));
+    setTimeout(() => this.setState({ fillJustConfirmed: false, codeDigits: '' }), 1400);
+  };
+
+  selectCylinder(i) { this.setState({ cylinderIdx: i }); }
+  setPhone = (e) => this.setState({ phone: e.target.value });
+
+  recordCash = () => {
+    const s = this.state; const kg = CYLINDERS[s.cylinderIdx]; const amount = Math.round(kg * PRICE);
+    const blocked = this.props.blockedThreshold ?? 300000;
+    if (s.cashHeld >= blocked) return;
+    const emp = EMPLOYEES.find(e => e.id === s.selectedEmployeeId);
+    const isCashier = emp && configForRoles(emp.roles) === 'cashier';
+    this.setState(prev => {
+      const upd = { cashHeld: prev.cashHeld + amount, salesToday: prev.salesToday + 1, phone: '', confirmFlash: true };
+      if (isCashier) { upd.tokensOut = [...prev.tokensOut, prev.nextToken]; upd.nextToken = prev.nextToken + 1; }
+      return upd;
+    });
+    setTimeout(() => this.setState({ confirmFlash: false }), 1200);
+  };
+  recordDeposit = () => this.setState({ cashHeld: 0 });
+  returnToken(tok) { this.setState(prev => ({ tokensOut: prev.tokensOut.filter(t => t !== tok), tokensReturned: [...prev.tokensReturned, tok] })); }
+
+  openEndShift = () => { const s = this.state; this.setState({ screen: 'end', closingCashInput: fmt((parseInt(s.openingCash.replace(/\D/g, '')) || 0) + s.cashHeld) }); };
+  setClosingCash = (e) => this.setState({ closingCashInput: e.target.value });
+  submitEndShift = () => { clearInterval(this._lockInterval); this.setState({ ...INITIAL_SHIFT_STATE }); };
+
+  buildKeypad(onDigit, onBack, disabled) {
+    const labels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
+    return labels.map(l => {
+      if (l === '') return { l: '', border: 'none', bg: 'transparent', onClick: () => {} };
+      const isBack = l === '⌫';
+      return { l, border: disabled ? '2px solid #E2E8F0' : '2px solid #0F172A', bg: disabled ? '#F1F5F9' : '#fff', onClick: disabled ? () => {} : (isBack ? onBack : () => onDigit(l)) };
+    });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const amber = this.props.amberThreshold ?? 150000;
+    const blocked = this.props.blockedThreshold ?? 300000;
+    const showOffline = this.props.showOfflineBanner ?? true;
+
+    const employees = EMPLOYEES.map(e => {
+      const sel = s.selectedEmployeeId === e.id;
+      return {
+        id: e.id, name: e.name, initials: e.initials, roleLabel: e.roles.join(' + '),
+        cardBorder: sel ? '3px solid #006B4D' : '2px solid #E2E8F0', cardBg: sel ? '#E7F6F1' : '#fff',
+        avatarBorder: sel ? '#006B4D' : '#0F172A', avatarBg: sel ? '#006B4D' : '#fff', avatarColor: sel ? '#fff' : '#0F172A',
+        roleColor: sel ? '#00543D' : '#64748B',
+        onSelect: () => this.selectEmployee(e.id),
+      };
+    });
+    const selectedEmp = EMPLOYEES.find(e => e.id === s.selectedEmployeeId);
+    const config = selectedEmp ? configForRoles(selectedEmp.roles) : 'combined';
+    const isCombined = config === 'combined', isCashier = config === 'cashier';
+    const effectiveTab = isCombined ? s.activeTab : (isCashier ? 'cash' : 'fill');
+
+    const pinDots = [0, 1, 2, 3].map(i => ({ bg: i < s.pin.length ? '#0F172A' : '#fff' }));
+    const pinKeypad = this.buildKeypad((d) => this.appendPin(d), () => this.backPin(), false);
+    const codeKeypad = this.buildKeypad((d) => this.appendCode(d), () => this.backCode(), s.locked);
+
+    const codeBoxes = [0, 1, 2, 3].map(i => {
+      const has = i < s.codeDigits.length; const err = s.errorType === 'wrong';
+      return { text: has ? s.codeDigits[i] : '–', border: err ? '2px solid #B45309' : '2px solid #0F172A', bg: err ? '#FFFBEB' : '#fff', color: err ? '#B45309' : (has ? '#0F172A' : '#CBD5E1') };
+    });
+
+    let fillState = 'idle';
+    if (s.locked) fillState = 'locked'; else if (s.fillJustConfirmed) fillState = 'confirmed'; else if (s.revealCustomer) fillState = 'reveal';
+    else if (s.errorType === 'already_used') fillState = 'already_used'; else if (s.errorType === 'wrong') fillState = 'wrong';
+
+    const cylinders = CYLINDERS.map((kg, i) => {
+      const sel = s.cylinderIdx === i;
+      return { label: (kg % 1 === 0 ? kg : kg.toFixed(1)) + ' kg', border: sel ? '2.5px solid #006B4D' : '1.5px solid #CBD5E1', bg: sel ? '#006B4D' : '#fff', color: sel ? '#F8FAFC' : '#0F172A', onClick: () => this.selectCylinder(i) };
+    });
+    const kgSelected = CYLINDERS[s.cylinderIdx];
+    const amount = Math.round(kgSelected * PRICE);
+
+    const cashState = s.cashHeld >= blocked ? 'blocked' : (s.cashHeld >= amber ? 'amber' : 'normal');
+    const cashColor = cashState === 'normal' ? '#0F172A' : '#B45309';
+    const cashBg = cashState === 'normal' ? '#fff' : '#FFFBEB';
+    const cashBorder = cashState === 'normal' ? '#E2E8F0' : '#F59E0B';
+    const cashCaption = cashState === 'normal' ? 'Normal — no action needed.' : 'Above threshold — plan a deposit soon.';
+    const cashCaptionColor = cashState === 'normal' ? '#64748B' : '#B45309';
+
+    const tokensOut = s.tokensOut.map(t => ({ num: t, onClick: () => this.returnToken(t) }));
+    const totalIssued = s.tokensOut.length + s.tokensReturned.length;
+
+    const openingCashNum = parseInt(s.openingCash.replace(/\D/g, '')) || 0;
+    const closingNum = parseInt(s.closingCashInput.replace(/\D/g, '')) || 0;
+    const variance = closingNum - openingCashNum - s.cashHeld;
+
+    return {
+      isStart: s.screen === 'start', isMain: s.screen === 'main', isEnd: s.screen === 'end',
+      employees, pinDots, pinKeypad, openingCash: s.openingCash, setOpeningCash: this.setOpeningCash,
+      startDisabled: !this.canStart(), startShift: this.startShift,
+      startBtnBg: this.canStart() ? '#006B4D' : '#E2E8F0', startBtnColor: this.canStart() ? '#F8FAFC' : '#94A3B8',
+
+      configLabel: config.charAt(0).toUpperCase() + config.slice(1),
+      shiftSummaryStr: isCashier ? (s.salesToday + ' sales today') : (s.fillsCompleted + ' fills · ' + s.kgDispensed.toFixed(1) + ' kg dispensed'),
+      openEndShift: this.openEndShift, showOffline,
+
+      isCombined, isCashier,
+      setTabFill: this.setTabFill, setTabCash: this.setTabCash,
+      fillTabBg: effectiveTab === 'fill' ? '#006B4D' : '#fff', fillTabColor: effectiveTab === 'fill' ? '#F8FAFC' : '#334155', fillTabBorderBottom: effectiveTab === 'fill' ? 'none' : '1px solid #E2E8F0',
+      cashTabBg: effectiveTab === 'cash' ? '#006B4D' : '#fff', cashTabColor: effectiveTab === 'cash' ? '#F8FAFC' : '#334155', cashTabBorderBottom: effectiveTab === 'cash' ? 'none' : '1px solid #E2E8F0',
+      showFill: effectiveTab === 'fill', showCash: effectiveTab === 'cash',
+      cashBodyHeight: (showOffline ? (isCombined ? '540px' : '596px') : (isCombined ? '580px' : '636px')),
+
+      fillIsLocked: fillState === 'locked', fillIsConfirmed: fillState === 'confirmed', fillIsReveal: fillState === 'reveal',
+      fillIsWrong: fillState === 'wrong', fillIsAlreadyUsed: fillState === 'already_used',
+      lockSecondsStr: String(s.lockSecondsLeft).padStart(2, '0'),
+      attemptsRemaining: 5 - s.wrongAttempts,
+      codeBoxes, codeKeypad,
+      revealInitials: s.revealCustomer ? s.revealCustomer.initials : '', revealKgStr: s.revealCustomer ? s.revealCustomer.kg.toFixed(1) : '',
+      revealAmountStr: s.revealCustomer ? fmt(s.revealCustomer.amount) : '', revealMethod: s.revealCustomer ? s.revealCustomer.method : '',
+      confirmFill: this.confirmFill, tryAnotherCode: this.tryAnotherCode,
+
+      cylinders, amountStr: fmt(amount), phone: s.phone, setPhone: this.setPhone,
+      recordCash: this.recordCash, recordButtonLabel: isCashier ? ('RECORD CASH & ISSUE TOKEN #' + s.nextToken) : 'RECORD CASH AND QUEUE FILL',
+      confirmFlash: s.confirmFlash,
+      cashIsBlocked: cashState === 'blocked', recordDeposit: this.recordDeposit,
+      cashHeldStr: fmt(s.cashHeld), cashColor, cashBg, cashBorder, cashCaption, cashCaptionColor,
+      tokensOut, tokensReturned: s.tokensReturned.slice().reverse(), tokensOutCount: s.tokensOut.length,
+
+      empName: selectedEmp ? selectedEmp.name : '—',
+      closingCashInput: s.closingCashInput, setClosingCash: this.setClosingCash,
+      tokensReturnedStr: s.tokensReturned.length + ' of ' + totalIssued + ' issued',
+      tokensOutstandingNote: s.tokensOut.length === 0 ? 'All tokens accounted for.' : ('Tokens ' + s.tokensOut.map(t => '#' + t).join(', ') + ' are still with customers.'),
+      submitEndShift: this.submitEndShift,
+      fillsCompleted: s.fillsCompleted, kgDispensedStr: s.kgDispensed.toFixed(1) + ' kg', openingCashStr: fmt(openingCashNum),
+      varianceStr: (variance === 0 ? '' : (variance < 0 ? '-' : '+')) + fmt(Math.abs(variance)), varianceColor: variance === 0 ? '#047857' : '#B45309',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

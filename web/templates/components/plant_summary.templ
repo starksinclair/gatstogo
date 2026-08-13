@@ -1,0 +1,53 @@
+package components
+
+import "gatstogo/internal/domain"
+
+templ PlantSummary(plant *domain.Plant) {
+	<section aria-label="Plant summary">
+		<h2 style="margin: 0 0 12px; font-size: 20px; font-weight: 800;">{ plant.Name }</h2>
+		<dl class="summary-list">
+			<div class="summary-row">
+				<dt>Status</dt>
+				<dd>{ plant.Status }</dd>
+			</div>
+			<div class="summary-row">
+				<dt>Slug</dt>
+				<dd>{ plant.Slug }</dd>
+			</div>
+			if plant.City != nil {
+				<div class="summary-row">
+					<dt>City</dt>
+					<dd>{ *plant.City }</dd>
+				</div>
+			}
+			if plant.Address != nil {
+				<div class="summary-row">
+					<dt>Address</dt>
+					<dd>{ *plant.Address }</dd>
+				</div>
+			}
+			if plant.Phone != nil {
+				<div class="summary-row">
+					<dt>Phone</dt>
+					<dd>{ *plant.Phone }</dd>
+				</div>
+			}
+			<div class="summary-row">
+				<dt>Primary color</dt>
+				<dd>{ plant.PrimaryColor }</dd>
+			</div>
+			<div class="summary-row">
+				<dt>Secondary color</dt>
+				<dd>{ plant.SecondaryColor }</dd>
+			</div>
+			<div class="summary-row">
+				<dt>Button color</dt>
+				<dd>{ plant.ButtonColor }</dd>
+			</div>
+			<div class="summary-row">
+				<dt>Font</dt>
+				<dd>{ plant.FontFamily }</dd>
+			</div>
+		</dl>
+	</section>
+}

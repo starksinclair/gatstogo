@@ -1,0 +1,615 @@
+package pages
+
+type OwnerDashboardData struct {
+	PlantName       string
+	PlantSlug       string
+	PlantCity       string
+	PlantAddress    string
+	PlantPhone      string
+	PlantStatus     string
+	DomainStatus    string
+	TodayLabel      string
+	CurrentPrice    string
+	MoneyToday      string
+	SalesCount      int64
+	GasSoldKg       string
+	ElectronicTotal string
+	CashTotal       string
+	PaidForKg       string
+	FilledKg        string
+	DiffKg          string
+	DiffAmount      string
+	RecentTickets   []OwnerTicketRow
+	Staff           []OwnerStaffRow
+	Shifts          []OwnerShiftRow
+	CashMovements   []OwnerCashRow
+	PriceHistory    []OwnerPriceRow
+	Activity        []OwnerActivityRow
+}
+
+type OwnerTicketRow struct {
+	Reference string
+	Code      string
+	Customer  string
+	Phone     string
+	Kg        string
+	NetKg     string
+	Rate      string
+	Amount    string
+	Channel   string
+	Status    string
+	When      string
+	PaidAt    string
+	FilledAt  string
+	BadgeCSS  string
+}
+
+type OwnerStaffRow struct {
+	Name        string
+	Phone       string
+	Role        string
+	Status      string
+	SalesCount  int64
+	ShiftsCount int64
+	Joined      string
+	BadgeCSS    string
+}
+
+type OwnerShiftRow struct {
+	Staff          string
+	Device         string
+	Opened         string
+	Closed         string
+	Tickets        int64
+	TokensIssued   int
+	TokensReturned string
+	OpeningCash    string
+	ClosingCash    string
+	Notes          string
+	Status         string
+	BadgeCSS       string
+}
+
+type OwnerCashRow struct {
+	When     string
+	Kind     string
+	Amount   string
+	Counted  string
+	Recorder string
+	Ticket   string
+	Note     string
+}
+
+type OwnerPriceRow struct {
+	EffectiveFrom string
+	Price         string
+	SetBy         string
+	CreatedAt     string
+}
+
+type OwnerActivityRow struct {
+	Action  string
+	Subject string
+	When    string
+}
+
+type AdminConsoleData struct {
+	PlantCount        int64
+	ActiveCount       int64
+	OnboardingCount   int64
+	SuspendedCount    int64
+	ClosedCount       int64
+	DomainPending     int64
+	DomainBroken      int64
+	TotalTickets7d    int64
+	TotalVolume30d    string
+	Plants            []AdminPlantRow
+	RecentActivity    []OwnerActivityRow
+	ReservedSlugs     []string
+	PlatformStaff     []AdminStaffRow
+	SystemTables      []AdminSystemTable
+}
+
+type AdminPlantRow struct {
+	Name          string
+	City          string
+	Address       string
+	Phone         string
+	Slug          string
+	Status        string
+	Domain        string
+	DomainStatus  string
+	FirstTxn      string
+	Txns7d        int64
+	Volume30d     string
+	LastTxn       string
+	StaffCount    int64
+	PriceCount    int64
+	OpenShifts    int64
+	ActivityCount int64
+	CreatedAt     string
+	UpdatedAt     string
+	BadgeCSS      string
+	DomainBadge   string
+}
+
+type AdminStaffRow struct {
+	Name   string
+	Phone  string
+	Status string
+	Plants int64
+}
+
+type AdminSystemTable struct {
+	Name        string
+	Role        string
+	Records     int64
+	Health      string
+	Description string
+}
+
+templ OwnerDashboard(data OwnerDashboardData) {
+	@opsShell(data.PlantName+" owner dashboard", "Owner", ownerNav(), ownerDashboardContent(data))
+}
+
+templ AdminConsole(data AdminConsoleData) {
+	@opsShell("GatsToGo admin console", "Admin", adminNav(), adminConsoleContent(data))
+}
+
+templ opsShell(title string, railLabel string, nav templ.Component, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title }</title>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+			<link rel="stylesheet" href="/static/css/owner-admin.css"/>
+			<script>
+				document.addEventListener("DOMContentLoaded", function () {
+					document.querySelectorAll("[data-tabs]").forEach(function (root) {
+						function show(tab) {
+							root.querySelectorAll("[data-tab]").forEach(function (button) {
+								button.classList.toggle("active", button.dataset.tab === tab);
+							});
+							root.querySelectorAll("[data-tab-panel]").forEach(function (panel) {
+								panel.classList.toggle("active", panel.dataset.tabPanel === tab);
+							});
+							var select = root.querySelector("[data-tab-select]");
+							if (select) select.value = tab;
+						}
+						root.querySelectorAll("[data-tab]").forEach(function (button) {
+							button.addEventListener("click", function () { show(button.dataset.tab); });
+						});
+						var select = root.querySelector("[data-tab-select]");
+						if (select) select.addEventListener("change", function () { show(select.value); });
+						var initial = root.querySelector("[data-tab].active");
+						show(initial ? initial.dataset.tab : "overview");
+					});
+				});
+			</script>
+		</head>
+		<body>
+			<div class="shell" data-tabs>
+				<aside class="rail">
+					<div class="brand"><span class="mark">G</span><span>GATSTOGO</span></div>
+					<div class="rail-label">{ railLabel } workspace</div>
+					@nav
+					<div class="rail-note">
+						<strong>Work from the truth.</strong>
+						Every panel is shaped around the tables already in the database. Empty areas show placeholders until real records arrive.
+					</div>
+				</aside>
+				<main class="main">
+					@content
+				</main>
+			</div>
+		</body>
+	</html>
+}
+
+templ ownerNav() {
+	<nav class="rail-nav" aria-label="Owner sections">
+		<button class="nav-button active" type="button" data-tab="overview">Overview</button>
+		<button class="nav-button" type="button" data-tab="sales">Sales and receipts</button>
+		<button class="nav-button" type="button" data-tab="cash">Cash drawer</button>
+		<button class="nav-button" type="button" data-tab="shifts">Shifts</button>
+		<button class="nav-button" type="button" data-tab="staff">Staff</button>
+		<button class="nav-button" type="button" data-tab="prices">Prices</button>
+		<button class="nav-button" type="button" data-tab="activity">Activity</button>
+	</nav>
+}
+
+templ adminNav() {
+	<nav class="rail-nav" aria-label="Admin sections">
+		<button class="nav-button active" type="button" data-tab="overview">Overview</button>
+		<button class="nav-button" type="button" data-tab="plants">Plants</button>
+		<button class="nav-button" type="button" data-tab="onboarding">Onboarding</button>
+		<button class="nav-button" type="button" data-tab="domains">Domains and slugs</button>
+		<button class="nav-button" type="button" data-tab="activity">Activity</button>
+		<button class="nav-button" type="button" data-tab="system">System</button>
+	</nav>
+}
+
+templ ownerDashboardContent(data OwnerDashboardData) {
+	<div class="mobile-tabs">
+		<select data-tab-select aria-label="Owner dashboard section">
+			<option value="overview">Overview</option>
+			<option value="sales">Sales and receipts</option>
+			<option value="cash">Cash drawer</option>
+			<option value="shifts">Shifts</option>
+			<option value="staff">Staff</option>
+			<option value="prices">Prices</option>
+			<option value="activity">Activity</option>
+		</select>
+	</div>
+	<div class="topline">
+		<div>
+			<div class="eyebrow">Plant owner console</div>
+			<h1>{ data.PlantName }</h1>
+			<div class="status-row">
+				<span class="badge badge-ok">{ data.TodayLabel }</span>
+				<span class="badge badge-muted">{ data.PlantCity }</span>
+				<span class="badge badge-muted mono">{ data.PlantSlug }</span>
+				<span class="badge badge-ok">{ data.PlantStatus }</span>
+				<span class="badge badge-muted">Domain { data.DomainStatus }</span>
+			</div>
+		</div>
+		<div class="toolbar">
+			<button class="btn" type="button">Export report</button>
+			<button class="btn primary" type="button">Set price</button>
+		</div>
+	</div>
+	<section class="tab-panel active" data-tab-panel="overview">
+		<div class="kpi-grid">
+			<div class="kpi-card"><div class="kpi-label">Money today</div><div class="kpi">{ data.MoneyToday }</div><div class="kpi-small">{ data.SalesCount } sales recorded</div></div>
+			<div class="kpi-card"><div class="kpi-label">Gas sold</div><div class="kpi">{ data.GasSoldKg }</div><div class="kpi-small">Paid ticket size</div></div>
+			<div class="kpi-card"><div class="kpi-label">Current price</div><div class="kpi">{ data.CurrentPrice }</div><div class="kpi-small">Snapshot used for new tickets</div></div>
+			<div class="kpi-card"><div class="kpi-label">Cash / electronic</div><div class="kpi">{ data.CashTotal }</div><div class="kpi-small">Electronic { data.ElectronicTotal }</div></div>
+		</div>
+		<div class="dashboard-grid">
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Reconciliation board</h2><span class="badge badge-warn">Weight proof</span></div>
+				<div class="stat-line">
+					<div><div class="kpi-label">Gas paid for</div><strong class="mono">{ data.PaidForKg }</strong></div>
+					<div><div class="kpi-label">Gas filled</div><strong class="mono">{ data.FilledKg }</strong></div>
+					<div><div class="kpi-label">Difference</div><strong class="mono">{ data.DiffKg } · { data.DiffAmount }</strong></div>
+				</div>
+				<div class="meter">
+					<div class="section-title"><h3>Daily control check</h3><span class="muted">Placeholder target</span></div>
+					<div class="meter-track"><div class="meter-fill"></div></div>
+					<div class="muted">When live tank data is added, this line can compare expected gas against actual dispensing.</div>
+				</div>
+			</div>
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Plant profile</h2><span class="badge badge-muted">Tenant</span></div>
+				<div class="split-list">
+					<div class="info-row"><span>Address</span><strong>{ data.PlantAddress }</strong></div>
+					<div class="info-row"><span>Phone</span><strong>{ data.PlantPhone }</strong></div>
+					<div class="info-row"><span>Public slug</span><strong class="mono">{ data.PlantSlug }</strong></div>
+					<div class="info-row"><span>Domain status</span><strong>{ data.DomainStatus }</strong></div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="sales">
+		<div class="dashboard-grid">
+			<div>
+				<div class="section-title"><h2>Sales and receipts</h2><span class="badge badge-ok">tickets</span></div>
+				<div class="table-wrap">
+					<table>
+						<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th>Paid kg</th><th>Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th></tr></thead>
+						<tbody>
+							if len(data.RecentTickets) == 0 {
+								<tr><td colspan="9"><div class="empty">No sales yet. Placeholder: a paid customer ticket will show reference, code, phone, weight, payment channel, and status here.</div></td></tr>
+							}
+							for _, row := range data.RecentTickets {
+								<tr><td class="mono">{ row.Reference }</td><td>{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="mono">{ row.Kg }</td><td class="mono">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="receipt-card">
+				<div class="section-title"><h2>Receipt preview</h2><span class="badge badge-muted">SMS proof</span></div>
+				if len(data.RecentTickets) == 0 {
+					<div class="receipt-code">0000</div>
+					<div class="muted">Placeholder code. The latest paid ticket code appears here.</div>
+				} else {
+					<div class="receipt-code">{ data.RecentTickets[0].Code }</div>
+					<div><strong>{ data.RecentTickets[0].Kg }</strong> paid at { data.RecentTickets[0].Rate } by { data.RecentTickets[0].Channel }.</div>
+					<div class="muted">Paid { data.RecentTickets[0].PaidAt } · Filled { data.RecentTickets[0].FilledAt }</div>
+				}
+				<button class="btn primary" type="button">Open receipt</button>
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="cash">
+		<div class="dashboard-grid">
+			<div>
+				<div class="section-title"><h2>Cash drawer</h2><span class="badge badge-ok">cash_movements</span></div>
+				<div class="table-wrap">
+					<table>
+						<thead><tr><th>When</th><th>Kind</th><th class="num">Amount</th><th class="num">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead>
+						<tbody>
+							if len(data.CashMovements) == 0 {
+								<tr><td colspan="7"><div class="empty">No cash entries yet. Placeholder: opening float, cash sale, payout, count, and closing records appear here.</div></td></tr>
+							}
+							for _, row := range data.CashMovements {
+								<tr><td>{ row.When }</td><td>{ row.Kind }</td><td class="num">{ row.Amount }</td><td class="num">{ row.Counted }</td><td>{ row.Recorder }</td><td class="mono">{ row.Ticket }</td><td>{ row.Note }</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Record cash count</h2><span class="badge badge-warn">UI only</span></div>
+				<div class="form-grid">
+					<div class="field"><label>Counted cash</label><input type="text" placeholder="₦0"/></div>
+					<div class="field"><label>Kind</label><select><option>Closing count</option><option>Deposit</option><option>Payout</option></select></div>
+					<div class="field" style="grid-column: 1 / -1;"><label>Note</label><textarea placeholder="Optional note for the owner"></textarea></div>
+				</div>
+				<div class="action-strip"><button class="btn primary" type="button">Save count</button><button class="btn" type="button">Print drawer sheet</button></div>
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="shifts">
+		<div class="section-title"><h2>Shift register</h2><span class="badge badge-ok">shifts</span></div>
+		<div class="table-wrap">
+			<table>
+				<thead><tr><th>Staff</th><th>Device</th><th>Opened</th><th>Closed</th><th class="num">Tickets</th><th class="num">Tokens</th><th class="num">Opening</th><th class="num">Closing</th><th>Status</th><th>Notes</th></tr></thead>
+				<tbody>
+					if len(data.Shifts) == 0 {
+						<tr><td colspan="10"><div class="empty">No shifts yet. Placeholder: when a cashier opens a shift, cash float, token count, sales, and closing cash appear here.</div></td></tr>
+					}
+					for _, row := range data.Shifts {
+						<tr><td>{ row.Staff }</td><td class="mono">{ row.Device }</td><td>{ row.Opened }</td><td>{ row.Closed }</td><td class="num">{ row.Tickets }</td><td class="num">{ row.TokensIssued } / { row.TokensReturned }</td><td class="num">{ row.OpeningCash }</td><td class="num">{ row.ClosingCash }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Notes }</td></tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="staff">
+		<div class="dashboard-grid">
+			<div>
+				<div class="section-title"><h2>Staff access</h2><span class="badge badge-ok">users</span></div>
+				<div class="table-wrap">
+					<table style="min-width:680px">
+						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th></tr></thead>
+						<tbody>
+							if len(data.Staff) == 0 {
+								<tr><td colspan="7"><div class="empty">No staff yet. Placeholder: owners, managers, cashiers, and operators will appear here.</div></td></tr>
+							}
+							for _, row := range data.Staff {
+								<tr><td><strong>{ row.Name }</strong></td><td class="mono">{ row.Phone }</td><td>{ row.Role }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td class="num">{ row.SalesCount }</td><td class="num">{ row.ShiftsCount }</td><td>{ row.Joined }</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Add staff</h2><span class="badge badge-warn">UI only</span></div>
+				<div class="form-grid">
+					<div class="field"><label>Name</label><input placeholder="Full name"/></div>
+					<div class="field"><label>Phone</label><input placeholder="0803 000 0000"/></div>
+					<div class="field"><label>Role</label><select><option>Cashier</option><option>Operator</option><option>Manager</option></select></div>
+					<div class="field"><label>PIN</label><input placeholder="Set temporary PIN"/></div>
+				</div>
+				<div class="action-strip"><button class="btn primary" type="button">Create staff</button></div>
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="prices">
+		<div class="dashboard-grid">
+			<div>
+				<div class="section-title"><h2>Price history</h2><span class="badge badge-ok">prices</span></div>
+				<div class="table-wrap">
+					<table style="min-width:560px">
+						<thead><tr><th>Effective from</th><th class="num">Price</th><th>Set by</th><th>Created</th></tr></thead>
+						<tbody>
+							if len(data.PriceHistory) == 0 {
+								<tr><td colspan="4"><div class="empty">No price history yet. Placeholder: every price change is kept here instead of overwritten.</div></td></tr>
+							}
+							for _, row := range data.PriceHistory {
+								<tr><td>{ row.EffectiveFrom }</td><td class="num">{ row.Price }</td><td>{ row.SetBy }</td><td>{ row.CreatedAt }</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Set new rate</h2><span class="badge badge-warn">UI only</span></div>
+				<div class="form-grid">
+					<div class="field"><label>Price per kg</label><input placeholder="₦1,150"/></div>
+					<div class="field"><label>Effective from</label><input placeholder="Now"/></div>
+				</div>
+				<div class="action-strip"><button class="btn primary" type="button">Save new price</button><button class="btn" type="button">Preview SMS price board</button></div>
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="activity">
+		<div class="dashboard-grid">
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Activity trail</h2><span class="badge badge-ok">activity_log</span></div>
+				<div class="timeline">
+					if len(data.Activity) == 0 {
+						<div class="empty">No activity yet. Placeholder: ticket created, price changed, shift opened, and staff actions will appear here.</div>
+					}
+					for _, item := range data.Activity {
+						<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Subject } · { item.When }</span></div>
+					}
+				</div>
+			</div>
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Audit guide</h2><span class="badge badge-muted">Placeholder</span></div>
+				<div class="split-list">
+					<div class="info-row"><span>Tickets</span><strong>Check customer proof and voids first.</strong></div>
+					<div class="info-row"><span>Cash</span><strong>Match movements against shift close.</strong></div>
+					<div class="info-row"><span>Prices</span><strong>Confirm the rate used at sale time.</strong></div>
+				</div>
+			</div>
+		</div>
+	</section>
+}
+
+templ adminConsoleContent(data AdminConsoleData) {
+	<div class="mobile-tabs">
+		<select data-tab-select aria-label="Admin console section">
+			<option value="overview">Overview</option>
+			<option value="plants">Plants</option>
+			<option value="onboarding">Onboarding</option>
+			<option value="domains">Domains and slugs</option>
+			<option value="activity">Activity</option>
+			<option value="system">System</option>
+		</select>
+	</div>
+	<div class="topline">
+		<div>
+			<div class="eyebrow">Platform admin console</div>
+			<h1>Plant network</h1>
+			<div class="status-row">
+				<span class="badge badge-ok">{ data.ActiveCount } active</span>
+				<span class="badge badge-warn">{ data.OnboardingCount } onboarding</span>
+				<span class="badge badge-danger">{ data.SuspendedCount } suspended</span>
+				<span class="badge badge-muted">{ data.ClosedCount } closed</span>
+			</div>
+		</div>
+		<div class="toolbar">
+			<button class="btn" type="button">Export plants</button>
+			<button class="btn primary" type="button">Create plant</button>
+		</div>
+	</div>
+	<section class="tab-panel active" data-tab-panel="overview">
+		<div class="kpi-grid">
+			<div class="kpi-card"><div class="kpi-label">Plants</div><div class="kpi">{ data.PlantCount }</div><div class="kpi-small">All tenants</div></div>
+			<div class="kpi-card"><div class="kpi-label">Transactions 7d</div><div class="kpi">{ data.TotalTickets7d }</div><div class="kpi-small">Across all plants</div></div>
+			<div class="kpi-card"><div class="kpi-label">Volume 30d</div><div class="kpi">{ data.TotalVolume30d }</div><div class="kpi-small">Paid ticket weight</div></div>
+			<div class="kpi-card"><div class="kpi-label">Domain issues</div><div class="kpi">{ data.DomainBroken }</div><div class="kpi-small">{ data.DomainPending } pending checks</div></div>
+		</div>
+		<div class="dashboard-grid">
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Launch queue</h2><span class="badge badge-warn">Provisioning</span></div>
+				<div class="split-list">
+					<div class="info-row"><span>Plant record</span><strong>Name, slug, location, status, colors, and domain.</strong></div>
+					<div class="info-row"><span>Owner access</span><strong>Create the first owner user and verify phone.</strong></div>
+					<div class="info-row"><span>Opening price</span><strong>Add a price row before the customer page goes live.</strong></div>
+					<div class="info-row"><span>First sale</span><strong>Watch ticket, cash, shift, and activity records arrive.</strong></div>
+				</div>
+			</div>
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Platform staff</h2><span class="badge badge-ok">users</span></div>
+				<div class="timeline">
+					if len(data.PlatformStaff) == 0 {
+						<div class="empty">No platform admin users found. Placeholder: admin operators will appear here.</div>
+					}
+					for _, row := range data.PlatformStaff {
+						<div class="timeline-item"><strong>{ row.Name }</strong><span class="muted">{ row.Phone } · { row.Status } · { row.Plants } plant links</span></div>
+					}
+				</div>
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="plants">
+		<div class="section-title"><h2>Plants</h2><span class="badge badge-ok">plants + tickets + staff</span></div>
+		<div class="table-wrap">
+			<table>
+				<thead><tr><th>Plant</th><th>Location</th><th>Slug</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th></tr></thead>
+				<tbody>
+					if len(data.Plants) == 0 {
+						<tr><td colspan="11"><div class="empty">No plants yet. Placeholder: tenant records with domain, staff, price, shift, and transaction health will appear here.</div></td></tr>
+					}
+					for _, row := range data.Plants {
+						<tr><td><strong>{ row.Name }</strong><div class="muted mono">{ row.Phone }</div></td><td>{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono">{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td></tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="onboarding">
+		<div class="dashboard-grid">
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Create plant</h2><span class="badge badge-warn">UI only</span></div>
+				<div class="form-grid">
+					<div class="field"><label>Plant name</label><input placeholder="Sunrise Gas Plant"/></div>
+					<div class="field"><label>Slug</label><input placeholder="sunrise"/></div>
+					<div class="field"><label>City</label><input placeholder="Owerri"/></div>
+					<div class="field"><label>Phone</label><input placeholder="0803 000 0000"/></div>
+					<div class="field" style="grid-column: 1 / -1;"><label>Address</label><input placeholder="Plant address"/></div>
+					<div class="field"><label>Primary color</label><input placeholder="#006B4D"/></div>
+					<div class="field"><label>Button color</label><input placeholder="#10B981"/></div>
+				</div>
+				<div class="action-strip"><button class="btn primary" type="button">Provision plant</button><button class="btn" type="button">Save draft</button></div>
+			</div>
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Provisioning checklist</h2><span class="badge badge-muted">Placeholder</span></div>
+				<div class="split-list">
+					<div class="info-row"><span>1</span><strong>Reserve slug and create tenant row.</strong></div>
+					<div class="info-row"><span>2</span><strong>Add owner user and temporary password.</strong></div>
+					<div class="info-row"><span>3</span><strong>Set starting price per kg.</strong></div>
+					<div class="info-row"><span>4</span><strong>Test customer site, receipt page, and staff terminal.</strong></div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="domains">
+		<div class="dashboard-grid">
+			<div>
+				<div class="section-title"><h2>Domain health</h2><span class="badge badge-ok">plants</span></div>
+				<div class="table-wrap">
+					<table style="min-width:720px">
+						<thead><tr><th>Plant</th><th>Slug</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead>
+						<tbody>
+							if len(data.Plants) == 0 {
+								<tr><td colspan="6"><div class="empty">No domains to check yet.</div></td></tr>
+							}
+							for _, row := range data.Plants {
+								<tr><td>{ row.Name }</td><td class="mono">{ row.Slug }</td><td>{ row.Domain }</td><td><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></td><td>{ row.CreatedAt }</td><td>{ row.UpdatedAt }</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="panel panel-pad">
+				<div class="section-title"><h2>Reserved slugs</h2><span class="badge badge-ok">reserved_slugs</span></div>
+				<div class="timeline">
+					if len(data.ReservedSlugs) == 0 {
+						<div class="empty">No reserved slugs found. Placeholder: admin, api, support, and other protected words appear here.</div>
+					}
+					for _, slug := range data.ReservedSlugs {
+						<div class="timeline-item"><strong class="mono">{ slug }</strong><span class="muted">Protected subdomain</span></div>
+					}
+				</div>
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="activity">
+		<div class="panel panel-pad">
+			<div class="section-title"><h2>Platform activity</h2><span class="badge badge-ok">activity_log</span></div>
+			<div class="timeline">
+				if len(data.RecentActivity) == 0 {
+					<div class="empty">No platform activity yet. Placeholder: provisioning, suspension, price, and domain actions will appear here.</div>
+				}
+				for _, item := range data.RecentActivity {
+					<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Subject } · { item.When }</span></div>
+				}
+			</div>
+		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="system">
+		<div class="section-title"><h2>Database map</h2><span class="badge badge-ok">current schema</span></div>
+		<div class="table-wrap">
+			<table>
+				<thead><tr><th>Table</th><th>What it controls</th><th class="num">Records</th><th>Health</th><th>Notes</th></tr></thead>
+				<tbody>
+					if len(data.SystemTables) == 0 {
+						<tr><td colspan="5"><div class="empty">No table stats available. Placeholder: schema coverage appears here.</div></td></tr>
+					}
+					for _, row := range data.SystemTables {
+						<tr><td class="mono">{ row.Name }</td><td>{ row.Role }</td><td class="num">{ row.Records }</td><td><span class="badge badge-ok">{ row.Health }</span></td><td>{ row.Description }</td></tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</section>
+}

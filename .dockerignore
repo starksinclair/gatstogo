@@ -1,0 +1,17 @@
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+tmp/
+bin/
+dist/
+node_modules/
+*.log
+.DS_Store
+.idea/
+.vscode/
+coverage/
+*.test
+*_test.go

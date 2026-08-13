@@ -1,0 +1,109 @@
+:root {
+	--brand: #006B4D;
+	--brand-button-text: #F8FAFC;
+	--slate-950: #0F172A;
+	--slate-600: #475569;
+	--slate-500: #64748B;
+	--slate-300: #CBD5E1;
+	--slate-200: #E2E8F0;
+	--slate-100: #F1F5F9;
+	--page: #F4F6F8;
+}
+* { box-sizing: border-box; }
+body {
+	min-height: 100vh;
+	margin: 0;
+	padding: 20px 16px 32px;
+	background: var(--page);
+	color: var(--slate-950);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-size: 17px;
+	line-height: 1.5;
+}
+button, input { font: inherit; }
+button:focus-visible, a:focus-visible {
+	outline: 3px solid var(--brand);
+	outline-offset: 3px;
+}
+main {
+	max-width: 720px;
+	margin: 0 auto;
+}
+.dash-header {
+	margin-bottom: 20px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid var(--slate-200);
+}
+.dash-header h1 {
+	margin: 0 0 6px;
+	font-size: 28px;
+	line-height: 1.15;
+	font-weight: 800;
+}
+.dash-header p {
+	margin: 0;
+	color: var(--slate-600);
+	font-size: 16px;
+}
+.card {
+	border: 1px solid var(--slate-200);
+	border-radius: 10px;
+	background: #fff;
+	padding: 20px;
+}
+.button {
+	display: inline-flex;
+	min-height: 56px;
+	align-items: center;
+	justify-content: center;
+	border: 0;
+	border-radius: 8px;
+	padding: 0 20px;
+	cursor: pointer;
+	font-size: 17px;
+	font-weight: 700;
+	text-align: center;
+	text-decoration: none;
+}
+.button-primary {
+	background: var(--brand);
+	color: var(--brand-button-text);
+}
+.full-width { width: 100%; }
+.summary-list {
+	display: grid;
+	gap: 0;
+	margin: 0;
+}
+.summary-row {
+	display: grid;
+	grid-template-columns: minmax(120px, 0.4fr) 1fr;
+	gap: 12px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--slate-100);
+}
+.summary-row:last-child { border-bottom: 0; }
+.summary-row dt {
+	margin: 0;
+	color: var(--slate-500);
+	font-size: 14px;
+	font-weight: 700;
+}
+.summary-row dd {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+.dash-actions {
+	margin: 16px 0;
+}
+@media (max-width: 640px) {
+	body { padding: 14px 12px 28px; }
+	.dash-header h1 { font-size: 24px; }
+	.button { width: 100%; min-height: 58px; }
+	.summary-row {
+		grid-template-columns: 1fr;
+		gap: 4px;
+	}
+}

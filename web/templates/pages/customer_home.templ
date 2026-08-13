@@ -1,0 +1,408 @@
+package pages
+
+import (
+	"gatstogo/internal/domain"
+	"strconv"
+	"strings"
+)
+
+type customerHomeTheme struct {
+	Name       string
+	Initial    string
+	Address    string
+	City       string
+	Phone      string
+	PhoneHref  string
+	LogoPath   string
+	Primary    string
+	Secondary  string
+	Button     string
+	ButtonText string
+	Tint       string
+	SubtleTint string
+}
+
+const (
+	customerDefaultName        = "Your LPG plant"
+	customerDefaultAddress     = "Plant location coming soon"
+	customerSamplePhone        = "0803 000 0000"
+	customerDefaultPrimary     = "#006B4D"
+	customerDefaultSecondary   = "#10B981"
+	customerDefaultButton      = "#006B4D"
+	customerDefaultButtonText  = "#F8FAFC"
+	customerDefaultText        = "#0F172A"
+	customerDefaultPlaceholder = "Coming soon"
+	customerPricePerKg         = 1150
+)
+
+func customerTheme(plant *domain.Plant) customerHomeTheme {
+	name := customerDefaultName
+	if plant != nil && strings.TrimSpace(plant.Name) != "" {
+		name = strings.TrimSpace(plant.Name)
+	}
+
+	address := customerDefaultAddress
+	if plant != nil {
+		parts := make([]string, 0, 2)
+		if plant.Address != nil && strings.TrimSpace(*plant.Address) != "" {
+			parts = append(parts, strings.TrimSpace(*plant.Address))
+		}
+		if plant.City != nil && strings.TrimSpace(*plant.City) != "" {
+			parts = append(parts, strings.TrimSpace(*plant.City))
+		}
+		if len(parts) > 0 {
+			address = strings.Join(parts, ", ")
+		}
+	}
+
+	city := customerDefaultPlaceholder
+	if plant != nil && plant.City != nil && strings.TrimSpace(*plant.City) != "" {
+		city = strings.TrimSpace(*plant.City)
+	}
+
+	phone := customerSamplePhone
+	if plant != nil && plant.Phone != nil && strings.TrimSpace(*plant.Phone) != "" {
+		phone = strings.TrimSpace(*plant.Phone)
+	}
+
+	logoPath := ""
+	if plant != nil && plant.LogoPath != nil && strings.TrimSpace(*plant.LogoPath) != "" {
+		logoPath = strings.TrimSpace(*plant.LogoPath)
+	}
+
+	primary := customerDefaultPrimary
+	secondary := customerDefaultSecondary
+	button := customerDefaultButton
+	buttonText := customerDefaultButtonText
+	if plant != nil {
+		primary = validHexColorOr(plant.PrimaryColor, customerDefaultPrimary)
+		secondary = validHexColorOr(plant.SecondaryColor, customerDefaultSecondary)
+		button = validHexColorOr(plant.ButtonColor, primary)
+		if validHexColor(plant.ButtonTextColor) {
+			buttonText = strings.TrimSpace(plant.ButtonTextColor)
+		} else {
+			buttonText = readableTextColor(button)
+		}
+	}
+
+	return customerHomeTheme{
+		Name:       name,
+		Initial:    plantInitial(name),
+		Address:    address,
+		City:       city,
+		Phone:      phone,
+		PhoneHref:  whatsappHref(phone),
+		LogoPath:   logoPath,
+		Primary:    primary,
+		Secondary:  secondary,
+		Button:     button,
+		ButtonText: buttonText,
+		Tint:       mixHex(primary, "#FFFFFF", 0.92),
+		SubtleTint: mixHex(primary, "#FFFFFF", 0.96),
+	}
+}
+
+func validHexColorOr(value string, fallback string) string {
+	value = strings.TrimSpace(value)
+	if validHexColor(value) {
+		return value
+	}
+	return fallback
+}
+
+func validHexColor(value string) bool {
+	value = strings.TrimSpace(value)
+	if len(value) != 4 && len(value) != 7 {
+		return false
+	}
+	if !strings.HasPrefix(value, "#") {
+		return false
+	}
+	for _, r := range value[1:] {
+		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')) {
+			return false
+		}
+	}
+	return true
+}
+
+func plantInitial(name string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "P"
+	}
+	return strings.ToUpper(string([]rune(name)[0]))
+}
+
+func whatsappHref(phone string) string {
+	digits := make([]rune, 0, len(phone))
+	for _, r := range phone {
+		if r >= '0' && r <= '9' {
+			digits = append(digits, r)
+		}
+	}
+	if len(digits) == 0 {
+		return "#"
+	}
+	return "https://wa.me/" + string(digits)
+}
+
+func readableTextColor(hex string) string {
+	r, g, b, ok := hexToRGB(hex)
+	if !ok {
+		return customerDefaultButtonText
+	}
+	luminance := (0.299 * float64(r)) + (0.587 * float64(g)) + (0.114 * float64(b))
+	if luminance > 150 {
+		return customerDefaultText
+	}
+	return customerDefaultButtonText
+}
+
+func mixHex(hex string, target string, amount float64) string {
+	ar, ag, ab, okA := hexToRGB(hex)
+	br, bg, bb, okB := hexToRGB(target)
+	if !okA || !okB {
+		return "#F8FAFC"
+	}
+	r := int(float64(ar) + (float64(br)-float64(ar))*amount)
+	g := int(float64(ag) + (float64(bg)-float64(ag))*amount)
+	b := int(float64(ab) + (float64(bb)-float64(ab))*amount)
+	return "rgb(" + strconv.Itoa(r) + "," + strconv.Itoa(g) + "," + strconv.Itoa(b) + ")"
+}
+
+func hexToRGB(hex string) (int64, int64, int64, bool) {
+	hex = strings.TrimPrefix(strings.TrimSpace(hex), "#")
+	if len(hex) == 3 {
+		hex = string(hex[0]) + string(hex[0]) + string(hex[1]) + string(hex[1]) + string(hex[2]) + string(hex[2])
+	}
+	if len(hex) != 6 {
+		return 0, 0, 0, false
+	}
+	r, errR := strconv.ParseInt(hex[0:2], 16, 64)
+	g, errG := strconv.ParseInt(hex[2:4], 16, 64)
+	b, errB := strconv.ParseInt(hex[4:6], 16, 64)
+	return r, g, b, errR == nil && errG == nil && errB == nil
+}
+
+func customerCSSVars(theme customerHomeTheme) string {
+	return "--brand:" + theme.Primary +
+		";--brand-secondary:" + theme.Secondary +
+		";--brand-button:" + theme.Button +
+		";--brand-button-text:" + theme.ButtonText +
+		";--brand-tint:" + theme.Tint +
+		";--brand-subtle:" + theme.SubtleTint
+}
+
+func buyGasAlpineInit() string {
+	return "buyGasForm(" + strconv.Itoa(customerPricePerKg) + ")"
+}
+
+templ CustomerHome(plant *domain.Plant) {
+	{{ theme := customerTheme(plant) }}
+	@customerPageShell(theme, theme.Name+" | Buy gas", customerHomeContent(theme))
+}
+
+templ CustomerReceipts(plant *domain.Plant) {
+	{{ theme := customerTheme(plant) }}
+	@customerPageShell(theme, theme.Name+" | Receipts", customerReceiptsContent(theme))
+}
+
+templ customerPageShell(theme customerHomeTheme, title string, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title }</title>
+			<script>
+				function buyGasForm(pricePerKg) {
+					return {
+						amount: '',
+						pricePerKg: pricePerKg,
+						get naira() {
+							var n = Number(this.amount);
+							return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+						},
+						get kg() {
+							return this.naira > 0 ? this.naira / this.pricePerKg : 0;
+						},
+						formatNaira: function (n) {
+							return '₦' + Number(n).toLocaleString('en-NG');
+						},
+						formatKg: function (n) {
+							return n.toFixed(2) + ' kg';
+						}
+					};
+				}
+			</script>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+			<link rel="stylesheet" href="/static/css/customer-home.css"/>
+		</head>
+		<body style={ customerCSSVars(theme) }>
+			@content
+		</body>
+	</html>
+}
+
+templ customerBrand(theme customerHomeTheme) {
+	<div class="brand-lockup">
+		<div class="logo-mark" aria-hidden="true">
+			if theme.LogoPath != "" {
+				<img src={ theme.LogoPath } alt=""/>
+			} else {
+				<span>{ theme.Initial }</span>
+			}
+		</div>
+		<div>
+			<div class="brand-name">{ theme.Name }</div>
+			<div class="brand-meta">
+				<span>{ theme.Address }</span>
+				<span class="sep" aria-hidden="true">·</span>
+				<a href={ theme.PhoneHref } target="_blank" rel="noreferrer">{ theme.Phone }</a>
+			</div>
+		</div>
+	</div>
+}
+
+templ customerHomeContent(theme customerHomeTheme) {
+	<div class="page has-sticky-pay">
+		<div class="wrap buy-main">
+			<header class="topbar">
+				@customerBrand(theme)
+				<a class="nav-link" href="/receipts">My receipts</a>
+			</header>
+			<div class="status-strip" role="status" aria-label="Plant status">
+				<span class="status-pill"><span class="dot"></span>Open now</span>
+				<span class="status-pill quiet"><span class="dot"></span>We have gas</span>
+			</div>
+			<main>
+				<section class="card panel" aria-label="Buy gas" x-data={ buyGasAlpineInit() }>
+					<div class="form-heading">
+						<div class="form-heading-row">
+							<h1>Buy gas</h1>
+							<div class="price-chip">₦1,150 <span>/kg</span></div>
+						</div>
+						<p>No signup. Enter how much you want to spend, then your name and phone.</p>
+					</div>
+					<div class="step-label"><span class="step-num">1</span> How much do you want to buy?</div>
+					<div class="amount-field">
+						<span class="amount-prefix">₦</span>
+						<input
+							type="number"
+							inputmode="numeric"
+							min="1"
+							step="1"
+							placeholder="14375"
+							x-model="amount"
+							aria-label="Amount in naira"
+						/>
+					</div>
+					<p class="kg-preview">
+						<span x-show="naira <= 0">Enter an amount to see how many kg you will get.</span>
+						<span x-show="naira > 0" x-cloak>
+							You will get <strong x-text="formatKg(kg)">0.00 kg</strong>.
+						</span>
+					</p>
+					<div class="step-label"><span class="step-num">2</span> Your details</div>
+					<div class="field-grid">
+						<div class="field">
+							<div class="label">Your name</div>
+							<input type="text" placeholder="Full name" autocomplete="name"/>
+						</div>
+						<div class="field">
+							<div class="label">Phone number</div>
+							<input type="tel" placeholder="0803 000 0000" autocomplete="tel"/>
+						</div>
+					</div>
+					<div class="step-label"><span class="step-num">3</span> How will you pay?</div>
+					<div class="payment-list">
+						<div class="payment is-selected"><span class="radio"></span><span>Bank transfer</span></div>
+						<div class="payment"><span class="radio"></span><span>POS terminal</span></div>
+						<div class="payment"><span class="radio"></span><span>USSD</span></div>
+					</div>
+					<p class="help">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p>
+					<div class="pay-bar">
+						<button
+							class="button button-primary full-width"
+							type="button"
+							:disabled="naira <= 0"
+							x-text="naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'"
+						>
+							Enter amount to pay
+						</button>
+					</div>
+					<div class="confirm-box">
+						<div class="label">After payment</div>
+						<strong>Your 4-digit code appears here.</strong>
+						<div class="code">7042</div>
+						<p class="help" style="margin-bottom: 0;">Join the queue as normal. Read this code to the attendant when you reach the front.</p>
+					</div>
+				</section>
+			</main>
+		</div>
+	</div>
+}
+
+templ customerReceiptsContent(theme customerHomeTheme) {
+	<div class="page">
+		<div class="wrap">
+			<header class="topbar">
+				@customerBrand(theme)
+				<a class="nav-link" href="/">Buy gas</a>
+			</header>
+			<main class="receipts-grid">
+				<aside class="card panel" aria-label="Recent receipts">
+					<h1 class="page-title">Receipts</h1>
+					<p class="help">Recent purchases saved on this phone.</p>
+					<div class="receipt-list">
+						<div class="receipt-item"><div><strong>12.5 kg</strong><small>28 Jul 2026</small></div><div class="amount">₦14,375</div></div>
+						<div class="receipt-item"><div><strong>6.0 kg</strong><small>22 Jul 2026</small></div><div class="amount">₦6,840</div></div>
+						<div class="receipt-item"><div><strong>12.5 kg</strong><small>14 Jul 2026</small></div><div class="amount">₦14,250</div></div>
+					</div>
+					<p class="help">Changed phones? Enter your number to see purchases linked to you.</p>
+					<div class="field">
+						<div class="label">Phone number</div>
+						<input type="tel" placeholder="0803 000 0000" autocomplete="tel"/>
+					</div>
+					<button class="button button-primary full-width" type="button" style="margin-top: 12px;">Send SMS code</button>
+				</aside>
+				<section class="card panel" aria-label="Receipt proof">
+					<div class="receipt-top">
+						<div>
+							<h1 class="page-title">Gas received</h1>
+							<div class="brand-meta">28 Jul 2026, 4:12pm</div>
+							<div class="brand-meta">Ticket 40217</div>
+						</div>
+						<span class="badge badge-success">RECEIVED</span>
+					</div>
+					<div class="weight-hero">
+						<div class="label">Gas you received</div>
+						<div class="weight">12.50<span>kg</span></div>
+					</div>
+					<div class="rows">
+						<div class="row"><span>Cylinder empty weight</span><span>15.20 kg</span></div>
+						<div class="row"><span>Weight after filling</span><span>27.70 kg</span></div>
+						<div class="row"><span>Rate per kg</span><span>₦1,150</span></div>
+						<div class="row"><span>Amount paid</span><span>₦14,375</span></div>
+						<div class="row"><span>Paid by</span><span>Bank transfer</span></div>
+						<div class="row"><span>Served by</span><span>T.A.</span></div>
+					</div>
+					<div class="trust"><strong>What is empty weight?</strong><br/>We weigh your empty cylinder first, then again after filling. The difference is the gas you received.</div>
+					<div class="state-grid" aria-label="Receipt states">
+						<div class="state-card"><span class="badge badge-pending">AWAITING FILL</span><strong>Code 7042</strong><p>Show this code to the attendant after payment.</p></div>
+						<div class="state-card"><span class="badge badge-danger">SHORT MEASURE</span><strong>0.50 kg short</strong><p>Report this so the plant can review the fill.</p></div>
+						<div class="state-card"><span class="badge badge-pending">CONFIRM</span><strong>Tap to confirm</strong><p>Close the ticket after receiving your gas.</p></div>
+					</div>
+					<div class="sms">
+						<div class="sms-bubble"><strong>You received 12.50 kg of gas.</strong><br/>Ticket 40217 · { theme.Name }.<br/>Amount paid: ₦14,375.<br/>View receipt: /receipts</div>
+					</div>
+					<div class="receipt-actions">
+						<button class="button button-primary" type="button">Confirm received</button>
+						<a class="button button-secondary" href="/">Buy again</a>
+					</div>
+				</section>
+			</main>
+		</div>
+	</div>
+}

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#F8FAFC}
+  a{color:#006B4D}
+  a:hover{color:#00543D}
+  ::selection{background:#10B981;color:#0F172A}
+  input, button, select { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:{{ rootDir }};min-height:100vh;background:#F8FAFC;color:#0F172A;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px">
+
+  <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+    <nav style="width:224px;flex:none;background:#0F172A;padding:20px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto">
+      <div style="padding:0 20px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1E293B;margin-bottom:14px">
+        <div style="width:22px;height:22px;border:1.5px solid #F8FAFC;display:flex;align-items:center;justify-content:center;position:relative;flex:none">
+          <div style="position:absolute;top:-1.5px;left:-1.5px;width:6px;height:6px;border-top:1.5px solid #10B981;border-left:1.5px solid #10B981"></div>
+          <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;color:#F8FAFC">G</span>
+        </div>
+        <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:12.5px;color:#F8FAFC">GATSTOGO</div>
+      </div>
+
+      <div onClick="{{ togglePlantSwitcher }}" style="margin:0 12px 16px;padding:10px 12px;background:#1E293B;cursor:pointer;position:relative">
+        <div style="font-size:10px;color:#64748B;letter-spacing:0.06em;margin-bottom:2px">PLANT</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+          <div style="font-size:13px;font-weight:600;color:#F8FAFC">{{ plantName }}</div>
+          <span style="color:#64748B;font-size:11px">▾</span>
+        </div>
+        <sc-if value="{{ plantSwitcherOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:100%;left:12px;right:12px;margin-top:4px;background:#1E293B;border:1px solid #334155;z-index:10">
+            <div style="padding:10px 12px;font-size:12.5px;color:#F8FAFC;border-bottom:1px solid #334155">{{ plantName }} — {{ plantCity }} ✓</div>
+            <div style="padding:10px 12px;font-size:12px;color:#64748B">+ Add another plant (coming soon)</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="8">
+        <div onClick="{{ n.onClick }}" style="padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;color:{{ n.color }};background:{{ n.bg }};border-left:{{ n.borderLeft }}">{{ n.label }}</div>
+      </sc-for>
+
+      <div style="margin-top:auto;padding:16px 20px 0;border-top:1px solid #1E293B">
+        <div style="font-size:11px;color:#475569">Signed in as</div>
+        <div style="font-size:12.5px;color:#CBD5E1;margin-top:2px">{{ ownerName }}</div>
+      </div>
+    </nav>
+  </sc-if>
+
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+    <div style="position:sticky;top:0;z-index:20;background:#0F172A;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div onClick="{{ togglePlantSwitcher }}" style="display:flex;align-items:center;gap:8px;position:relative;cursor:pointer">
+        <div style="width:20px;height:20px;border:1.5px solid #F8FAFC;display:flex;align-items:center;justify-content:center;position:relative;flex:none">
+          <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;color:#F8FAFC">G</span>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#F8FAFC">{{ plantName }} <span style="color:#64748B;font-size:11px">▾</span></div>
+        <sc-if value="{{ plantSwitcherOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:100%;left:0;margin-top:6px;background:#1E293B;border:1px solid #334155;z-index:10;min-width:200px">
+            <div style="padding:10px 12px;font-size:12.5px;color:#F8FAFC;border-bottom:1px solid #334155">{{ plantName }} — {{ plantCity }} ✓</div>
+            <div style="padding:10px 12px;font-size:12px;color:#64748B">+ Add another plant (coming soon)</div>
+          </div>
+        </sc-if>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#64748B">{{ nowLabel }}</div>
+    </div>
+  </sc-if>
+
+  <main style="flex:1;min-width:0;padding:{{ mainPadding }}">
+
+    <!-- ===================== TODAY ===================== -->
+    <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:720px">
+        <div style="font-size:12.5px;color:#64748B;margin-bottom:4px">{{ todayDateLabel }}</div>
+        <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.06em;margin-bottom:6px">MONEY TAKEN TODAY</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:{{ heroFontSize }};color:#0F172A;line-height:1.05;margin-bottom:20px">{{ heroMoney }}</div>
+
+        <sc-if value="{{ hasSalesToday }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px">
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:16px">
+              <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:6px">SALES</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px">{{ salesCount }}</div>
+            </div>
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:16px">
+              <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:6px">GAS SOLD</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px">{{ kgSoldStr }}</div>
+            </div>
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:16px;grid-column:span 2">
+              <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:10px">HOW IT WAS PAID</div>
+              <div style="display:flex;height:10px;margin-bottom:10px">
+                <div style="width:{{ electronicPct }}%;background:#006B4D"></div>
+                <div style="width:{{ cashPct }}%;background:#CBD5E1"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px">
+                <div><span style="display:inline-block;width:8px;height:8px;background:#006B4D;margin-right:6px"></span>Electronic — <span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ electronicStr }}</span></div>
+                <div><span style="display:inline-block;width:8px;height:8px;background:#CBD5E1;margin-right:6px"></span>Cash — <span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ cashStr }}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="border:2px solid {{ reconBorder }};background:{{ reconBg }};padding:22px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:#64748B">RECONCILIATION</div>
+              <span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;font-weight:700;font-size:11px;letter-spacing:0.03em;white-space:nowrap;background:{{ reconBadgeBg }};color:{{ reconBadgeColor }};border:1px solid {{ reconBadgeBorder }};flex:none">{{ reconBadgeLabel }}</span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid {{ reconRowBorder }};gap:10px;flex-wrap:wrap">
+              <div style="font-size:13.5px;color:#334155">Gas that left the tank <span onClick="{{ toggleImprove }}" style="font-size:10px;font-weight:700;color:#64748B;border:1px dashed #94A3B8;padding:1px 6px;margin-left:6px;cursor:pointer;letter-spacing:0.03em;white-space:nowrap">ESTIMATED ›</span></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:16px">{{ tankLeftStr }}</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid {{ reconRowBorder }}">
+              <div style="font-size:13.5px;color:#334155">Gas that was paid for</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:16px">{{ paidForStr }}</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0">
+              <div style="font-size:13.5px;font-weight:600;color:#0F172A">Difference</div>
+              <div style="text-align:right">
+                <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;color:{{ diffColor }}">{{ diffKgStr }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:{{ diffColor }}">{{ diffAmtStr }}</div>
+              </div>
+            </div>
+
+            <sc-if value="{{ improveOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:14px;padding:14px;background:#F8FAFC;border:1px solid #E2E8F0">
+                <div style="font-size:12.5px;font-weight:600;color:#0F172A;margin-bottom:4px">Why this is estimated</div>
+                <div style="font-size:12.5px;color:#334155;line-height:1.5;margin-bottom:10px">This figure comes from a manual tank reading taken once a month, not a live sensor. A flow sensor would measure gas leaving the tank in real time, so this number stops being an estimate.</div>
+                <button onClick="{{ requestSensor }}" style="height:36px;padding:0 16px;background:#006B4D;color:#F8FAFC;border:none;font-weight:600;font-size:12.5px;cursor:pointer">{{ sensorButtonLabel }}</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ reconIsGap }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:16px;padding-top:16px;border-top:1px solid {{ reconRowBorder }}">
+                <div style="font-size:13.5px;color:#334155;line-height:1.6;margin-bottom:12px">{{ gapExplanation }}</div>
+                <button onClick="{{ goActivity }}" style="height:40px;padding:0 16px;background:#fff;color:#B45309;border:1.5px solid #B45309;font-weight:600;font-size:13px;cursor:pointer">Open the activity log</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ reconIsBalanced }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;padding-top:16px;border-top:1px solid {{ reconRowBorder }};font-size:13.5px;color:#047857">Every kilogram that left the tank was paid for. No action needed.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasSalesToday }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px solid #E2E8F0;background:#fff;padding:40px 24px;text-align:center">
+            <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;color:#0F172A;margin-bottom:8px">No fills recorded yet today</div>
+            <div style="font-size:13.5px;color:#64748B;max-width:360px;margin:0 auto">Reconciliation and payment totals will appear here once the first sale is made.</div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===================== CASH RECONCILIATION ===================== -->
+    <sc-if value="{{ isCash }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;margin-bottom:4px">Cash reconciliation</h1>
+      <div style="font-size:13px;color:#64748B;margin-bottom:20px">Cash sales recorded vs cash handed in, per shift — {{ todayDateLabel }}</div>
+
+      <sc-for list="{{ cashShifts }}" as="c" hint-placeholder-count="3">
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:18px;margin-bottom:12px;max-width:560px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px">
+            <div>
+              <div style="font-weight:700;font-size:14.5px">{{ c.shift }} shift</div>
+              <div style="font-size:12px;color:#64748B;margin-top:2px">{{ c.time }} · {{ c.staff }}</div>
+            </div>
+            <span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;font-weight:700;font-size:10.5px;letter-spacing:0.03em;background:{{ c.statusBg }};color:{{ c.statusColor }};border:1px solid {{ c.statusBorder }};flex:none">{{ c.statusLabel }}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12.5px;margin-bottom:12px">
+            <div><div style="color:#94A3B8;margin-bottom:3px">RECORDED</div><div style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ c.recordedStr }}</div></div>
+            <div><div style="color:#94A3B8;margin-bottom:3px">HANDED IN</div><div style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ c.handedStr }}</div></div>
+            <div><div style="color:#94A3B8;margin-bottom:3px">VARIANCE</div><div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:{{ c.varianceColor }}">{{ c.varianceStr }}</div></div>
+          </div>
+          <sc-if value="{{ c.showAction }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ c.onRequest }}" disabled="{{ c.requested }}" style="height:38px;padding:0 14px;background:{{ c.reqBg }};color:{{ c.reqColor }};border:1.5px solid {{ c.reqBorder }};font-weight:600;font-size:12.5px;cursor:pointer">{{ c.reqLabel }}</button>
+          </sc-if>
+        </div>
+      </sc-for>
+    </sc-if>
+
+    <!-- ===================== ANALYTICS ===================== -->
+    <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+        <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px">Analytics</h1>
+        <div style="display:flex;border:1px solid #CBD5E1">
+          <sc-for list="{{ periodTabs }}" as="pt" hint-placeholder-count="3">
+            <div onClick="{{ pt.onClick }}" style="padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;background:{{ pt.bg }};color:{{ pt.color }}">{{ pt.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="border:1px solid #E2E8F0;background:#fff;padding:18px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:14px">REVENUE &amp; VOLUME</div>
+        <div style="display:flex;align-items:flex-end;gap:8px;height:150px">
+          <sc-for list="{{ revenueBars }}" as="b" hint-placeholder-count="7">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#64748B;white-space:nowrap">{{ b.valueStr }}</div>
+              <div style="width:100%;background:#006B4D;height:{{ b.heightPct }}%"></div>
+              <div style="font-size:10.5px;color:#94A3B8">{{ b.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="border:1px solid #E2E8F0;background:#fff;padding:18px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:14px">BUSIEST HOURS</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:100px">
+          <sc-for list="{{ busiestHours }}" as="h" hint-placeholder-count="8">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end">
+              <div style="width:100%;background:#10B981;height:{{ h.heightPct }}%"></div>
+              <div style="font-size:9.5px;color:#94A3B8">{{ h.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:{{ analyticsGridCols }};gap:16px">
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:18px">
+          <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:14px">CYLINDER SIZE MIX</div>
+          <sc-for list="{{ cylinderMix }}" as="cy" hint-placeholder-count="4">
+            <div style="margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span>{{ cy.label }}</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ cy.pctStr }}</span></div>
+              <div style="height:8px;background:#F1F5F9"><div style="height:100%;width:{{ cy.pct }}%;background:#006B4D"></div></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:18px">
+          <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:14px">REPEAT VS NEW CUSTOMERS</div>
+          <div style="display:flex;height:14px;margin-bottom:12px">
+            <div style="width:{{ repeatPct }}%;background:#006B4D"></div>
+            <div style="width:{{ newPct }}%;background:#F59E0B"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px">
+            <div><span style="display:inline-block;width:8px;height:8px;background:#006B4D;margin-right:6px"></span>Repeat — {{ repeatPct }}%</div>
+            <div><span style="display:inline-block;width:8px;height:8px;background:#F59E0B;margin-right:6px"></span>New — {{ newPct }}%</div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:18px;grid-column:{{ cashTrendSpan }}">
+          <div style="font-size:12px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:14px">SHARE OF SALES PAID IN CASH</div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:70px;margin-bottom:10px">
+            <sc-for list="{{ cashTrend }}" as="ct" hint-placeholder-count="8">
+              <div style="flex:1;background:#CBD5E1;height:{{ ct.heightPct }}%"></div>
+            </sc-for>
+          </div>
+          <div style="font-size:12.5px;color:#047857">{{ cashTrendNote }}</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===================== STAFF ===================== -->
+    <sc-if value="{{ isStaff }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px">
+        <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px">Staff</h1>
+        <button onClick="{{ openAddStaff }}" style="height:40px;padding:0 16px;background:#006B4D;color:#F8FAFC;border:none;font-weight:600;font-size:13px;cursor:pointer">+ Add employee</button>
+      </div>
+      <div style="font-size:13px;color:#64748B;margin-bottom:16px">{{ staffCount }} people with tablet access</div>
+
+      <sc-if value="{{ hasDualRole }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px solid #CBD5E1;background:#F1F5F9;padding:14px 16px;margin-bottom:18px;font-size:12.5px;color:#334155;line-height:1.6;max-width:640px">
+          <strong style="color:#0F172A">{{ dualRoleName }}</strong> holds both the Cashier and Operator role. At this plant the same person can take payment and dispense gas — cash handling and dispensing are not separated. This is common at smaller plants and isn't a problem on its own, but it does mean one person controls both sides of a sale.
+        </div>
+      </sc-if>
+
+      <div style="max-width:640px">
+        <sc-for list="{{ staffList }}" as="e" hint-placeholder-count="5">
+          <div style="border:1px solid #E2E8F0;background:#fff;padding:16px;margin-bottom:10px;opacity:{{ e.opacity }}">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
+              <div>
+                <div style="font-weight:700;font-size:14.5px">{{ e.name }}</div>
+                <div style="font-size:12px;color:#64748B;margin-top:2px;font-family:'IBM Plex Mono',monospace">{{ e.phone }}</div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+                <sc-for list="{{ e.roleBadges }}" as="rb" hint-placeholder-count="1">
+                  <span style="display:inline-flex;align-items:center;height:22px;padding:0 9px;font-weight:700;font-size:10px;letter-spacing:0.03em;background:{{ rb.bg }};color:{{ rb.color }}">{{ rb.label }}</span>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px;margin-bottom:12px">
+              <div><div style="color:#94A3B8;margin-bottom:3px">SALES HANDLED</div><div style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ e.salesStr }}</div></div>
+              <div><div style="color:#94A3B8;margin-bottom:3px">SHIFTS WORKED</div><div style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ e.shiftsWorked }}</div></div>
+              <div><div style="color:#94A3B8;margin-bottom:3px">CASH VARIANCE</div><div style="font-size:12px">{{ e.varianceHistory }}</div></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <span style="font-size:12px;font-weight:600;color:{{ e.statusColor }}">● {{ e.statusLabel }}</span>
+              <button onClick="{{ e.onToggleStatus }}" style="height:34px;padding:0 14px;background:#fff;color:{{ e.toggleColor }};border:1.5px solid {{ e.toggleBorder }};font-weight:600;font-size:12px;cursor:pointer">{{ e.toggleLabel }}</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- ===================== SHIFTS ===================== -->
+    <sc-if value="{{ isShifts }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ shiftDetailOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">
+          <span onClick="{{ closeShiftDetail }}" style="font-size:13px;color:#64748B;cursor:pointer">Shifts</span>
+          <span style="color:#CBD5E1">/</span>
+          <span style="font-size:13px;font-weight:600">{{ selectedShift.date }} · {{ selectedShift.shift }}</span>
+        </div>
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:22px;max-width:560px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+            <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:17px">{{ selectedShift.shift }} shift — {{ selectedShift.date }}</div>
+            <span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;font-weight:700;font-size:10.5px;background:{{ selectedShift.statusBg }};color:{{ selectedShift.statusColor }};border:1px solid {{ selectedShift.statusBorder }}">{{ selectedShift.statusLabel }}</span>
+          </div>
+          <div style="font-size:13px;color:#64748B;margin-bottom:18px">Worked by {{ selectedShift.staff }}</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Opening cash</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ selectedShift.openingStr }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Closing cash</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ selectedShift.closingStr }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Tickets issued</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ selectedShift.ticketsIssued }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9"><span style="color:#64748B">Tokens returned</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ selectedShift.tokensReturned }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0"><span style="color:#0F172A;font-weight:600">Variance</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:{{ selectedShift.varianceColor }}">{{ selectedShift.varianceStr }}</span></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ shiftDetailOpen }}" hint-placeholder-val="{{ true }}">
+        <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;margin-bottom:16px">Shifts</h1>
+        <sc-if value="{{ showTableView }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px solid #E2E8F0;background:#fff;overflow-x:auto">
+            <div style="min-width:680px">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1.3fr 1fr 1fr 1fr;background:#F1F5F9;font-size:11px;font-weight:600;color:#475569;letter-spacing:0.04em;padding:9px 14px">
+                <div>DATE</div><div>SHIFT</div><div>STAFF</div><div style="text-align:right">TICKETS</div><div style="text-align:right">TOKENS</div><div style="text-align:right">VARIANCE</div>
+              </div>
+              <sc-for list="{{ shiftRows }}" as="sh" hint-placeholder-count="6">
+                <div onClick="{{ sh.onOpen }}" style="display:grid;grid-template-columns:1fr 1fr 1.3fr 1fr 1fr 1fr;padding:11px 14px;align-items:center;border-top:1px solid #E2E8F0;cursor:pointer" style-hover="background:#F1F5F9">
+                  <div>{{ sh.date }}</div><div>{{ sh.shift }}</div><div>{{ sh.staff }}</div>
+                  <div style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ sh.ticketsIssued }}</div>
+                  <div style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ sh.tokensReturned }}</div>
+                  <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:{{ sh.varianceColor }}">{{ sh.varianceStr }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ showCardView }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ shiftRows }}" as="sh" hint-placeholder-count="6">
+              <div onClick="{{ sh.onOpen }}" style="border:1px solid #E2E8F0;background:#fff;padding:14px;cursor:pointer">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px"><div style="font-weight:700;font-size:14px">{{ sh.shift }} — {{ sh.date }}</div><span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:{{ sh.varianceColor }};font-size:13px">{{ sh.varianceStr }}</span></div>
+                <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">{{ sh.staff }}</div>
+                <div style="display:flex;gap:16px;font-size:12px">
+                  <div><span style="color:#94A3B8">Tickets </span>{{ sh.ticketsIssued }}</div>
+                  <div><span style="color:#94A3B8">Tokens </span>{{ sh.tokensReturned }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </sc-if>
+    </sc-if>
+
+    <!-- ===================== PRICE ===================== -->
+    <sc-if value="{{ isPrice }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;margin-bottom:16px">Price</h1>
+      <div style="display:grid;grid-template-columns:{{ priceGridCols }};gap:20px">
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:22px">
+          <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:8px">TODAY'S PRICE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:32px;margin-bottom:18px">{{ currentPriceStr }}<span style="font-size:15px;color:#64748B"> /kg</span></div>
+          <label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">NEW PRICE PER KG (₦)</label>
+          <div style="display:flex;gap:10px;margin-bottom:8px">
+            <input value="{{ newPriceInput }}" onChange="{{ setNewPrice }}" placeholder="1150" style="flex:1;height:44px;padding:0 12px;border:1.5px solid #CBD5E1;font-family:'IBM Plex Mono',monospace;font-size:15px;outline:none" style-focus="border-color:#006B4D" />
+            <button onClick="{{ applyPrice }}" disabled="{{ priceApplyDisabled }}" style="height:44px;padding:0 18px;background:#006B4D;color:#F8FAFC;border:none;font-weight:600;font-size:13.5px;cursor:pointer">Update</button>
+          </div>
+          <sc-if value="{{ priceJustApplied }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12.5px;color:#047857;margin-bottom:8px">Price updated. This applies from now on.</div>
+          </sc-if>
+          <div style="font-size:12px;color:#64748B;line-height:1.5;margin-top:8px">Tickets already sold today keep the rate they were sold at. Only new sales use the updated price.</div>
+        </div>
+
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:22px">
+          <div style="font-size:11px;font-weight:600;color:#64748B;letter-spacing:0.05em;margin-bottom:14px">LAST 14 DAYS</div>
+          <div style="display:flex;align-items:flex-end;gap:4px;height:100px;margin-bottom:8px">
+            <sc-for list="{{ priceHistoryBars }}" as="ph" hint-placeholder-count="14">
+              <div style="flex:1;background:{{ ph.color }};height:{{ ph.heightPct }}%"></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#94A3B8">
+            <span>14 days ago</span><span>Today</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===================== RECEIPTS ===================== -->
+    <sc-if value="{{ isReceipts }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;margin-bottom:14px">Receipts</h1>
+      <input value="{{ receiptSearch }}" onChange="{{ setReceiptSearch }}" placeholder="Search by phone, code or date…" style="width:100%;max-width:380px;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:13.5px;outline:none;margin-bottom:16px" style-focus="border-color:#006B4D" />
+
+      <sc-if value="{{ showTableView }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px solid #E2E8F0;background:#fff;overflow-x:auto">
+          <div style="min-width:640px">
+            <div style="display:grid;grid-template-columns:1fr 1.2fr 1.3fr 0.8fr 1fr 1fr;background:#F1F5F9;font-size:11px;font-weight:600;color:#475569;letter-spacing:0.04em;padding:9px 14px">
+              <div>CODE</div><div>PHONE</div><div>DATE</div><div style="text-align:right">KG</div><div style="text-align:right">AMOUNT</div><div style="text-align:right">STATUS</div>
+            </div>
+            <sc-for list="{{ receiptRows }}" as="r" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:1fr 1.2fr 1.3fr 0.8fr 1fr 1fr;padding:11px 14px;align-items:center;border-top:1px solid #E2E8F0">
+                <div style="font-family:'IBM Plex Mono',monospace">{{ r.code }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;color:#64748B;font-size:12.5px">{{ r.phone }}</div>
+                <div style="font-size:12.5px;color:#334155">{{ r.date }}</div>
+                <div style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ r.kgStr }}</div>
+                <div style="text-align:right;font-family:'IBM Plex Mono',monospace">{{ r.amountStr }}</div>
+                <div style="text-align:right"><span style="display:inline-flex;align-items:center;height:22px;padding:0 9px;font-weight:700;font-size:10px;background:{{ r.statusBg }};color:{{ r.statusColor }}">{{ r.statusLabel }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showCardView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ receiptRows }}" as="r" hint-placeholder-count="8">
+            <div style="border:1px solid #E2E8F0;background:#fff;padding:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;gap:8px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ r.code }}</div>
+                <span style="display:inline-flex;align-items:center;height:22px;padding:0 9px;font-weight:700;font-size:10px;background:{{ r.statusBg }};color:{{ r.statusColor }}">{{ r.statusLabel }}</span>
+              </div>
+              <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">{{ r.phone }} · {{ r.date }}</div>
+              <div style="display:flex;gap:16px;font-size:12.5px">
+                <div><span style="color:#94A3B8">Kg </span>{{ r.kgStr }}</div>
+                <div><span style="color:#94A3B8">Amount </span><span style="font-family:'IBM Plex Mono',monospace">{{ r.amountStr }}</span></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ receiptsEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid #E2E8F0;background:#fff;padding:40px;text-align:center;color:#64748B;font-size:13.5px">No receipts match "{{ receiptSearch }}".</div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ===================== ACTIVITY LOG ===================== -->
+    <sc-if value="{{ isActivity }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;margin-bottom:6px">Activity log</h1>
+      <div style="font-size:13px;color:#64748B;margin-bottom:18px">A running record of everything that happened. Nothing here can be edited or removed.</div>
+      <div style="border:1px solid #E2E8F0;background:#fff;max-width:680px">
+        <sc-for list="{{ activityRows }}" as="a" hint-placeholder-count="7">
+          <div style="display:flex;gap:12px;padding:14px 16px;border-top:1px solid #F1F5F9">
+            <div style="width:8px;height:8px;border-radius:50%;background:{{ a.dotColor }};flex:none;margin-top:6px"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13.5px;color:#0F172A;line-height:1.5">{{ a.text }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#94A3B8;margin-top:4px">{{ a.time }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- ===================== STAFF TERMINAL ===================== -->
+    <sc-if value="{{ isTerminal }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;margin-bottom:6px">Staff terminal</h1>
+      <div style="font-size:13px;color:#64748B;margin-bottom:16px;max-width:600px">This is the exact tablet experience your staff use — start a shift to try Fill, Cash sale and Shift end yourself.</div>
+      <div style="overflow-x:auto;max-width:100%">
+        <dc-import name="GatsToGo Staff Terminal" style="display:block" hint-size="1180px,900px"></dc-import>
+      </div>
+    </sc-if>
+
+  </main>
+
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:0;left:0;right:0;background:#0F172A;display:flex;z-index:30;border-top:1px solid #1E293B">
+      <sc-for list="{{ tabItems }}" as="t" hint-placeholder-count="4">
+        <div onClick="{{ t.onClick }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 10px;cursor:pointer">
+          <div style="width:20px;height:20px;border:1.5px solid {{ t.iconBorder }};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:{{ t.iconColor }}">{{ t.letter }}</div>
+          <div style="font-size:9.5px;font-weight:600;color:{{ t.color }}">{{ t.label }}</div>
+        </div>
+      </sc-for>
+      <div onClick="{{ toggleMore }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 10px;cursor:pointer">
+        <div style="width:20px;height:20px;border:1.5px solid {{ moreIconBorder }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:{{ moreIconColor }}">⋯</div>
+        <div style="font-size:9.5px;font-weight:600;color:{{ moreColor }}">More</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ moreOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeMore }}" style="position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:40;display:flex;align-items:flex-end">
+      <div onClick="{{ stopProp }}" style="width:100%;background:#F8FAFC;border-top:1px solid #E2E8F0;padding:8px 0 24px">
+        <div style="width:36px;height:4px;background:#CBD5E1;margin:0 auto 12px;border-radius:2px"></div>
+        <sc-for list="{{ moreItems }}" as="m" hint-placeholder-count="4">
+          <div onClick="{{ m.onClick }}" style="padding:14px 20px;font-size:14.5px;font-weight:600;color:#0F172A;border-bottom:1px solid #F1F5F9">{{ m.label }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ addStaffOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeAddStaff }}" style="position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px">
+      <div onClick="{{ stopProp }}" style="width:100%;max-width:420px;background:#fff;border:1px solid #E2E8F0;padding:24px;max-height:90vh;overflow-y:auto">
+        <sc-if value="{{ pinIssued }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:10px 0">
+            <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;margin-bottom:10px">Employee added</div>
+            <div style="font-size:13px;color:#64748B;margin-bottom:14px">Give {{ newStaffForm.name }} this PIN to sign in on the tablet. It's shown once — write it down now.</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:32px;letter-spacing:0.1em;background:#F1F5F9;padding:14px;margin-bottom:16px">{{ pinIssued }}</div>
+            <button onClick="{{ closeAddStaff }}" style="height:42px;width:100%;background:#006B4D;color:#F8FAFC;border:none;font-weight:600;font-size:13.5px;cursor:pointer">Done</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pinIssued }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;margin-bottom:16px">Add employee</div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+            <div><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">NAME</label><input value="{{ newStaffForm.name }}" onChange="{{ setNewStaffName }}" placeholder="Full name" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-size:14px;outline:none" style-focus="border-color:#006B4D" /></div>
+            <div><label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px">PHONE</label><input value="{{ newStaffForm.phone }}" onChange="{{ setNewStaffPhone }}" placeholder="0803 000 0000" style="width:100%;height:42px;padding:0 12px;border:1.5px solid #CBD5E1;font-family:'IBM Plex Mono',monospace;font-size:13.5px;outline:none" style-focus="border-color:#006B4D" /></div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:6px">ROLE</label>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ roleOptions }}" as="ro" hint-placeholder-count="4">
+                  <div onClick="{{ ro.onSelect }}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid {{ ro.borderColor }};background:{{ ro.bgColor }};cursor:pointer">
+                    <div style="width:16px;height:16px;border:1.5px solid {{ ro.dotBorder }};background:{{ ro.dotBg }};flex:none;border-radius:50%"></div>
+                    <span style="font-size:13px">{{ ro.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onClick="{{ closeAddStaff }}" style="flex:1;height:42px;background:#fff;color:#334155;border:1.5px solid #CBD5E1;font-weight:600;font-size:13px;cursor:pointer">Cancel</button>
+            <button onClick="{{ submitNewStaff }}" disabled="{{ newStaffDisabled }}" style="flex:1;height:42px;background:#006B4D;color:#F8FAFC;border:none;font-weight:600;font-size:13px;cursor:pointer">Issue PIN &amp; add</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:900},&quot;todayScenario&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;gap&quot;,&quot;options&quot;:[&quot;gap&quot;,&quot;balanced&quot;,&quot;no_sales_yet&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Today demo&quot;},&quot;currencyDecimals&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behavior&quot;},&quot;showSensorUpsell&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+const PLANT = { name: 'Chukwu Gas Ltd', city: 'Lagos', owner: 'Chukwu Eze' };
+
+const STAFF_SEED = [
+  { id: 1, name: 'Ngozi Umeh', phone: '0803 214 5567', roles: ['Manager'], status: 'active', sales: null, shiftsWorked: 30, varianceHistory: 'No cash handled' },
+  { id: 2, name: 'Ifeoma Chukwu', phone: '0805 662 1190', roles: ['Cashier'], status: 'active', sales: 412, shiftsWorked: 22, varianceHistory: '1 short (₦2,500) in last 30 days' },
+  { id: 3, name: 'Chidi Okonkwo', phone: '0813 970 4432', roles: ['Operator'], status: 'active', sales: null, shiftsWorked: 25, varianceHistory: '—' },
+  { id: 4, name: 'Tunde Bakare', phone: '0701 558 2290', roles: ['Cashier', 'Operator'], status: 'active', sales: 298, shiftsWorked: 19, varianceHistory: 'Balanced most shifts, 1 short this week' },
+  { id: 5, name: 'Fatima Sani', phone: '0906 334 7781', roles: ['Cashier'], status: 'deactivated', sales: 87, shiftsWorked: 6, varianceHistory: '2 short in final month' },
+];
+
+const SHIFTS_SEED = [
+  { id: 1, date: '27 Jul', shift: 'Morning', staff: 'Ifeoma Chukwu', opening: 20000, closing: 115000, ticketsIssued: 38, tokensReturned: 2, variance: 0 },
+  { id: 2, date: '27 Jul', shift: 'Afternoon', staff: 'Tunde Bakare', opening: 115000, closing: 197500, ticketsIssued: 29, tokensReturned: 1, variance: -2500 },
+  { id: 3, date: '27 Jul', shift: 'Evening (ongoing)', staff: 'Ifeoma Chukwu', opening: 197500, closing: null, ticketsIssued: 14, tokensReturned: 0, variance: null },
+  { id: 4, date: '26 Jul', shift: 'Morning', staff: 'Ifeoma Chukwu', opening: 18000, closing: 108000, ticketsIssued: 35, tokensReturned: 0, variance: 0 },
+  { id: 5, date: '26 Jul', shift: 'Afternoon', staff: 'Tunde Bakare', opening: 108000, closing: 191000, ticketsIssued: 31, tokensReturned: 3, variance: 1000 },
+  { id: 6, date: '25 Jul', shift: 'Morning', staff: 'Fatima Sani', opening: 15000, closing: 98500, ticketsIssued: 27, tokensReturned: 1, variance: -1500 },
+];
+
+const CASH_SHIFTS_TODAY_SEED = [
+  { id: 1, shift: 'Morning', staff: 'Ifeoma Chukwu', time: '6:00am – 2:00pm', recorded: 95000, handedIn: 95000, open: false },
+  { id: 2, shift: 'Afternoon', staff: 'Tunde Bakare', time: '2:00pm – 9:00pm', recorded: 85000, handedIn: 82500, open: false },
+  { id: 3, shift: 'Evening', staff: 'Ifeoma Chukwu', time: '9:00pm – close', recorded: 40000, handedIn: null, open: true },
+];
+
+const PRICE_HISTORY = [1120, 1120, 1120, 1130, 1130, 1130, 1140, 1140, 1140, 1140, 1150, 1150, 1150, 1150];
+
+const RECEIPTS_SEED = [
+  { code: 'GX-5011', phone: '0803 214 5567', date: '27 Jul, 8:42pm', kg: 12.5, amount: 14375, status: 'DISPENSED' },
+  { code: 'GX-5010', phone: '0805 662 9981', date: '27 Jul, 8:10pm', kg: 6.0, amount: 6900, status: 'DISPENSED' },
+  { code: 'GX-5009', phone: '0701 448 2290', date: '27 Jul, 7:55pm', kg: 25.0, amount: 28750, status: 'PAID' },
+  { code: 'GX-5008', phone: '0906 334 1187', date: '27 Jul, 7:30pm', kg: 3.0, amount: 3450, status: 'DISPENSED' },
+  { code: 'GX-5007', phone: '0813 970 4432', date: '27 Jul, 6:58pm', kg: 12.5, amount: 14375, status: 'VOIDED' },
+  { code: 'GX-5006', phone: '0803 552 0091', date: '27 Jul, 6:20pm', kg: 6.0, amount: 6900, status: 'DISPENSED' },
+  { code: 'GX-5005', phone: '0705 128 6620', date: '27 Jul, 5:47pm', kg: 12.5, amount: 14375, status: 'DISPENSED' },
+  { code: 'GX-5004', phone: '0802 991 3345', date: '27 Jul, 5:12pm', kg: 6.0, amount: 6900, status: 'DISPENSED' },
+  { code: 'GX-5003', phone: '0810 447 2201', date: '27 Jul, 4:40pm', kg: 25.0, amount: 28750, status: 'DISPENSED' },
+  { code: 'GX-5002', phone: '0903 662 7781', date: '26 Jul, 8:05pm', kg: 12.5, amount: 14000, status: 'DISPENSED' },
+];
+
+const ACTIVITY_SEED = [
+  { time: '27 Jul, 8:45pm', type: 'price', text: 'Price changed from ₦1,120/kg to ₦1,150/kg by Owner.' },
+  { time: '27 Jul, 6:58pm', type: 'void', text: 'Sale GX-5007 voided by Tunde Bakare. Reason: wrong cylinder size brought by customer.' },
+  { time: '27 Jul, 4:00pm', type: 'cash', text: 'Afternoon cash declared by Tunde Bakare: ₦82,500 handed in against ₦85,000 recorded. ₦2,500 short.' },
+  { time: '27 Jul, 2:12pm', type: 'pin', text: '3 failed PIN attempts on the tablet, then a correct entry by Tunde Bakare.' },
+  { time: '27 Jul, 11:20am', type: 'offline', text: 'Terminal was offline from 11:05am to 11:20am (15 minutes). No sales recorded during this time.' },
+  { time: '26 Jul, 9:02pm', type: 'cash', text: 'Morning cash declared by Ifeoma Chukwu: ₦18,000 handed in against ₦18,000 recorded. Balanced.' },
+  { time: '25 Jul, 7:40pm', type: 'void', text: 'Sale GX-4986 voided by Ifeoma Chukwu. Reason: customer paid twice by mistake, second sale refunded.' },
+];
+
+const ANALYTICS_REVENUE = {
+  day: [{ label: '6a', value: 38000 }, { label: '8a', value: 62000 }, { label: '10a', value: 81000 }, { label: '12p', value: 120000 }, { label: '2p', value: 95000 }, { label: '4p', value: 140000 }, { label: '6p', value: 160000 }, { label: '8p', value: 110000 }],
+  week: [{ label: 'Mon', value: 612000 }, { label: 'Tue', value: 548000 }, { label: 'Wed', value: 701000 }, { label: 'Thu', value: 665000 }, { label: 'Fri', value: 812000 }, { label: 'Sat', value: 940000 }, { label: 'Sun', value: 920000 }],
+  month: [{ label: 'W1', value: 3800000 }, { label: 'W2', value: 4100000 }, { label: 'W3', value: 4350000 }, { label: 'W4', value: 4600000 }],
+};
+const BUSIEST_HOURS = [{ label: '6a', value: 4 }, { label: '8a', value: 7 }, { label: '10a', value: 9 }, { label: '12p', value: 13 }, { label: '2p', value: 8 }, { label: '4p', value: 14 }, { label: '6p', value: 17 }, { label: '8p', value: 11 }];
+const CYLINDER_MIX = [{ label: '3 kg', pct: 12 }, { label: '6 kg', pct: 34 }, { label: '12.5 kg', pct: 41 }, { label: '25 kg+', pct: 13 }];
+const REPEAT_VS_NEW = { repeat: 72, new: 28 };
+const CASH_TREND = [38, 35, 33, 29, 26, 24, 21, 19];
+
+const NAV_DEFS = [
+  { key: 'today', label: 'Today', letter: 'T' },
+  { key: 'cash', label: 'Cash', letter: 'C' },
+  { key: 'analytics', label: 'Analytics', letter: 'A' },
+  { key: 'staff', label: 'Staff', letter: 'S' },
+  { key: 'shifts', label: 'Shifts' },
+  { key: 'price', label: 'Price' },
+  { key: 'receipts', label: 'Receipts' },
+  { key: 'activity', label: 'Activity log' },
+  { key: 'terminal', label: 'Staff Terminal' },
+];
+
+const ROLE_STYLE = { Manager: { bg: '#0F172A', color: '#F8FAFC' }, Cashier: { bg: '#10B981', color: '#0F172A' }, Operator: { bg: '#F59E0B', color: '#0F172A' } };
+const CASH_STATUS = {
+  balanced: { label: 'BALANCED', bg: '#10B981', color: '#0F172A', border: '#059669' },
+  short: { label: 'SHORT', bg: '#F59E0B', color: '#0F172A', border: '#B45309' },
+  over: { label: 'OVER', bg: '#F59E0B', color: '#0F172A', border: '#B45309' },
+  open: { label: 'ONGOING', bg: '#F1F5F9', color: '#475569', border: '#CBD5E1' },
+};
+const RECEIPT_STATUS = {
+  DISPENSED: { bg: '#006B4D', color: '#F8FAFC' },
+  PAID: { bg: '#10B981', color: '#0F172A' },
+  VOIDED: { bg: '#FEE2E2', color: '#B91C1C' },
+};
+const ACTIVITY_DOT = { price: '#006B4D', void: '#B45309', cash: '#0F172A', pin: '#B91C1C', offline: '#64748B' };
+
+function fmtN(amount, decimals) {
+  return '₦' + amount.toLocaleString('en-NG', decimals ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function fmtKg(kg) { return kg.toFixed(1) + ' kg'; }
+function varianceStatus(v) { if (v === null) return 'open'; if (v === 0) return 'balanced'; return v < 0 ? 'short' : 'over'; }
+function fmtVariance(v, decimals) {
+  if (v === null) return '—';
+  if (v === 0) return decimals ? '₦0.00' : '₦0';
+  return (v < 0 ? '-' : '+') + fmtN(Math.abs(v), decimals);
+}
+function randPin() { return String(Math.floor(1000 + Math.random() * 9000)); }
+
+class Component extends DCLogic {
+  state = {
+    vw: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    screen: 'today', plantSwitcherOpen: false, moreOpen: false,
+    improveOpen: false, sensorRequested: false,
+    period: 'week',
+    cashRequested: {},
+    addStaffOpen: false, newStaffForm: { name: '', phone: '', roleIdx: null }, pinIssued: null,
+    staffOverrides: {},
+    shiftDetailId: null,
+    receiptSearch: '',
+    priceCurrent: 1150, newPriceInput: '', priceJustApplied: false,
+  };
+
+  componentDidMount() {
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onResize);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+
+  goScreen = (key) => this.setState({ screen: key, moreOpen: false });
+  togglePlantSwitcher = () => this.setState(s => ({ plantSwitcherOpen: !s.plantSwitcherOpen }));
+  toggleMore = () => this.setState(s => ({ moreOpen: !s.moreOpen }));
+  closeMore = () => this.setState({ moreOpen: false });
+  stopProp = (e) => e.stopPropagation();
+  toggleImprove = () => this.setState(s => ({ improveOpen: !s.improveOpen }));
+  requestSensor = () => this.setState({ sensorRequested: true });
+  goActivity = () => this.setState({ screen: 'activity' });
+
+  requestCashCount(id) { this.setState(s => ({ cashRequested: { ...s.cashRequested, [id]: true } })); }
+
+  openAddStaff = () => this.setState({ addStaffOpen: true, pinIssued: null, newStaffForm: { name: '', phone: '', roleIdx: null } });
+  closeAddStaff = () => this.setState({ addStaffOpen: false, pinIssued: null });
+  setNewStaffName = (e) => this.setState(s => ({ newStaffForm: { ...s.newStaffForm, name: e.target.value } }));
+  setNewStaffPhone = (e) => this.setState(s => ({ newStaffForm: { ...s.newStaffForm, phone: e.target.value } }));
+  submitNewStaff = () => this.setState({ pinIssued: randPin() });
+  toggleStaffStatus(id, current) {
+    this.setState(s => ({ staffOverrides: { ...s.staffOverrides, [id]: current === 'active' ? 'deactivated' : 'active' } }));
+  }
+
+  openShiftDetail(id) { this.setState({ shiftDetailId: id }); }
+  closeShiftDetail = () => this.setState({ shiftDetailId: null });
+
+  applyPrice = () => {
+    const v = parseFloat(this.state.newPriceInput);
+    if (!v || v <= 0) return;
+    this.setState({ priceCurrent: Math.round(v), newPriceInput: '', priceJustApplied: true });
+  };
+
+  renderVals() {
+    const s = this.state;
+    const decimals = this.props.currencyDecimals ?? false;
+    const scenario = this.props.todayScenario ?? 'gap';
+    const showSensorUpsell = this.props.showSensorUpsell ?? true;
+    const vw = s.vw;
+    const isMobile = vw < 768, isTablet = vw >= 768 && vw < 1024, isDesktop = vw >= 1024;
+
+    const money = (n) => fmtN(n, decimals);
+
+    // ---- Today scenario data ----
+    const hasSalesToday = scenario !== 'no_sales_yet';
+    const price = 1150;
+    const paidForKg = 800.0;
+    const tankLeftKg = scenario === 'balanced' ? 800.0 : 812.5;
+    const diffKg = Math.round((tankLeftKg - paidForKg) * 10) / 10;
+    const diffAmt = Math.round(diffKg * price);
+    const moneyToday = hasSalesToday ? Math.round(paidForKg * price) : 0;
+    const electronicAmt = hasSalesToday ? Math.round(moneyToday * 0.8043) : 0;
+    const cashAmt = moneyToday - electronicAmt;
+    const salesCount = hasSalesToday ? 41 : 0;
+
+    const navItems = NAV_DEFS.map(n => {
+      const active = s.screen === n.key;
+      return { label: n.label, onClick: () => this.goScreen(n.key), color: active ? '#F8FAFC' : '#94A3B8', bg: active ? '#1E293B' : 'transparent', borderLeft: '2px solid ' + (active ? '#10B981' : 'transparent') };
+    });
+    const tabItems = NAV_DEFS.slice(0, 4).map(n => {
+      const active = s.screen === n.key;
+      return { label: n.label, letter: n.letter, onClick: () => this.goScreen(n.key), color: active ? '#F8FAFC' : '#64748B', iconColor: active ? '#F8FAFC' : '#64748B', iconBorder: active ? '#10B981' : '#334155' };
+    });
+    const moreKeys = NAV_DEFS.slice(4).map(n => n.key);
+    const moreActive = moreKeys.includes(s.screen);
+    const moreItems = NAV_DEFS.slice(4).map(n => ({ label: n.label, onClick: () => this.goScreen(n.key) }));
+
+    const reconIsGap = hasSalesToday && diffKg !== 0;
+    const reconIsBalanced = hasSalesToday && diffKg === 0;
+    const reconBorder = reconIsGap ? '#F59E0B' : '#10B981';
+    const reconBg = reconIsGap ? '#FFFBEB' : '#ECFDF5';
+    const reconRowBorder = reconIsGap ? '#FDE68A' : '#A7F3D0';
+    const diffColor = reconIsGap ? '#B45309' : '#047857';
+
+    const cashShifts = CASH_SHIFTS_TODAY_SEED.map(c => {
+      const status = c.open ? 'open' : varianceStatus(c.handedIn - c.recorded);
+      const st = CASH_STATUS[status];
+      const requested = !!s.cashRequested[c.id];
+      const showAction = status !== 'balanced';
+      const reqLabel = c.open ? (requested ? 'Request sent ✓' : 'Request cash count now') : (requested ? 'Recount requested ✓' : 'Request recount');
+      return {
+        shift: c.shift, staff: c.staff, time: c.time,
+        recordedStr: money(c.recorded), handedStr: c.handedIn === null ? 'Not yet closed' : money(c.handedIn),
+        varianceStr: c.handedIn === null ? '—' : fmtVariance(c.handedIn - c.recorded, decimals),
+        varianceColor: status === 'balanced' ? '#047857' : (status === 'open' ? '#64748B' : '#B45309'),
+        statusLabel: st.label, statusBg: st.bg, statusColor: st.color, statusBorder: st.border,
+        showAction, requested, reqLabel,
+        reqBg: requested ? '#F1F5F9' : '#fff', reqColor: requested ? '#64748B' : '#006B4D', reqBorder: requested ? '#CBD5E1' : '#006B4D',
+        onRequest: () => this.requestCashCount(c.id),
+      };
+    });
+
+    const periodTabs = ['day', 'week', 'month'].map(p => ({ label: p[0].toUpperCase() + p.slice(1), onClick: () => this.setState({ period: p }), bg: s.period === p ? '#0F172A' : '#fff', color: s.period === p ? '#F8FAFC' : '#334155' }));
+    const revenueSeries = ANALYTICS_REVENUE[s.period];
+    const maxRev = Math.max(...revenueSeries.map(r => r.value));
+    const revenueBars = revenueSeries.map(r => ({ label: r.label, valueStr: money(r.value), heightPct: Math.max(6, Math.round((r.value / maxRev) * 100)) }));
+    const maxHour = Math.max(...BUSIEST_HOURS.map(h => h.value));
+    const busiestHours = BUSIEST_HOURS.map(h => ({ label: h.label, heightPct: Math.max(6, Math.round((h.value / maxHour) * 100)) }));
+    const cylinderMix = CYLINDER_MIX.map(c => ({ label: c.label, pct: c.pct, pctStr: c.pct + '%' }));
+    const maxCash = Math.max(...CASH_TREND);
+    const cashTrend = CASH_TREND.map(v => ({ heightPct: Math.max(10, Math.round((v / maxCash) * 100)) }));
+
+    const staffList = STAFF_SEED.map(e => {
+      const status = s.staffOverrides[e.id] || e.status;
+      const active = status === 'active';
+      return {
+        name: e.name, phone: e.phone, shiftsWorked: e.shiftsWorked, varianceHistory: e.varianceHistory,
+        salesStr: e.sales === null ? '—' : String(e.sales),
+        roleBadges: e.roles.map(r => ({ label: r.toUpperCase(), bg: ROLE_STYLE[r].bg, color: ROLE_STYLE[r].color })),
+        opacity: active ? 1 : 0.6,
+        statusColor: active ? '#047857' : '#94A3B8', statusLabel: active ? 'Active' : 'Deactivated',
+        toggleLabel: active ? 'Deactivate' : 'Reactivate', toggleColor: active ? '#B91C1C' : '#006B4D', toggleBorder: active ? '#FCA5A5' : '#006B4D',
+        onToggleStatus: () => this.toggleStaffStatus(e.id, status),
+      };
+    });
+    const dualRoleEmployee = STAFF_SEED.find(e => e.roles.length > 1 && (s.staffOverrides[e.id] || e.status) === 'active');
+
+    const roleCombos = [['Manager'], ['Cashier'], ['Operator'], ['Cashier', 'Operator']];
+    const roleOptions = roleCombos.map((combo, i) => ({
+      label: combo.join(' + '), onSelect: () => this.setState(st => ({ newStaffForm: { ...st.newStaffForm, roleIdx: i } })),
+      borderColor: s.newStaffForm.roleIdx === i ? '#006B4D' : '#E2E8F0', bgColor: s.newStaffForm.roleIdx === i ? '#E7F6F1' : '#fff',
+      dotBorder: s.newStaffForm.roleIdx === i ? '#006B4D' : '#CBD5E1', dotBg: s.newStaffForm.roleIdx === i ? '#006B4D' : '#fff',
+    }));
+    const newStaffDisabled = !s.newStaffForm.name.trim() || !s.newStaffForm.phone.trim() || s.newStaffForm.roleIdx === null;
+
+    const selectedShiftRaw = SHIFTS_SEED.find(sh => sh.id === s.shiftDetailId);
+    let selectedShift = null;
+    if (selectedShiftRaw) {
+      const status = varianceStatus(selectedShiftRaw.variance);
+      const st = CASH_STATUS[status];
+      selectedShift = {
+        date: selectedShiftRaw.date, shift: selectedShiftRaw.shift, staff: selectedShiftRaw.staff,
+        openingStr: money(selectedShiftRaw.opening), closingStr: selectedShiftRaw.closing === null ? 'Not yet closed' : money(selectedShiftRaw.closing),
+        ticketsIssued: selectedShiftRaw.ticketsIssued, tokensReturned: selectedShiftRaw.tokensReturned,
+        varianceStr: fmtVariance(selectedShiftRaw.variance, decimals), varianceColor: status === 'balanced' ? '#047857' : (status === 'open' ? '#64748B' : '#B45309'),
+        statusLabel: st.label, statusBg: st.bg, statusColor: st.color, statusBorder: st.border,
+      };
+    }
+    const shiftRows = SHIFTS_SEED.map(sh => {
+      const status = varianceStatus(sh.variance);
+      return {
+        date: sh.date, shift: sh.shift, staff: sh.staff, ticketsIssued: sh.ticketsIssued, tokensReturned: sh.tokensReturned,
+        varianceStr: fmtVariance(sh.variance, decimals), varianceColor: status === 'balanced' ? '#047857' : (status === 'open' ? '#64748B' : '#B45309'),
+        onOpen: () => this.openShiftDetail(sh.id),
+      };
+    });
+
+    const priceMax = Math.max(...PRICE_HISTORY, s.priceCurrent);
+    const priceHistoryBars = PRICE_HISTORY.map((v, i) => ({ heightPct: Math.max(20, Math.round((v / priceMax) * 100)), color: i === PRICE_HISTORY.length - 1 ? '#006B4D' : '#CBD5E1' }));
+
+    const q = s.receiptSearch.trim().toLowerCase();
+    const receiptRows = RECEIPTS_SEED.filter(r => !q || r.code.toLowerCase().includes(q) || r.phone.includes(q) || r.date.toLowerCase().includes(q)).map(r => {
+      const rs = RECEIPT_STATUS[r.status];
+      return { code: r.code, phone: r.phone, date: r.date, kgStr: fmtKg(r.kg), amountStr: money(r.amount), statusLabel: r.status, statusBg: rs.bg, statusColor: rs.color };
+    });
+
+    const activityRows = ACTIVITY_SEED.map(a => ({ time: a.time, text: a.text, dotColor: ACTIVITY_DOT[a.type] }));
+
+    return {
+      isDesktop: !isMobile, isMobile, rootDir: isMobile ? 'column' : 'row',
+      mainPadding: isMobile ? '16px 16px 96px' : (isTablet ? '24px 28px 60px' : '32px 40px 60px'),
+      plantName: PLANT.name, plantCity: PLANT.city, ownerName: PLANT.owner,
+      plantSwitcherOpen: s.plantSwitcherOpen, togglePlantSwitcher: this.togglePlantSwitcher,
+      nowLabel: '9:12 PM',
+      navItems, tabItems, moreItems, moreOpen: s.moreOpen, toggleMore: this.toggleMore, closeMore: this.closeMore, stopProp: this.stopProp,
+      moreColor: moreActive ? '#F8FAFC' : '#64748B', moreIconColor: moreActive ? '#F8FAFC' : '#64748B', moreIconBorder: moreActive ? '#10B981' : '#334155',
+
+      isToday: s.screen === 'today', isCash: s.screen === 'cash', isAnalytics: s.screen === 'analytics', isStaff: s.screen === 'staff',
+      isShifts: s.screen === 'shifts', isPrice: s.screen === 'price', isReceipts: s.screen === 'receipts', isActivity: s.screen === 'activity',
+      isTerminal: s.screen === 'terminal',
+
+      todayDateLabel: 'Sunday, 27 July — as of 9:12pm',
+      heroFontSize: isMobile ? '42px' : '58px',
+      heroMoney: hasSalesToday ? money(moneyToday) : money(0),
+      hasSalesToday,
+      salesCount, kgSoldStr: fmtKg(paidForKg),
+      electronicPct: hasSalesToday ? Math.round((electronicAmt / moneyToday) * 100) : 0, cashPct: hasSalesToday ? 100 - Math.round((electronicAmt / moneyToday) * 100) : 0,
+      electronicStr: money(electronicAmt), cashStr: money(cashAmt),
+      reconBorder, reconBg, reconRowBorder, diffColor,
+      reconBadgeLabel: reconIsGap ? 'NEEDS ATTENTION' : 'BALANCED',
+      reconBadgeBg: reconIsGap ? '#F59E0B' : '#10B981', reconBadgeColor: '#0F172A', reconBadgeBorder: reconIsGap ? '#B45309' : '#059669',
+      tankLeftStr: fmtKg(tankLeftKg), paidForStr: fmtKg(paidForKg),
+      diffKgStr: (diffKg > 0 ? '+' : '') + diffKg.toFixed(1) + ' kg', diffAmtStr: '(' + money(Math.abs(diffAmt)) + ')',
+      reconIsGap, reconIsBalanced,
+      gapExplanation: diffKg + ' kg left the tank today (' + fmtKg(tankLeftKg) + '). ' + fmtKg(paidForKg) + ' of that was paid for — a gap of ' + Math.abs(diffKg).toFixed(1) + ' kg (' + money(Math.abs(diffAmt)) + ').',
+      goActivity: this.goActivity,
+      improveOpen: s.improveOpen && showSensorUpsell, toggleImprove: this.toggleImprove,
+      requestSensor: this.requestSensor, sensorButtonLabel: s.sensorRequested ? 'Request sent ✓' : 'Ask about the flow-sensor upgrade',
+
+      cashShifts,
+
+      periodTabs, revenueBars, busiestHours, cylinderMix, repeatPct: REPEAT_VS_NEW.repeat, newPct: REPEAT_VS_NEW.new,
+      cashTrend, cashTrendNote: 'Trending down from 38% to 19% over 8 weeks — good, more customers are paying electronically.',
+      analyticsGridCols: isMobile ? '1fr' : 'repeat(3, 1fr)', cashTrendSpan: isMobile ? 'auto' : '1 / -1',
+
+      staffCount: STAFF_SEED.length, staffList, hasDualRole: !!dualRoleEmployee, dualRoleName: dualRoleEmployee ? dualRoleEmployee.name : '',
+      openAddStaff: this.openAddStaff, addStaffOpen: s.addStaffOpen, closeAddStaff: this.closeAddStaff,
+      newStaffForm: s.newStaffForm, setNewStaffName: this.setNewStaffName, setNewStaffPhone: this.setNewStaffPhone,
+      roleOptions, newStaffDisabled, submitNewStaff: this.submitNewStaff, pinIssued: s.pinIssued,
+
+      shiftDetailOpen: !!selectedShiftRaw, selectedShift, closeShiftDetail: this.closeShiftDetail,
+      showTableView: !isMobile, showCardView: isMobile, shiftRows,
+
+      currentPriceStr: s.priceCurrent.toLocaleString('en-NG'), newPriceInput: s.newPriceInput, setNewPrice: (e) => this.setState({ newPriceInput: e.target.value, priceJustApplied: false }),
+      applyPrice: this.applyPrice, priceApplyDisabled: !s.newPriceInput, priceJustApplied: s.priceJustApplied,
+      priceGridCols: isMobile ? '1fr' : '1fr 1fr', priceHistoryBars,
+
+      receiptSearch: s.receiptSearch, setReceiptSearch: (e) => this.setState({ receiptSearch: e.target.value }), receiptRows, receiptsEmpty: receiptRows.length === 0,
+
+      activityRows,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
