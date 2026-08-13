@@ -1,3 +1,15 @@
+# gatstogo/gatstogo_secret is the Postgres bootstrap superuser (initdb's
+# POSTGRES_USER) -- used only by the postgres service itself and by the
+# migrate service to run DDL that the restricted gatstogo_app/gatstogo_admin
+# roles are deliberately not allowed to run (schema 0001 REVOKEs CREATE on
+# the public schema from them). It's shared between the two blocks below via
+# this anchor so the credential can't silently drift out of sync between
+# them. Rotate it for any real deployment -- it's still a hardcoded dev
+# password, same as before this build-out.
+x-postgres-superuser: &postgres-superuser
+  PGUSER: gatstogo
+  PGPASSWORD: gatstogo_secret
+
 services:
   # ======================
   # Go Application
@@ -14,12 +26,21 @@ services:
     environment:
       APP_ENV: development
       APP_PORT: 8080
-      APP_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
-      ADMIN_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
+      # Normal tenant traffic: the restricted gatstogo_app role, subject to
+      # Row Level Security. Its password is set by
+      # migrations/0003_role_credentials.up.sql (run by the migrate service
+      # below) from the same GATSTOGO_APP_ROLE_PASSWORD var, so these two
+      # values are guaranteed to match at "docker compose up" time.
+      APP_DATABASE_URL: postgres://gatstogo_app:${GATSTOGO_APP_ROLE_PASSWORD:?set GATSTOGO_APP_ROLE_PASSWORD in .env}@postgres:5432/gatstogo?sslmode=disable
+      # Platform-level reads/writes: the gatstogo_admin role, which bypasses
+      # Row Level Security. Same password-sync note as above.
+      ADMIN_DATABASE_URL: postgres://gatstogo_admin:${GATSTOGO_ADMIN_ROLE_PASSWORD:?set GATSTOGO_ADMIN_ROLE_PASSWORD in .env}@postgres:5432/gatstogo?sslmode=disable
     command: ["air", "-c", ".air.toml"]
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - .:/app
       - go-mod-cache:/go/pkg/mod
@@ -35,6 +56,9 @@ services:
     container_name: gatstogo-postgres
     restart: unless-stopped
     environment:
+      # Must match the x-postgres-superuser anchor above (different key
+      # names because the postgres image and the psql client expect
+      # different env var names for the same credential).
       POSTGRES_USER: gatstogo
       POSTGRES_PASSWORD: gatstogo_secret
       POSTGRES_DB: gatstogo
@@ -55,30 +79,28 @@ services:
   # ======================
   # Migrations
   # ======================
-#  migrate:
-#    image: postgres:16-alpine
-#    container_name: gatstogo-migrate
-#    restart: "no"
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#    environment:
-#      PGPASSWORD: gatstogo_secret
-#    command:
-#      - /bin/sh
-#      - -c
-#      - |
-#        until pg_isready -h postgres -U gatstogo -d gatstogo; do
-#          sleep 1;
-#        done;
-#        for file in /migrations/*.up.sql; do
-#          echo "Applying $$file";
-#          psql -v ON_ERROR_STOP=1 -h postgres -U gatstogo -d gatstogo -f "$$file";
-#        done
-#    volumes:
-#      - ./migrations:/migrations
-#    networks:
-#      - gatstogo-network
+  # Applies migrations/*.up.sql (tracked in a schema_migrations table, so
+  # re-running this against an already-migrated volume is a safe no-op --
+  # see migrations/migrate.sh) and, via 0003_role_credentials.up.sql, sets
+  # the gatstogo_app/gatstogo_admin role passwords the app connects with.
+  migrate:
+    image: postgres:16-alpine
+    container_name: gatstogo-migrate
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *postgres-superuser
+      PGHOST: postgres
+      PGDATABASE: gatstogo
+      GATSTOGO_APP_ROLE_PASSWORD: ${GATSTOGO_APP_ROLE_PASSWORD:?set GATSTOGO_APP_ROLE_PASSWORD in .env}
+      GATSTOGO_ADMIN_ROLE_PASSWORD: ${GATSTOGO_ADMIN_ROLE_PASSWORD:?set GATSTOGO_ADMIN_ROLE_PASSWORD in .env}
+    entrypoint: ["/bin/sh", "/migrations/migrate.sh"]
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - gatstogo-network
 
   # ======================
   # Redis

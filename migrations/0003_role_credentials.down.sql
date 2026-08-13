@@ -1,0 +1,5 @@
+-- Deliberately a no-op. A "down" migration for a password rotation isn't
+-- something that should ever be auto-applied (it would mean silently
+-- resetting a production role's password back to the placeholder that
+-- shipped in 0001). If gatstogo_app/gatstogo_admin credentials need to be
+-- rolled back, rotate them explicitly and out-of-band instead.
