@@ -39,6 +39,11 @@ type Server struct {
 	Redis    *redis.Client
 	Sessions *session.Store
 	Paystack *payments.Client
+	// NotificationEmail is GatsToGo's own real inbox, used as the base for
+	// the per-ticket placeholder email Paystack's Initialize API requires
+	// (see ticketEmail in tickets.go). Configurable via
+	// TICKET_NOTIFICATION_EMAIL; defaults to the address actually in use.
+	NotificationEmail string
 }
 
 func main() {
@@ -139,12 +144,13 @@ func CreateNewServer() (*Server, error) {
 	}
 
 	s := &Server{
-		Router:   chi.NewRouter(),
-		AppDB:    appDB,
-		AdminDB:  adminDB,
-		Redis:    rdb,
-		Sessions: session.New(rdb),
-		Paystack: payments.NewClient(paystackSecretKey),
+		Router:            chi.NewRouter(),
+		AppDB:             appDB,
+		AdminDB:           adminDB,
+		Redis:             rdb,
+		Sessions:          session.New(rdb),
+		Paystack:          payments.NewClient(paystackSecretKey),
+		NotificationEmail: getEnv("TICKET_NOTIFICATION_EMAIL", "gatstogofficial@gmail.com"),
 	}
 	return s, nil
 }

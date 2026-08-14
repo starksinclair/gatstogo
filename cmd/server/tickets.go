@@ -58,11 +58,30 @@ func mapCustomerChannel(input string) (dbChannel string, paystackChannels []stri
 	}
 }
 
-// ticketEmail synthesizes a placeholder address: Paystack's Initialize API
-// requires an email, but this app's customer flow only ever collects a
-// name and phone number -- a standard workaround for phone-first markets.
-func ticketEmail(reference string) string {
-	return reference + "@no-reply.gatstogo.invalid"
+// ticketEmail builds a per-ticket email address for Paystack's Initialize
+// API, which requires one even though this app's customer flow only ever
+// collects a name and phone number. baseEmail is GatsToGo's own real inbox
+// (Server.NotificationEmail, from TICKET_NOTIFICATION_EMAIL) -- ticketEmail
+// tags it with the ticket reference using Gmail-style "+tag" addressing
+// (localpart+tag@domain), so every transaction is distinguishable if
+// Paystack ever sends a receipt there, while mail still lands in that one
+// real, controlled inbox.
+//
+// This replaced a synthetic reference@example.com placeholder: a live test
+// against the real Paystack API (internal/payments/live_test.go) caught
+// that Paystack's own email validation rejects obviously-fake domains
+// outright -- specifically .invalid, with "Invalid Email Address Passed"
+// (HTTP 400) -- something a mocked test could never catch, since the mock
+// never validated the email format at all. Every real ticket purchase
+// would have failed at the Initialize step with that domain. Using a real,
+// deliverable address sidesteps the question of which placeholder domains
+// happen to pass Paystack's validator.
+func ticketEmail(baseEmail, reference string) string {
+	at := strings.Index(baseEmail, "@")
+	if at < 0 {
+		return baseEmail // malformed base -- fall back to it verbatim rather than producing something worse
+	}
+	return baseEmail[:at] + "+" + reference + baseEmail[at:]
 }
 
 // requestScheme reports "https" if this request arrived over TLS or a
@@ -155,7 +174,7 @@ func buyGasSubmitHandler(s *Server) http.HandlerFunc {
 
 		callbackURL := requestScheme(r) + "://" + r.Host + "/tickets/" + ticket.Reference + "/callback"
 		init, err := s.Paystack.Initialize(r.Context(), payments.InitializeParams{
-			Email:       ticketEmail(ticket.Reference),
+			Email:       ticketEmail(s.NotificationEmail, ticket.Reference),
 			AmountKobo:  amountKobo,
 			Reference:   ticket.Reference,
 			CallbackURL: callbackURL,
