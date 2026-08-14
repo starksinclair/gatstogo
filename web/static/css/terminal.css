@@ -372,6 +372,9 @@ button:disabled {
 }
 
 .shift-strip button {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
 	min-height: 42px;
 	border: 2px solid #94A3B8;
 	background: transparent;
@@ -422,6 +425,9 @@ button:disabled {
 }
 
 .state-message {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 	margin: 12px 0;
 	border: 2px solid var(--amber);
 	background: #FFFBEB;
@@ -430,6 +436,7 @@ button:disabled {
 	font-size: 18px;
 	font-weight: 900;
 }
+.state-message .icon { flex: none; font-size: 22px; }
 
 .state-message.confirmed {
 	border-color: #86EFAC;
@@ -506,6 +513,12 @@ button:disabled {
 	font-size: 18px;
 	font-weight: 800;
 }
+.privacy-card p {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+}
+.privacy-card p .icon { flex: none; font-size: 22px; margin-top: 2px; }
 
 .big-stat {
 	margin-top: 18px;
