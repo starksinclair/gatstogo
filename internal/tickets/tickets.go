@@ -429,11 +429,18 @@ var ErrTicketNotConfirmable = errors.New("tickets: not found, not filled, or not
 // /receipts page's list panel. Deliberately smaller than Receipt (the
 // detail view): just enough to render the list and link into a detail.
 type ReceiptSummary struct {
-	Reference  string
-	Status     string
-	SizeGrams  int
-	AmountKobo int64
-	CreatedAt  time.Time
+	Reference   string
+	Status      string
+	SizeGrams   int
+	AmountKobo  int64
+	CreatedAt   time.Time
+	// ConfirmedAt distinguishes a 'filled' ticket the customer has already
+	// tapped "Confirm received" on from one still awaiting that tap --
+	// both share the same tickets.status value, so the list view needs
+	// this to label/badge each row correctly (see receiptStatusLabel in
+	// cmd/server/receipts.go) instead of showing every filled ticket as
+	// "ready to confirm" regardless of whether it already was.
+	ConfirmedAt *time.Time
 }
 
 // ListByPhone returns every ticket at plantID whose customer_phone
@@ -442,7 +449,7 @@ type ReceiptSummary struct {
 // admin report.
 func ListByPhone(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, phone string) ([]ReceiptSummary, error) {
 	rows, err := q.Query(ctx, `
-		SELECT reference, status, size_grams, amount, created_at
+		SELECT reference, status, size_grams, amount, created_at, confirmed_at
 		FROM tickets
 		WHERE plant_id = $1 AND `+phoneMatchSQL+` = $2
 		ORDER BY created_at DESC
@@ -456,7 +463,7 @@ func ListByPhone(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, pho
 	var out []ReceiptSummary
 	for rows.Next() {
 		var r ReceiptSummary
-		if err := rows.Scan(&r.Reference, &r.Status, &r.SizeGrams, &r.AmountKobo, &r.CreatedAt); err != nil {
+		if err := rows.Scan(&r.Reference, &r.Status, &r.SizeGrams, &r.AmountKobo, &r.CreatedAt, &r.ConfirmedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, r)

@@ -242,12 +242,14 @@ templ CustomerHome(plant *domain.Plant, pricePerKgKobo int64, csrfToken string, 
 // DB-row-to-view-model conversion loadOwnerTickets already does for the
 // owner dashboard's ticket table.
 type ReceiptListItem struct {
-	Reference string
-	Href      string
-	Kg        string
-	Amount    string
-	When      string
-	Selected  bool
+	Reference   string
+	Href        string
+	Kg          string
+	Amount      string
+	When        string
+	Selected    bool
+	StatusLabel string
+	BadgeCSS    string
 }
 
 // ReceiptDetail is the full detail panel for one selected ticket --
@@ -470,10 +472,16 @@ templ customerReceiptsContent(theme customerHomeTheme, data ReceiptsViewData) {
 		<div class="wrap">
 			<header class="topbar">
 				@customerBrand(theme)
-				<a class="nav-link" href="/">Buy gas</a>
+				<a class="nav-link" href="/">
+					@components.Icon("gas-pump")
+					Buy gas
+				</a>
 			</header>
 			if data.ErrorMsg != "" {
-				<div class="form-error">{ data.ErrorMsg }</div>
+				<div class="form-error">
+					@components.Icon("warning-circle")
+					{ data.ErrorMsg }
+				</div>
 			}
 			switch data.View {
 				case "list":
@@ -489,16 +497,22 @@ templ customerReceiptsContent(theme customerHomeTheme, data ReceiptsViewData) {
 
 templ receiptsLookupView(data ReceiptsViewData) {
 	<main class="receipts-grid">
-		<section class="card panel" aria-label="Find your receipts">
+		<section class="card panel lookup-card" aria-label="Find your receipts">
+			<div class="lookup-icon">
+				@components.Icon("receipt")
+			</div>
 			<h1 class="page-title">Receipts</h1>
 			<p class="help">Enter the phone number you used to buy gas. We'll text you a 6-digit code to confirm it's you.</p>
 			<form method="post" action="/receipts/lookup">
 				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 				<div class="field">
 					<div class="label">Phone number</div>
-					<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required/>
+					<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required autofocus/>
 				</div>
-				<button class="button button-primary full-width" type="submit" style="margin-top: 12px;">Send code</button>
+				<button class="button button-primary full-width" type="submit" style="margin-top: 12px;">
+					Send code
+					@components.Icon("arrow-right")
+				</button>
 			</form>
 		</section>
 	</main>
@@ -506,7 +520,10 @@ templ receiptsLookupView(data ReceiptsViewData) {
 
 templ receiptsVerifyView(data ReceiptsViewData) {
 	<main class="receipts-grid">
-		<section class="card panel" aria-label="Enter your code">
+		<section class="card panel lookup-card" aria-label="Enter your code">
+			<div class="lookup-icon">
+				@components.Icon("shield-check")
+			</div>
 			<h1 class="page-title">Enter your code</h1>
 			<p class="help">We sent a 6-digit code by SMS to { data.Phone }. It expires in 10 minutes.</p>
 			<form method="post" action="/receipts/verify">
@@ -514,9 +531,12 @@ templ receiptsVerifyView(data ReceiptsViewData) {
 				<input type="hidden" name="phone" value={ data.Phone }/>
 				<div class="field">
 					<div class="label">6-digit code</div>
-					<input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" autocomplete="one-time-code" required/>
+					<input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" autocomplete="one-time-code" autofocus required/>
 				</div>
-				<button class="button button-primary full-width" type="submit" style="margin-top: 12px;">Verify</button>
+				<button class="button button-primary full-width" type="submit" style="margin-top: 12px;">
+					Verify
+					@components.Icon("arrow-right")
+				</button>
 			</form>
 			<form method="post" action="/receipts/lookup" style="margin-top: 12px;">
 				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
@@ -533,16 +553,25 @@ templ receiptsListView(data ReceiptsViewData) {
 			<h1 class="page-title">Receipts</h1>
 			<p class="help">Recent purchases linked to { data.Phone }.</p>
 			if len(data.Tickets) == 0 {
-				<p class="help">No purchases found yet on this phone number.</p>
+				<div class="empty-state">
+					@components.Icon("receipt")
+					<strong>No purchases yet</strong>
+					<p>Receipts for anything bought with this phone number will show up here.</p>
+					<a class="button button-secondary" href="/">Buy gas</a>
+				</div>
+			} else {
+				<div class="receipt-list">
+					for _, item := range data.Tickets {
+						<a class={ receiptItemClass(item.Selected) } href={ item.Href }>
+							<div><strong>{ item.Kg }</strong><small>{ item.When }</small></div>
+							<div class="receipt-item-end">
+								<span class={ "badge " + item.BadgeCSS }>{ item.StatusLabel }</span>
+								<div class="amount">{ item.Amount }</div>
+							</div>
+						</a>
+					}
+				</div>
 			}
-			<div class="receipt-list">
-				for _, item := range data.Tickets {
-					<a class={ receiptItemClass(item.Selected) } href={ item.Href }>
-						<div><strong>{ item.Kg }</strong><small>{ item.When }</small></div>
-						<div class="amount">{ item.Amount }</div>
-					</a>
-				}
-			</div>
 		</aside>
 		if data.Selected != nil {
 			@receiptDetailView(*data.Selected)
@@ -573,14 +602,21 @@ templ receiptDetailView(d ReceiptDetail) {
 		<div class="state-grid" aria-label="Receipt states">
 			<div class="state-card"><strong>Code { d.Code }</strong><p>Show this code to the attendant to collect your gas.</p></div>
 		</div>
+		if d.ConfirmedAt != "" {
+			<div class="confirmed-strip">
+				@components.Icon("check-circle")
+				Confirmed { d.ConfirmedAt }
+			</div>
+		}
 		<div class="receipt-actions">
 			if d.CanConfirm {
 				<form method="post" action={ d.ConfirmAction }>
 					<input type="hidden" name="csrf_token" value={ d.CSRFToken }/>
-					<button class="button button-primary" type="submit">Confirm received</button>
+					<button class="button button-primary" type="submit">
+						@components.Icon("check")
+						Confirm received
+					</button>
 				</form>
-			} else if d.ConfirmedAt != "" {
-				<span class="help">Confirmed { d.ConfirmedAt }</span>
 			}
 			<a class="button button-secondary" href="/">Buy again</a>
 		</div>

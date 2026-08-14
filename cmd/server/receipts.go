@@ -197,13 +197,16 @@ func receiptsPageHandler(s *Server) http.HandlerFunc {
 
 			data.Tickets = make([]pages.ReceiptListItem, 0, len(summaries))
 			for _, sum := range summaries {
+				confirmed := sum.ConfirmedAt != nil
 				data.Tickets = append(data.Tickets, pages.ReceiptListItem{
-					Reference: sum.Reference,
-					Href:      "/receipts?ticket=" + sum.Reference,
-					Kg:        formatKg(int64(sum.SizeGrams)),
-					Amount:    formatNaira(sum.AmountKobo),
-					When:      sum.CreatedAt.Format("2 Jan, 15:04"),
-					Selected:  sum.Reference == selectedRef,
+					Reference:   sum.Reference,
+					Href:        "/receipts?ticket=" + sum.Reference,
+					Kg:          formatKg(int64(sum.SizeGrams)),
+					Amount:      formatNaira(sum.AmountKobo),
+					When:        sum.CreatedAt.Format("2 Jan, 15:04"),
+					Selected:    sum.Reference == selectedRef,
+					StatusLabel: receiptStatusLabel(sum.Status, confirmed),
+					BadgeCSS:    receiptBadgeCSS(sum.Status, confirmed),
 				})
 			}
 

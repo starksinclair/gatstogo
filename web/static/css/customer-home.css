@@ -121,6 +121,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	min-height: 56px;
 	align-items: center;
 	justify-content: center;
+	gap: 8px;
 	border: 0;
 	border-radius: 8px;
 	padding: 0 20px;
@@ -413,6 +414,49 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	gap: 18px;
 	align-items: start;
 }
+/* The lookup and verify screens (phone entry, OTP entry) -- single
+   centered card, no second column, since there's nothing to show
+   alongside a form for a session that doesn't exist yet. */
+.lookup-card {
+	max-width: 440px;
+	margin: 0 auto;
+	text-align: center;
+}
+.lookup-card .field { text-align: left; }
+.lookup-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	margin: 0 auto 14px;
+	border-radius: 50%;
+	background: var(--brand-tint);
+	color: var(--brand);
+}
+.lookup-icon .icon { font-size: 26px; }
+.empty-state {
+	display: grid;
+	justify-items: center;
+	gap: 6px;
+	padding: 32px 16px;
+	color: var(--slate-500);
+	text-align: center;
+}
+.empty-state .icon {
+	font-size: 32px;
+	margin-bottom: 4px;
+	color: var(--slate-300);
+}
+.empty-state strong {
+	color: var(--slate-950);
+	font-size: 16px;
+}
+.empty-state p {
+	margin: 0 0 8px;
+	font-size: 14px;
+	line-height: 1.5;
+}
 .page-title {
 	margin: 0 0 8px;
 	font-family: var(--font-display, inherit);
@@ -443,6 +487,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-size: 17px;
 	font-weight: 800;
 	font-variant-numeric: tabular-nums;
+}
+.receipt-item-end {
+	display: grid;
+	justify-items: end;
+	gap: 4px;
+}
+.receipt-item-end .badge {
+	font-size: 10px;
+	padding: 3px 8px;
 }
 .receipt-item-selected {
 	background: var(--brand-tint, var(--success-bg));
@@ -543,11 +596,30 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-size: 15px;
 	line-height: 1.5;
 }
+.confirmed-strip {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 16px;
+	border-radius: 8px;
+	background: var(--success-bg);
+	color: var(--success-text);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-weight: 700;
+}
 .receipt-actions {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 10px;
 	margin-top: 18px;
+}
+/* When there's only one action (a ticket that isn't confirmable yet has
+   no "Confirm received" form, just "Buy again") that one action should
+   fill the row instead of sitting in the first column with dead
+   whitespace next to it. */
+.receipt-actions:has(> :only-child) {
+	grid-template-columns: 1fr;
 }
 /* The "Confirm received" button is wrapped in its own <form> (it needs a
    real POST + CSRF field, unlike "Buy again" which is a plain link) --
