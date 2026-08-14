@@ -78,6 +78,29 @@ func TestNewCode(t *testing.T) {
 	}
 }
 
+func TestInitialsFromName(t *testing.T) {
+	cases := []struct {
+		name string
+		want string
+	}{
+		{"Ada Nwosu", "A.N."},
+		{"  Ifeoma  Chukwu  ", "I.C."},
+		{"Cher", "C."},
+		{"Tunde Bakare Extra Name", "T.B."}, // only the first two words count
+		{"", ""},
+		{"   ", ""},
+	}
+	for _, c := range cases {
+		name := c.name
+		if got := initialsFromName(&name); got != c.want {
+			t.Errorf("initialsFromName(%q) = %q, want %q", c.name, got, c.want)
+		}
+	}
+	if got := initialsFromName(nil); got != "" {
+		t.Errorf("initialsFromName(nil) = %q, want empty (no customer name on file, e.g. a cash-sale ticket)", got)
+	}
+}
+
 func TestNullIfEmpty(t *testing.T) {
 	if got := nullIfEmpty("  "); got != nil {
 		t.Errorf("expected whitespace-only input to become nil, got %q", *got)

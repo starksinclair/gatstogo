@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"gatstogo/internal/session"
@@ -15,13 +16,13 @@ import (
 const ActorContextKey contextKey = "actor"
 
 // Actor is the authenticated identity attached to the request context by
-// RequireOwnerSession / RequireAdminSession (and, in a later milestone,
-// a staff-terminal equivalent tied to an open shift).
+// RequireOwnerSession / RequireAdminSession / RequireStaffSession.
 type Actor struct {
 	UserID  uuid.UUID
 	Name    string
 	Role    session.Role
 	PlantID *uuid.UUID // nil for admin sessions (see session.Data.PlantID)
+	ShiftID *uuid.UUID // set only for staff terminal sessions (RequireStaffSession)
 	Token   string     // the raw session token -- needed for logout
 }
 
@@ -118,4 +119,66 @@ func RequireAdminSession(store *session.Store) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
 		})
 	}
+}
+
+// RequireStaffSession gates a route to a logged-in cashier, operator, or
+// manager with an open shift on this plant. Must run after Tenant.
+//
+// Unlike RequireOwnerSession/RequireAdminSession, failures respond with a
+// small JSON body instead of a redirect: the staff terminal is a
+// fetch()-driven single-page UI (see cmd/server/terminal.go), not a
+// full-page browser navigation, so a 30x here would just hand the
+// frontend's fetch() call an HTML login page it has no way to render.
+func RequireStaffSession(store *session.Store) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			plant := GetPlant(r.Context())
+			if plant == nil {
+				http.Error(w, "Plant not found", http.StatusNotFound)
+				return
+			}
+
+			token, ok := session.ReadCookie(r)
+			if !ok {
+				writeSessionError(w, http.StatusUnauthorized, "not signed in")
+				return
+			}
+			data, err := store.Load(r.Context(), token)
+			if err != nil {
+				writeSessionError(w, http.StatusUnauthorized, "session expired")
+				return
+			}
+			staffRole := data.Role == session.RoleManager || data.Role == session.RoleCashier || data.Role == session.RoleOperator
+			if !staffRole || data.PlantID != plant.ID.String() || data.ShiftID == "" {
+				writeSessionError(w, http.StatusUnauthorized, "not signed in")
+				return
+			}
+			userID, err := uuid.Parse(data.UserID)
+			if err != nil {
+				writeSessionError(w, http.StatusUnauthorized, "session invalid")
+				return
+			}
+			shiftID, err := uuid.Parse(data.ShiftID)
+			if err != nil {
+				writeSessionError(w, http.StatusUnauthorized, "session invalid")
+				return
+			}
+
+			// Renews the leak-prevention backstop, not a primary expiry --
+			// see session.StaffBackstopTTL's doc comment. The session is
+			// deleted outright the moment shift-close succeeds
+			// (cmd/server/terminal.go), which is the real end-of-life path.
+			_ = store.Touch(r.Context(), token, session.StaffBackstopTTL)
+
+			plantID := plant.ID
+			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, ShiftID: &shiftID, Token: token}
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
+		})
+	}
+}
+
+func writeSessionError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
 }

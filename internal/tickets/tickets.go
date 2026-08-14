@@ -12,10 +12,12 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"unicode"
 
 	"gatstogo/internal/tenantdb"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -145,6 +147,181 @@ func CreatePending(ctx context.Context, q tenantdb.Querier, p CreatePendingParam
 		}
 	}
 	return nil, errors.New("tickets: could not allocate a unique redemption code after several attempts")
+}
+
+// CreatePaidCashParams are the fields needed to record a cash sale at the
+// staff terminal -- unlike CreatePending, this is paid the instant it's
+// recorded (cash is already in hand), not an async gateway round trip.
+type CreatePaidCashParams struct {
+	PlantID       uuid.UUID
+	PlantSlug     string
+	PriceID       uuid.UUID
+	RatePerKgKobo int64
+	AmountKobo    int64
+	SizeGrams     int
+	CustomerPhone string // optional -- the terminal's cash-sale flow doesn't collect a name at all
+	SoldBy        uuid.UUID
+	ShiftID       uuid.UUID
+}
+
+// CreatePaidCash inserts a new ticket already in 'paid' status with
+// channel='cash', sold_by/shift_id set to the terminal operator recording
+// it. Retries on a code collision the same way CreatePending does.
+func CreatePaidCash(ctx context.Context, q tenantdb.Querier, p CreatePaidCashParams) (*Ticket, error) {
+	reference, err := NewReference(p.PlantSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	for attempt := 0; attempt < maxCodeAttempts; attempt++ {
+		code, err := NewCode()
+		if err != nil {
+			return nil, err
+		}
+
+		row := q.QueryRow(ctx, `
+			INSERT INTO tickets (
+				plant_id, reference, code, customer_phone,
+				size_grams, rate_per_kg, price_id, amount, channel, status,
+				paid_at, sold_by, shift_id
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'cash', 'paid', now(), $9, $10)
+			RETURNING id
+		`, p.PlantID, reference, code, nullIfEmpty(p.CustomerPhone),
+			p.SizeGrams, p.RatePerKgKobo, p.PriceID, p.AmountKobo, p.SoldBy, p.ShiftID)
+
+		var id uuid.UUID
+		switch scanErr := row.Scan(&id); {
+		case scanErr == nil:
+			return &Ticket{ID: id, Reference: reference, Code: code}, nil
+		case isUniqueViolation(scanErr):
+			continue
+		default:
+			return nil, scanErr
+		}
+	}
+	return nil, errors.New("tickets: could not allocate a unique redemption code after several attempts")
+}
+
+// RedeemedTicket is what the staff terminal's Fill tab is allowed to see
+// after a code is entered. Deliberately excludes customer_name,
+// customer_phone, and reference -- the terminal mockup this replaces was
+// explicit that "no customer name, phone number, or ticket reference
+// appears on this terminal", and Initials (derived server-side, never the
+// raw name) is what it showed instead.
+type RedeemedTicket struct {
+	ID         uuid.UUID
+	Initials   string
+	SizeGrams  int
+	AmountKobo int64
+	Channel    string
+}
+
+// Redeem-specific errors -- distinguished (unlike the client-side-only
+// mockup this replaces, where every failure just showed "incorrect code")
+// so the terminal can show the right message: a code that plainly doesn't
+// exist vs. one that's already been used vs. one that hasn't been paid
+// for yet.
+var (
+	ErrCodeNotFound        = errors.New("tickets: no ticket with that code")
+	ErrCodeAlreadyRedeemed = errors.New("tickets: this ticket has already been filled")
+	ErrCodeNotPayable      = errors.New("tickets: this ticket has not been paid for yet")
+)
+
+// Redeem looks up a ticket by its 4-digit code. Codes are only unique
+// among currently-live tickets (idx_tickets_open_code, a partial unique
+// index scoped to status IN ('pending','paid')) -- once a ticket leaves
+// that range (filled, voided, expired), its code number can be reused by
+// a later ticket. So this looks up the most recently created ticket with
+// that code, not just any match, and returns ErrCodeAlreadyRedeemed
+// specifically for a code whose most recent ticket is already filled,
+// rather than lumping it in with "never existed".
+func Redeem(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, code string) (*RedeemedTicket, error) {
+	var (
+		id           uuid.UUID
+		customerName *string
+		sizeGrams    int
+		amountKobo   int64
+		channel      string
+		status       string
+	)
+	err := q.QueryRow(ctx, `
+		SELECT id, customer_name, size_grams, amount, channel, status
+		FROM tickets
+		WHERE plant_id = $1 AND code = $2
+		ORDER BY created_at DESC
+		LIMIT 1
+	`, plantID, code).Scan(&id, &customerName, &sizeGrams, &amountKobo, &channel, &status)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrCodeNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	switch status {
+	case "paid":
+		// redeemable
+	case "filled":
+		return nil, ErrCodeAlreadyRedeemed
+	default: // pending, voided, expired
+		return nil, ErrCodeNotPayable
+	}
+
+	return &RedeemedTicket{
+		ID:         id,
+		Initials:   initialsFromName(customerName),
+		SizeGrams:  sizeGrams,
+		AmountKobo: amountKobo,
+		Channel:    channel,
+	}, nil
+}
+
+// Fill transitions a paid ticket to filled. Unlike MarkPaid, this is not
+// idempotent-by-design -- there's no race between two independent
+// confirmation paths here, just one deliberate staff action, so filling an
+// already-filled (or otherwise non-paid) ticket is treated as an error
+// rather than silently accepted.
+//
+// net_grams/empty_weight_grams/filled_weight_grams are deliberately left
+// unset: the terminal has no weighing-scale input step (matching the
+// mockup this replaces, which only ever showed the entitled kg, not an
+// actual dispensed weight) -- capturing real dispensed weight would need a
+// scale integration this build-out doesn't include. Until that exists,
+// filled tickets show "Awaiting fill" for net weight on the owner
+// dashboard (cmd/server/main.go's loadOwnerTickets already handles a NULL
+// net_grams this way).
+func Fill(ctx context.Context, q tenantdb.Querier, plantID, ticketID, shiftID uuid.UUID) error {
+	tag, err := q.Exec(ctx, `
+		UPDATE tickets
+		SET status = 'filled', filled_at = now(), filled_shift_id = $3
+		WHERE id = $1 AND plant_id = $2 AND status = 'paid'
+	`, ticketID, plantID, shiftID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("tickets: not found, or not currently paid")
+	}
+	return nil
+}
+
+func initialsFromName(name *string) string {
+	if name == nil {
+		return ""
+	}
+	fields := strings.Fields(*name)
+	var b strings.Builder
+	for i, f := range fields {
+		if i >= 2 {
+			break
+		}
+		r := []rune(f)
+		if len(r) > 0 {
+			b.WriteRune(unicode.ToUpper(r[0]))
+			b.WriteByte('.')
+		}
+	}
+	return b.String()
 }
 
 // MarkPaid transitions a ticket from pending to paid. Idempotent by

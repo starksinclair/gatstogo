@@ -13,6 +13,7 @@ import (
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/payments"
 	"gatstogo/internal/session"
+	"gatstogo/internal/shifts"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/web/templates/components"
 	"gatstogo/web/templates/pages"
@@ -36,9 +37,10 @@ type Server struct {
 	Router   *chi.Mux
 	AppDB    *pgxpool.Pool // used for normal plant traffic (RLS enforced)
 	AdminDB  *pgxpool.Pool // used for platform admin (bypasses RLS)
-	Redis    *redis.Client
-	Sessions *session.Store
-	Paystack *payments.Client
+	Redis      *redis.Client
+	Sessions   *session.Store
+	Paystack   *payments.Client
+	PINLimiter *shifts.PINLimiter
 	// NotificationEmail is GatsToGo's own real inbox, used as the base for
 	// the per-ticket placeholder email Paystack's Initialize API requires
 	// (see ticketEmail in tickets.go). Configurable via
@@ -150,6 +152,7 @@ func CreateNewServer() (*Server, error) {
 		Redis:             rdb,
 		Sessions:          session.New(rdb),
 		Paystack:          payments.NewClient(paystackSecretKey),
+		PINLimiter:        shifts.NewPINLimiter(rdb),
 		NotificationEmail: getEnv("TICKET_NOTIFICATION_EMAIL", "gatstogofficial@gmail.com"),
 	}
 	return s, nil
@@ -234,6 +237,24 @@ func (s *Server) MountHandlers() {
 			if err := pages.StaffTerminal(plant).Render(r.Context(), w); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
+		})
+
+		// Staff terminal backend. JSON, not HTML -- see cmd/server/terminal.go.
+		// /terminal/pin is public (no staff session exists yet, so CSRF here
+		// uses the double-submit cookie check); everything after it requires
+		// RequireStaffSession, which is also where CSRF switches to the
+		// authenticated per-session check, same ordering rationale as the
+		// owner/admin groups above.
+		r.With(middleware.CSRF).Post("/terminal/pin", terminalPinHandler(s))
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequireStaffSession(s.Sessions))
+			r.Use(middleware.CSRF)
+
+			r.Post("/terminal/redeem", terminalRedeemHandler(s))
+			r.Post("/terminal/fill", terminalFillHandler(s))
+			r.Post("/terminal/cash-sale", terminalCashSaleHandler(s))
+			r.Post("/terminal/token-return", terminalTokenReturnHandler(s))
+			r.Post("/terminal/shift/end", terminalShiftEndHandler(s))
 		})
 
 		r.Get("/owner/login", ownerLoginPageHandler(s))
