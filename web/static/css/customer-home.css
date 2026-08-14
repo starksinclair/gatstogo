@@ -110,7 +110,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .brand-meta a { color: var(--ink-soft); font-weight: 700; text-decoration: none; }
 .brand-meta a:hover { text-decoration: underline; }
-.brand-meta .sep { margin: 0 6px; color: var(--faint); }
+/* A drawn hairline rather than a "·" character -- consistent with every
+   other demarcation on these pages being a thin 1px line, not a glyph. */
+.brand-meta .sep {
+	display: inline-block;
+	width: 1px;
+	height: 11px;
+	margin: 0 9px;
+	background: var(--line-strong);
+	vertical-align: middle;
+}
 .site-nav a {
 	display: inline-flex;
 	align-items: center;
