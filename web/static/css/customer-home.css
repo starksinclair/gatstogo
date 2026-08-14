@@ -429,7 +429,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	justify-content: space-between;
 	gap: 14px;
 	border-bottom: 1px solid var(--slate-100);
-	padding: 14px 2px;
+	padding: 14px 6px;
+	text-decoration: none;
+	color: inherit;
+	border-radius: 8px;
 }
 .receipt-item:last-child { border-bottom: 0; }
 .receipt-item strong { display: block; font-size: 17px; }
@@ -438,6 +441,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-size: 17px;
 	font-weight: 800;
 	font-variant-numeric: tabular-nums;
+}
+.receipt-item-selected {
+	background: var(--brand-tint, var(--success-bg));
 }
 .receipt-top {
 	display: flex;
@@ -541,6 +547,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	gap: 10px;
 	margin-top: 18px;
 }
+/* The "Confirm received" button is wrapped in its own <form> (it needs a
+   real POST + CSRF field, unlike "Buy again" which is a plain link) --
+   display: contents unwraps that form from layout so its button becomes
+   the direct grid item, filling its column exactly like a bare button
+   would, instead of the form's own default-sized block box doing so. */
+.receipt-actions form { display: contents; }
+.receipt-actions .button { width: 100%; }
 @media (max-width: 920px) {
 	.receipts-grid,
 	.state-grid { grid-template-columns: 1fr; }

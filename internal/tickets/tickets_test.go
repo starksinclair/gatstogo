@@ -243,6 +243,38 @@ func TestAmountFromGramsAndGramsFromAmountAgree(t *testing.T) {
 	}
 }
 
+func TestNormalizePhone(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"0803 000 0000", "8030000000"},
+		{"08030000000", "8030000000"},
+		{"8030000000", "8030000000"},
+		{"2348030000000", "8030000000"},
+		{"+234 803 000 0000", "8030000000"},
+		{"+234-803-000-0000", "8030000000"},
+		{"", ""},
+		{"not a phone number", ""},
+	}
+	for _, c := range cases {
+		if got := NormalizePhone(c.in); got != c.want {
+			t.Errorf("NormalizePhone(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+
+	// The whole point: differently-formatted entries for what is obviously
+	// the same real-world number must normalize identically, since this is
+	// what ListByPhone/GetReceipt/Confirm compare on.
+	forms := []string{"0803 000 0000", "08030000000", "2348030000000", "+234 803 000 0000"}
+	for i := 1; i < len(forms); i++ {
+		if NormalizePhone(forms[0]) != NormalizePhone(forms[i]) {
+			t.Errorf("expected %q and %q to normalize the same, got %q vs %q",
+				forms[0], forms[i], NormalizePhone(forms[0]), NormalizePhone(forms[i]))
+		}
+	}
+}
+
 func TestNullIfEmpty(t *testing.T) {
 	if got := nullIfEmpty("  "); got != nil {
 		t.Errorf("expected whitespace-only input to become nil, got %q", *got)

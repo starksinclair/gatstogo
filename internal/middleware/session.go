@@ -16,13 +16,15 @@ import (
 const ActorContextKey contextKey = "actor"
 
 // Actor is the authenticated identity attached to the request context by
-// RequireOwnerSession / RequireAdminSession / RequireStaffSession.
+// RequireOwnerSession / RequireAdminSession / RequireStaffSession /
+// RequireReceiptSession.
 type Actor struct {
 	UserID  uuid.UUID
 	Name    string
 	Role    session.Role
 	PlantID *uuid.UUID // nil for admin sessions (see session.Data.PlantID)
 	ShiftID *uuid.UUID // set only for staff terminal sessions (RequireStaffSession)
+	Phone   string     // set only for customer receipts sessions (RequireReceiptSession); UserID is uuid.Nil for these -- there's no users-table row
 	Token   string     // the raw session token -- needed for logout
 }
 
@@ -172,6 +174,55 @@ func RequireStaffSession(store *session.Store) func(http.Handler) http.Handler {
 
 			plantID := plant.ID
 			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, ShiftID: &shiftID, Token: token}
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
+		})
+	}
+}
+
+// RequireReceiptSession gates a route to a phone-verified customer
+// receipts session (internal/receipts) tied to the plant this request
+// resolved to. Must run after Tenant.
+//
+// Unlike RequireOwnerSession/RequireAdminSession, there's no separate
+// "/receipts/login" page to redirect a failure to -- GET /receipts is
+// itself both the phone-entry form and (once a session exists) the ticket
+// list, branching on whether a valid cookie is present (see
+// cmd/server/receipts.go's receiptsPageHandler, which does that check
+// itself rather than sitting behind this middleware, since it must render
+// successfully for anonymous visitors too). So a failure here redirects
+// back to plain /receipts, with an ?error= code, rather than a dedicated
+// login route -- the same page will show the phone-entry form again.
+func RequireReceiptSession(store *session.Store) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			plant := GetPlant(r.Context())
+			if plant == nil {
+				http.Error(w, "Plant not found", http.StatusNotFound)
+				return
+			}
+
+			token, ok := session.ReadCookie(r)
+			if !ok {
+				http.Redirect(w, r, "/receipts?error=session", http.StatusSeeOther)
+				return
+			}
+			data, err := store.Load(r.Context(), token)
+			if err != nil {
+				http.Redirect(w, r, "/receipts?error=session", http.StatusSeeOther)
+				return
+			}
+			if data.Role != session.RoleCustomer || data.PlantID != plant.ID.String() || data.Phone == "" {
+				http.Redirect(w, r, "/receipts?error=session", http.StatusSeeOther)
+				return
+			}
+
+			// Sliding expiry, same idea as RequireOwnerSession's Touch --
+			// a customer actively viewing/confirming receipts during one
+			// visit shouldn't be logged out mid-visit.
+			_ = store.Touch(r.Context(), token, session.ReceiptSessionTTL)
+
+			plantID := plant.ID
+			actor := &Actor{Role: data.Role, PlantID: &plantID, Phone: data.Phone, Token: token}
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
 		})
 	}

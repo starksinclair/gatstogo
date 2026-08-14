@@ -236,9 +236,62 @@ templ CustomerHome(plant *domain.Plant, pricePerKgKobo int64, csrfToken string, 
 	@customerPageShell(theme, theme.Name+" | Buy gas", customerHomeContent(theme, pricePerKgKobo, csrfToken, errorMsg))
 }
 
-templ CustomerReceipts(plant *domain.Plant) {
-	{{ theme := customerTheme(plant) }}
-	@customerPageShell(theme, theme.Name+" | Receipts", customerReceiptsContent(theme))
+// ReceiptListItem is one row in a customer's receipt list -- populated by
+// cmd/server/receipts.go from tickets.ReceiptSummary, the same
+// DB-row-to-view-model conversion loadOwnerTickets already does for the
+// owner dashboard's ticket table.
+type ReceiptListItem struct {
+	Reference string
+	Href      string
+	Kg        string
+	Amount    string
+	When      string
+	Selected  bool
+}
+
+// ReceiptDetail is the full detail panel for one selected ticket --
+// populated from tickets.Receipt.
+type ReceiptDetail struct {
+	Reference     string
+	Code          string
+	StatusLabel   string
+	BadgeCSS      string
+	Kg            string
+	NetKg         string
+	Rate          string
+	Amount        string
+	Channel       string
+	When          string
+	ConfirmedAt   string // "" if not yet confirmed
+	CanConfirm    bool
+	ConfirmAction string
+	CSRFToken     string // session-derived CSRF token for the confirm form
+}
+
+// ReceiptsViewData drives all three states GET /receipts can render:
+// "lookup" (no session yet -- phone entry), "verify" (a code was just
+// sent, waiting for the customer to enter it), and "list" (a valid
+// receipts session -- the ticket list + detail panel).
+type ReceiptsViewData struct {
+	Plant     *domain.Plant
+	View      string
+	CSRFToken string
+	ErrorMsg  string
+	Phone     string // the phone number just entered/verified, for display and to prefill the verify form
+	Tickets   []ReceiptListItem
+	Selected  *ReceiptDetail
+}
+
+func receiptItemClass(selected bool) string {
+	if selected {
+		return "receipt-item receipt-item-selected"
+	}
+	return "receipt-item"
+}
+
+templ CustomerReceipts(data ReceiptsViewData) {
+	{{ theme := customerTheme(data.Plant) }}
+	@customerPageShell(theme, theme.Name+" | Receipts", customerReceiptsContent(theme, data))
 }
 
 templ customerPageShell(theme customerHomeTheme, title string, content templ.Component) {
@@ -394,65 +447,124 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 	</div>
 }
 
-templ customerReceiptsContent(theme customerHomeTheme) {
+templ customerReceiptsContent(theme customerHomeTheme, data ReceiptsViewData) {
 	<div class="page">
 		<div class="wrap">
 			<header class="topbar">
 				@customerBrand(theme)
 				<a class="nav-link" href="/">Buy gas</a>
 			</header>
-			<main class="receipts-grid">
-				<aside class="card panel" aria-label="Recent receipts">
-					<h1 class="page-title">Receipts</h1>
-					<p class="help">Recent purchases saved on this phone.</p>
-					<div class="receipt-list">
-						<div class="receipt-item"><div><strong>12.5 kg</strong><small>28 Jul 2026</small></div><div class="amount">₦14,375</div></div>
-						<div class="receipt-item"><div><strong>6.0 kg</strong><small>22 Jul 2026</small></div><div class="amount">₦6,840</div></div>
-						<div class="receipt-item"><div><strong>12.5 kg</strong><small>14 Jul 2026</small></div><div class="amount">₦14,250</div></div>
-					</div>
-					<p class="help">Changed phones? Enter your number to see purchases linked to you.</p>
-					<div class="field">
-						<div class="label">Phone number</div>
-						<input type="tel" placeholder="0803 000 0000" autocomplete="tel"/>
-					</div>
-					<button class="button button-primary full-width" type="button" style="margin-top: 12px;">Send SMS code</button>
-				</aside>
-				<section class="card panel" aria-label="Receipt proof">
-					<div class="receipt-top">
-						<div>
-							<h1 class="page-title">Gas received</h1>
-							<div class="brand-meta">28 Jul 2026, 4:12pm</div>
-							<div class="brand-meta">Ticket 40217</div>
-						</div>
-						<span class="badge badge-success">RECEIVED</span>
-					</div>
-					<div class="weight-hero">
-						<div class="label">Gas you received</div>
-						<div class="weight">12.50<span>kg</span></div>
-					</div>
-					<div class="rows">
-						<div class="row"><span>Cylinder empty weight</span><span>15.20 kg</span></div>
-						<div class="row"><span>Weight after filling</span><span>27.70 kg</span></div>
-						<div class="row"><span>Rate per kg</span><span>₦1,150</span></div>
-						<div class="row"><span>Amount paid</span><span>₦14,375</span></div>
-						<div class="row"><span>Paid by</span><span>Bank transfer</span></div>
-						<div class="row"><span>Served by</span><span>T.A.</span></div>
-					</div>
-					<div class="trust"><strong>What is empty weight?</strong><br/>We weigh your empty cylinder first, then again after filling. The difference is the gas you received.</div>
-					<div class="state-grid" aria-label="Receipt states">
-						<div class="state-card"><span class="badge badge-pending">AWAITING FILL</span><strong>Code 7042</strong><p>Show this code to the attendant after payment.</p></div>
-						<div class="state-card"><span class="badge badge-danger">SHORT MEASURE</span><strong>0.50 kg short</strong><p>Report this so the plant can review the fill.</p></div>
-						<div class="state-card"><span class="badge badge-pending">CONFIRM</span><strong>Tap to confirm</strong><p>Close the ticket after receiving your gas.</p></div>
-					</div>
-					<div class="sms">
-						<div class="sms-bubble"><strong>You received 12.50 kg of gas.</strong><br/>Ticket 40217 · { theme.Name }.<br/>Amount paid: ₦14,375.<br/>View receipt: /receipts</div>
-					</div>
-					<div class="receipt-actions">
-						<button class="button button-primary" type="button">Confirm received</button>
-						<a class="button button-secondary" href="/">Buy again</a>
-					</div>
-				</section>
-			</main>
+			if data.ErrorMsg != "" {
+				<div class="form-error">{ data.ErrorMsg }</div>
+			}
+			switch data.View {
+				case "list":
+					@receiptsListView(data)
+				case "verify":
+					@receiptsVerifyView(data)
+				default:
+					@receiptsLookupView(data)
+			}
 		</div>
 	</div>
+}
+
+templ receiptsLookupView(data ReceiptsViewData) {
+	<main class="receipts-grid">
+		<section class="card panel" aria-label="Find your receipts">
+			<h1 class="page-title">Receipts</h1>
+			<p class="help">Enter the phone number you used to buy gas. We'll text you a 6-digit code to confirm it's you.</p>
+			<form method="post" action="/receipts/lookup">
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<div class="field">
+					<div class="label">Phone number</div>
+					<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required/>
+				</div>
+				<button class="button button-primary full-width" type="submit" style="margin-top: 12px;">Send code</button>
+			</form>
+		</section>
+	</main>
+}
+
+templ receiptsVerifyView(data ReceiptsViewData) {
+	<main class="receipts-grid">
+		<section class="card panel" aria-label="Enter your code">
+			<h1 class="page-title">Enter your code</h1>
+			<p class="help">We sent a 6-digit code by SMS to { data.Phone }. It expires in 10 minutes.</p>
+			<form method="post" action="/receipts/verify">
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="phone" value={ data.Phone }/>
+				<div class="field">
+					<div class="label">6-digit code</div>
+					<input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" autocomplete="one-time-code" required/>
+				</div>
+				<button class="button button-primary full-width" type="submit" style="margin-top: 12px;">Verify</button>
+			</form>
+			<form method="post" action="/receipts/lookup" style="margin-top: 12px;">
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<input type="hidden" name="phone" value={ data.Phone }/>
+				<button class="button button-secondary full-width" type="submit">Resend code</button>
+			</form>
+		</section>
+	</main>
+}
+
+templ receiptsListView(data ReceiptsViewData) {
+	<main class="receipts-grid">
+		<aside class="card panel" aria-label="Recent receipts">
+			<h1 class="page-title">Receipts</h1>
+			<p class="help">Recent purchases linked to { data.Phone }.</p>
+			if len(data.Tickets) == 0 {
+				<p class="help">No purchases found yet on this phone number.</p>
+			}
+			<div class="receipt-list">
+				for _, item := range data.Tickets {
+					<a class={ receiptItemClass(item.Selected) } href={ item.Href }>
+						<div><strong>{ item.Kg }</strong><small>{ item.When }</small></div>
+						<div class="amount">{ item.Amount }</div>
+					</a>
+				}
+			</div>
+		</aside>
+		if data.Selected != nil {
+			@receiptDetailView(*data.Selected)
+		}
+	</main>
+}
+
+templ receiptDetailView(d ReceiptDetail) {
+	<section class="card panel" aria-label="Receipt proof">
+		<div class="receipt-top">
+			<div>
+				<h1 class="page-title">{ d.StatusLabel }</h1>
+				<div class="brand-meta">{ d.When }</div>
+				<div class="brand-meta">Ticket { d.Reference }</div>
+			</div>
+			<span class={ "badge " + d.BadgeCSS }>{ d.StatusLabel }</span>
+		</div>
+		<div class="weight-hero">
+			<div class="label">Gas you bought</div>
+			<div class="weight">{ d.Kg }</div>
+		</div>
+		<div class="rows">
+			<div class="row"><span>Weight received</span><span>{ d.NetKg }</span></div>
+			<div class="row"><span>Rate per kg</span><span>{ d.Rate }</span></div>
+			<div class="row"><span>Amount paid</span><span>{ d.Amount }</span></div>
+			<div class="row"><span>Paid by</span><span>{ d.Channel }</span></div>
+		</div>
+		<div class="state-grid" aria-label="Receipt states">
+			<div class="state-card"><strong>Code { d.Code }</strong><p>Show this code to the attendant to collect your gas.</p></div>
+		</div>
+		<div class="receipt-actions">
+			if d.CanConfirm {
+				<form method="post" action={ d.ConfirmAction }>
+					<input type="hidden" name="csrf_token" value={ d.CSRFToken }/>
+					<button class="button button-primary" type="submit">Confirm received</button>
+				</form>
+			} else if d.ConfirmedAt != "" {
+				<span class="help">Confirmed { d.ConfirmedAt }</span>
+			}
+			<a class="button button-secondary" href="/">Buy again</a>
+		</div>
+	</section>
 }

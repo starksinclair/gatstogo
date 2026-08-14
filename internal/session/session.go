@@ -26,6 +26,11 @@ const (
 	RoleCashier  Role = "cashier"
 	RoleOperator Role = "operator"
 	RoleAdmin    Role = "admin"
+	// RoleCustomer is not a users-table role at all (customers don't have
+	// rows there) -- it's an anonymous, phone-verified session minted
+	// after internal/receipts.CodeStore.VerifyCode succeeds, scoping
+	// access to that one phone number's tickets at one plant.
+	RoleCustomer Role = "customer"
 )
 
 // Data is what's stored in Redis for a session, keyed by its token.
@@ -43,7 +48,10 @@ type Data struct {
 	PlantID string `json:"plant_id"`
 	// ShiftID is set only for staff terminal sessions (cashier/operator),
 	// once a shift has been opened. Empty until then.
-	ShiftID   string    `json:"shift_id,omitempty"`
+	ShiftID string `json:"shift_id,omitempty"`
+	// Phone is set only for RoleCustomer sessions -- the verified phone
+	// number this session is allowed to see/confirm tickets for.
+	Phone     string    `json:"phone,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -66,6 +74,12 @@ const (
 	// deleted explicitly the instant shift-close succeeds (internal/shifts).
 	// This is just a floor under that, in case a shift is never closed.
 	StaffBackstopTTL = 24 * time.Hour
+
+	// ReceiptSessionTTL is the sliding idle timeout for a phone-verified
+	// customer receipts session. Short: this only needs to last long
+	// enough for one visit to look up and confirm receipts, not a
+	// standing login the way OwnerTTL is.
+	ReceiptSessionTTL = 30 * time.Minute
 )
 
 // Store is a thin wrapper over a Redis client for session CRUD.

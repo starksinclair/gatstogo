@@ -12,8 +12,10 @@ import (
 	"gatstogo/internal/domain"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/payments"
+	"gatstogo/internal/receipts"
 	"gatstogo/internal/session"
 	"gatstogo/internal/shifts"
+	"gatstogo/internal/sms"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/web/templates/components"
 	"gatstogo/web/templates/pages"
@@ -42,6 +44,8 @@ type Server struct {
 	Sessions   *session.Store
 	Paystack   *payments.Client
 	PINLimiter *shifts.PINLimiter
+	Receipts   *receipts.CodeStore
+	SMS        sms.Sender
 	// NotificationEmail is GatsToGo's own real inbox, used as the base for
 	// the per-ticket placeholder email Paystack's Initialize API requires
 	// (see ticketEmail in tickets.go). Configurable via
@@ -154,6 +158,8 @@ func CreateNewServer() (*Server, error) {
 		Sessions:          session.New(rdb),
 		Paystack:          payments.NewClient(paystackSecretKey),
 		PINLimiter:        shifts.NewPINLimiter(rdb),
+		Receipts:          receipts.NewCodeStore(rdb),
+		SMS:               sms.NewLoggingSender(),
 		NotificationEmail: getEnv("TICKET_NOTIFICATION_EMAIL", "gatstogofficial@gmail.com"),
 	}
 	return s, nil
@@ -221,15 +227,21 @@ func (s *Server) MountHandlers() {
 		r.With(middleware.CSRF).Post("/tickets", buyGasSubmitHandler(s))
 		r.Get("/tickets/{reference}/callback", ticketCallbackHandler(s))
 
-		r.Get("/receipts", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			if err := pages.CustomerReceipts(plant).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
+		// Customer receipts lookup. GET /receipts is public (it's both the
+		// phone-entry form and, once a receipts session cookie exists, the
+		// ticket list -- see receiptsPageHandler); /lookup and /verify are
+		// public too (no session exists yet at that point), so CSRF on them
+		// uses the double-submit cookie check. /tickets/{reference}/confirm
+		// requires an actual verified session, mirroring the staff
+		// terminal's public-PIN-then-protected-group shape above.
+		r.Get("/receipts", receiptsPageHandler(s))
+		r.With(middleware.CSRF).Post("/receipts/lookup", receiptsLookupHandler(s))
+		r.With(middleware.CSRF).Post("/receipts/verify", receiptsVerifyHandler(s))
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequireReceiptSession(s.Sessions))
+			r.Use(middleware.CSRF)
+
+			r.Post("/tickets/{reference}/confirm", receiptsConfirmHandler(s))
 		})
 
 		r.Get("/terminal", terminalPageHandler(s))

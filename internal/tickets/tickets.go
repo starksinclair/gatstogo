@@ -382,6 +382,167 @@ func Void(ctx context.Context, q tenantdb.Querier, plantID, ticketID, voidedBy u
 	return nil
 }
 
+// NormalizePhone reduces a customer-entered phone number to a comparable
+// canonical form: digits only, then just the last 10 of them -- the part
+// of a Nigerian mobile number that stays the same no matter how it's
+// written ("0803 000 0000", "8030000000", "2348030000000", and
+// "+234 803 000 0000" all reduce to "8030000000").
+//
+// Ticket creation (cmd/server/tickets.go's buyGasSubmitHandler) stores
+// customer_phone exactly as the customer typed it at purchase time,
+// unnormalized -- an already-shipped write path this deliberately leaves
+// untouched. So every place that needs to recognize "this is the same
+// phone number" again later (the receipts lookup: ListByPhone, GetReceipt,
+// Confirm below, and internal/receipts.CodeStore's OTP keying, called with
+// this same normalized form from cmd/server/receipts.go) applies this one
+// reduction to both sides of the comparison instead, rather than assuming
+// the stored value is already in any particular shape.
+func NormalizePhone(phone string) string {
+	digits := make([]byte, 0, len(phone))
+	for _, r := range phone {
+		if r >= '0' && r <= '9' {
+			digits = append(digits, byte(r))
+		}
+	}
+	if len(digits) > 10 {
+		digits = digits[len(digits)-10:]
+	}
+	return string(digits)
+}
+
+// phoneMatchSQL is the same reduction NormalizePhone performs, applied in
+// SQL to the stored customer_phone column so it can be compared against an
+// already-normalized Go-side value -- see NormalizePhone's doc comment for
+// why both sides need reducing, not just the input.
+const phoneMatchSQL = `right(regexp_replace(customer_phone, '\D', '', 'g'), 10)`
+
+// ErrReceiptNotFound is returned by GetReceipt when no ticket at plantID
+// with that reference belongs to phone (NormalizePhone'd).
+var ErrReceiptNotFound = errors.New("tickets: no receipt found for that phone number")
+
+// ErrTicketNotConfirmable is returned by Confirm when the ticket doesn't
+// exist, doesn't belong to phone, or isn't in a confirmable ('filled')
+// state.
+var ErrTicketNotConfirmable = errors.New("tickets: not found, not filled, or not yours")
+
+// ReceiptSummary is one row in a customer's receipt list -- the
+// /receipts page's list panel. Deliberately smaller than Receipt (the
+// detail view): just enough to render the list and link into a detail.
+type ReceiptSummary struct {
+	Reference  string
+	Status     string
+	SizeGrams  int
+	AmountKobo int64
+	CreatedAt  time.Time
+}
+
+// ListByPhone returns every ticket at plantID whose customer_phone
+// matches phone (already NormalizePhone'd by the caller), most recent
+// first. Capped at 50 -- a customer's own receipts page, not a paginated
+// admin report.
+func ListByPhone(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, phone string) ([]ReceiptSummary, error) {
+	rows, err := q.Query(ctx, `
+		SELECT reference, status, size_grams, amount, created_at
+		FROM tickets
+		WHERE plant_id = $1 AND `+phoneMatchSQL+` = $2
+		ORDER BY created_at DESC
+		LIMIT 50
+	`, plantID, phone)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []ReceiptSummary
+	for rows.Next() {
+		var r ReceiptSummary
+		if err := rows.Scan(&r.Reference, &r.Status, &r.SizeGrams, &r.AmountKobo, &r.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+// Receipt is the full detail a customer is allowed to see about one of
+// their own tickets -- the receipts page's detail panel. Unlike
+// RedeemedTicket (the staff terminal's much narrower view, deliberately
+// stripped of name/phone/reference for a different privacy reason -- see
+// that type's doc comment), this is that customer's own data, so nothing
+// here is withheld from them.
+type Receipt struct {
+	Reference     string
+	Code          string
+	Status        string
+	SizeGrams     int
+	NetGrams      *int
+	RatePerKgKobo int64
+	AmountKobo    int64
+	Channel       string
+	CreatedAt     time.Time
+	FilledAt      *time.Time
+	ConfirmedAt   *time.Time
+}
+
+// GetReceipt loads one ticket's full detail for the receipts page, scoped
+// to phone the same way ListByPhone is -- so a receipts session for one
+// phone number can't view another customer's ticket by guessing its
+// reference. Returns ErrReceiptNotFound if no match.
+func GetReceipt(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, reference, phone string) (*Receipt, error) {
+	rc := &Receipt{Reference: reference}
+	err := q.QueryRow(ctx, `
+		SELECT code, status, size_grams, net_grams, rate_per_kg, amount, channel, created_at, filled_at, confirmed_at
+		FROM tickets
+		WHERE plant_id = $1 AND reference = $2 AND `+phoneMatchSQL+` = $3
+	`, plantID, reference, phone).Scan(
+		&rc.Code, &rc.Status, &rc.SizeGrams, &rc.NetGrams, &rc.RatePerKgKobo, &rc.AmountKobo,
+		&rc.Channel, &rc.CreatedAt, &rc.FilledAt, &rc.ConfirmedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrReceiptNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return rc, nil
+}
+
+// Confirm marks a filled ticket's gas as received-and-confirmed by the
+// customer -- the receipts page's "Confirm received" action. Requires the
+// ticket to already be 'filled' (set by the terminal's Fill call,
+// cmd/server/terminal.go) and to belong to phone, the same scoping
+// GetReceipt/ListByPhone use, so a receipts session for one phone number
+// can't confirm a different customer's ticket even at the same plant.
+// Idempotent: confirming an already-confirmed ticket succeeds silently
+// (matching MarkPaid's pattern) rather than erroring on a double-tap.
+func Confirm(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, reference, phone string) error {
+	var (
+		status      string
+		confirmedAt *time.Time
+	)
+	err := q.QueryRow(ctx, `
+		SELECT status, confirmed_at FROM tickets
+		WHERE plant_id = $1 AND reference = $2 AND `+phoneMatchSQL+` = $3
+	`, plantID, reference, phone).Scan(&status, &confirmedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrTicketNotConfirmable
+	}
+	if err != nil {
+		return err
+	}
+	if status != "filled" {
+		return ErrTicketNotConfirmable
+	}
+	if confirmedAt != nil {
+		return nil // already confirmed -- idempotent
+	}
+
+	_, err = q.Exec(ctx, `
+		UPDATE tickets SET confirmed_at = now() WHERE plant_id = $1 AND reference = $2
+	`, plantID, reference)
+	return err
+}
+
 // LookupPlantByReference finds which plant a ticket reference belongs to.
 // Must run on a connection that can see across every plant (AdminDB) --
 // there's no plant_id yet to scope a tenantdb.WithTenant transaction to,
