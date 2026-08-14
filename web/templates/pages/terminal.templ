@@ -12,7 +12,12 @@ func terminalPlantName(plant *domain.Plant) string {
 	return strings.TrimSpace(plant.Name)
 }
 
-templ StaffTerminal(plant *domain.Plant, initJSON string) {
+// init is passed through to templ.JSONScript untyped (any) rather than a
+// named pages type -- cmd/server/terminal.go's terminalInitPayload is the
+// one and only shape that's ever rendered here, and templ.JSONScript just
+// needs something encoding/json can marshal, not a type this package has
+// any other use for.
+templ StaffTerminal(plant *domain.Plant, init any) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -512,7 +517,7 @@ templ StaffTerminal(plant *domain.Plant, initJSON string) {
 		</head>
 		<body>
 			<div class="terminal-page">
-				<script type="application/json" id="terminal-init">{ initJSON }</script>
+				@templ.JSONScript("terminal-init", init)
 				<div data-terminal data-plant={ terminalPlantName(plant) }></div>
 			</div>
 		</body>

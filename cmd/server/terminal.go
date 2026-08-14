@@ -95,13 +95,21 @@ func terminalPageHandler(s *Server) http.HandlerFunc {
 		for i, m := range staff {
 			payload.Staff[i] = terminalStaffPayload{ID: m.ID.String(), Name: m.Name, Role: m.Role}
 		}
-		initJSON, err := json.Marshal(payload)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 
-		if err := pages.StaffTerminal(plant, string(initJSON)).Render(r.Context(), w); err != nil {
+		// Passed straight through to templ.JSONScript, which does its own
+		// json.Marshal -- previously this pre-marshaled to a string and
+		// interpolated it as {initJSON} inside a literal <script> tag,
+		// which templ does NOT run Go-expression interpolation inside
+		// (script bodies are treated as opaque text, same as any other
+		// HTML element's raw text content) -- so the page was actually
+		// shipping the eight literal characters "{ initJSON }" to the
+		// browser instead of real JSON, and every terminal page load
+		// would fail at JSON.parse(...) before the terminal could boot at
+		// all. Only caught by rendering this page for real against a
+		// live server; the JS itself had only ever been tested with a
+		// hand-rolled harness that supplied a mocked init object directly,
+		// never through templ's actual renderer.
+		if err := pages.StaffTerminal(plant, payload).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
