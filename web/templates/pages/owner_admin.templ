@@ -121,9 +121,12 @@ type AdminConsoleData struct {
 	PlatformStaff     []AdminStaffRow
 	SystemTables      []AdminSystemTable
 	CSRFToken         string
+	ErrorMessage      string
 }
 
 type AdminPlantRow struct {
+	ID            string
+	RawStatus     string
 	Name          string
 	City          string
 	Address       string
@@ -531,6 +534,19 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 	</section>
 }
 
+// plantStatusForm is a single small "change this plant's status" button,
+// used once per applicable transition in the Plants table -- e.g. an
+// active plant gets one Suspend form, a suspended plant gets both
+// Reactivate and Close. Kept as its own component since the same
+// three-line form shape repeats per row per available transition.
+templ plantStatusForm(plantID string, newStatus string, label string, csrfToken string) {
+	<form method="post" action={ templ.SafeURL("/admin/plants/" + plantID + "/status") }>
+		<input type="hidden" name="csrf_token" value={ csrfToken }/>
+		<input type="hidden" name="status" value={ newStatus }/>
+		<button class="btn" type="submit">{ label }</button>
+	</form>
+}
+
 templ adminConsoleContent(data AdminConsoleData) {
 	<div class="mobile-tabs">
 		<select data-tab-select aria-label="Admin console section">
@@ -555,9 +571,11 @@ templ adminConsoleContent(data AdminConsoleData) {
 		</div>
 		<div class="toolbar">
 			<button class="btn" type="button">Export plants</button>
-			<button class="btn primary" type="button">Create plant</button>
 		</div>
 	</div>
+	if data.ErrorMessage != "" {
+		<div class="owner-error">{ data.ErrorMessage }</div>
+	}
 	<section class="tab-panel active" data-tab-panel="overview">
 		<div class="kpi-grid">
 			<div class="kpi-card"><div class="kpi-label">Plants</div><div class="kpi">{ data.PlantCount }</div><div class="kpi-small">All tenants</div></div>
@@ -592,13 +610,26 @@ templ adminConsoleContent(data AdminConsoleData) {
 		<div class="section-title"><h2>Plants</h2><span class="badge badge-ok">plants + tickets + staff</span></div>
 		<div class="table-wrap">
 			<table>
-				<thead><tr><th>Plant</th><th>Location</th><th>Slug</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th></tr></thead>
+				<thead><tr><th>Plant</th><th>Location</th><th>Slug</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th><th></th></tr></thead>
 				<tbody>
 					if len(data.Plants) == 0 {
-						<tr><td colspan="11"><div class="empty">No plants yet. Placeholder: tenant records with domain, staff, price, shift, and transaction health will appear here.</div></td></tr>
+						<tr><td colspan="12"><div class="empty">No plants yet. Placeholder: tenant records with domain, staff, price, shift, and transaction health will appear here.</div></td></tr>
 					}
 					for _, row := range data.Plants {
-						<tr><td><strong>{ row.Name }</strong><div class="muted mono">{ row.Phone }</div></td><td>{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono">{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td></tr>
+						<tr>
+							<td><strong>{ row.Name }</strong><div class="muted mono">{ row.Phone }</div></td><td>{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono">{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td>
+							<td class="action-strip">
+								switch row.RawStatus {
+									case "active":
+										@plantStatusForm(row.ID, "suspended", "Suspend", data.CSRFToken)
+									case "suspended":
+										@plantStatusForm(row.ID, "active", "Reactivate", data.CSRFToken)
+										@plantStatusForm(row.ID, "closed", "Close", data.CSRFToken)
+									case "provisioning":
+										@plantStatusForm(row.ID, "active", "Activate", data.CSRFToken)
+								}
+							</td>
+						</tr>
 					}
 				</tbody>
 			</table>
@@ -607,26 +638,34 @@ templ adminConsoleContent(data AdminConsoleData) {
 	<section class="tab-panel" data-tab-panel="onboarding">
 		<div class="dashboard-grid">
 			<div class="panel panel-pad">
-				<div class="section-title"><h2>Create plant</h2><span class="badge badge-warn">UI only</span></div>
-				<div class="form-grid">
-					<div class="field"><label>Plant name</label><input placeholder="Sunrise Gas Plant"/></div>
-					<div class="field"><label>Slug</label><input placeholder="sunrise"/></div>
-					<div class="field"><label>City</label><input placeholder="Owerri"/></div>
-					<div class="field"><label>Phone</label><input placeholder="0803 000 0000"/></div>
-					<div class="field" style="grid-column: 1 / -1;"><label>Address</label><input placeholder="Plant address"/></div>
-					<div class="field"><label>Primary color</label><input placeholder="#006B4D"/></div>
-					<div class="field"><label>Button color</label><input placeholder="#10B981"/></div>
-				</div>
-				<div class="action-strip"><button class="btn primary" type="button">Provision plant</button><button class="btn" type="button">Save draft</button></div>
+				<div class="section-title"><h2>Create plant</h2><span class="badge badge-ok">live</span></div>
+				<form method="post" action="/admin/plants">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="form-grid">
+						<div class="field"><label>Plant name</label><input type="text" name="name" placeholder="Sunrise Gas Plant" required/></div>
+						<div class="field"><label>Slug</label><input type="text" name="slug" placeholder="sunrise" pattern="[a-z0-9-]+" required/></div>
+						<div class="field"><label>City</label><input type="text" name="city" placeholder="Owerri"/></div>
+						<div class="field"><label>Phone</label><input type="tel" name="phone" placeholder="0803 000 0000"/></div>
+						<div class="field" style="grid-column: 1 / -1;"><label>Address</label><input type="text" name="address" placeholder="Plant address"/></div>
+						<div class="field"><label>Primary color</label><input type="text" name="primary_color" placeholder="#006B4D"/></div>
+						<div class="field"><label>Button color</label><input type="text" name="button_color" placeholder="#006B4D"/></div>
+						<div class="field"><label>Starting price per kg</label><input type="text" name="starting_price" placeholder="1150" inputmode="decimal" required/></div>
+						<div class="field"><label>Owner name</label><input type="text" name="owner_name" placeholder="Full name" required/></div>
+						<div class="field"><label>Owner phone</label><input type="tel" name="owner_phone" placeholder="0803 000 0000" required/></div>
+						<div class="field"><label>Owner temporary password</label><input type="text" name="owner_password" placeholder="Set a temporary password" required/></div>
+					</div>
+					<div class="action-strip"><button class="btn primary" type="submit">Provision plant</button></div>
+				</form>
 			</div>
 			<div class="panel panel-pad">
-				<div class="section-title"><h2>Provisioning checklist</h2><span class="badge badge-muted">Placeholder</span></div>
+				<div class="section-title"><h2>Provisioning checklist</h2><span class="badge badge-ok">automated</span></div>
 				<div class="split-list">
 					<div class="info-row"><span>1</span><strong>Reserve slug and create tenant row.</strong></div>
 					<div class="info-row"><span>2</span><strong>Add owner user and temporary password.</strong></div>
 					<div class="info-row"><span>3</span><strong>Set starting price per kg.</strong></div>
 					<div class="info-row"><span>4</span><strong>Test customer site, receipt page, and staff terminal.</strong></div>
 				</div>
+				<p class="muted" style="margin-top: 12px;">Steps 1-3 all happen from the one "Create plant" form. Step 4 is still on you.</p>
 			</div>
 		</div>
 	</section>

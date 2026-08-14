@@ -194,12 +194,15 @@ func (s *Server) MountHandlers() {
 			data := loadAdminConsole(r.Context(), s.AdminDB)
 			actor := middleware.GetActor(r.Context())
 			data.CSRFToken, _ = csrf.Token(actor.Token)
+			data.ErrorMessage = adminErrorMessage(r.URL.Query().Get("error"))
 			if err := pages.AdminConsole(data).Render(r.Context(), w); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		})
 
 		r.Post("/admin/logout", adminLogoutHandler(s))
+		r.Post("/admin/plants", adminCreatePlantHandler(s))
+		r.Post("/admin/plants/{id}/status", adminPlantStatusHandler(s))
 	})
 
 	s.Router.Group(func(r chi.Router) {
@@ -428,6 +431,32 @@ func ownerErrorMessage(code string) string {
 		return "Could not update that staff member."
 	case "cash":
 		return "Enter a valid amount, and make sure a shift is currently open."
+	case "form":
+		return "Something went wrong. Please try again."
+	default:
+		return ""
+	}
+}
+
+// adminErrorMessage maps the short ?error= code the admin write handlers
+// (cmd/server/admin_write.go) redirect back with to a human-readable
+// message.
+func adminErrorMessage(code string) string {
+	switch code {
+	case "missing":
+		return "Fill in every field -- plant name, slug, owner name, owner phone, owner password, and a starting price are all required."
+	case "slug":
+		return "Slugs can only contain lowercase letters, numbers, and hyphens, and can't start or end with a hyphen."
+	case "reserved-slug":
+		return "That slug is reserved and can't be used for a plant."
+	case "slug-taken":
+		return "That slug is already in use by another plant."
+	case "price":
+		return "Enter a starting price per kg greater than zero."
+	case "plant":
+		return "Could not create that plant. Please try again."
+	case "status":
+		return "Could not update that plant's status."
 	case "form":
 		return "Something went wrong. Please try again."
 	default:
@@ -756,7 +785,7 @@ func loadAdminConsole(ctx context.Context, db tenantdb.Querier) pages.AdminConso
 
 func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlantRow {
 	rows, err := db.Query(ctx, `
-		SELECT p.name, COALESCE(p.city, ''), COALESCE(p.address, ''), COALESCE(p.phone, ''),
+		SELECT p.id, p.name, COALESCE(p.city, ''), COALESCE(p.address, ''), COALESCE(p.phone, ''),
 		       p.slug, p.status, COALESCE(p.custom_domain, ''), p.domain_status,
 		       (SELECT MIN(t.created_at) FROM tickets t WHERE t.plant_id = p.id),
 		       (SELECT COUNT(*) FROM tickets t WHERE t.plant_id = p.id AND t.created_at >= now() - interval '7 days'),
@@ -778,13 +807,16 @@ func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlan
 
 	out := []pages.AdminPlantRow{}
 	for rows.Next() {
+		var id uuid.UUID
 		var row pages.AdminPlantRow
 		var firstTxn, lastTxn sql.NullTime
 		var created, updated time.Time
 		var volume int64
-		if err := rows.Scan(&row.Name, &row.City, &row.Address, &row.Phone, &row.Slug, &row.Status, &row.Domain, &row.DomainStatus, &firstTxn, &row.Txns7d, &volume, &lastTxn, &row.StaffCount, &row.PriceCount, &row.OpenShifts, &row.ActivityCount, &created, &updated); err != nil {
+		if err := rows.Scan(&id, &row.Name, &row.City, &row.Address, &row.Phone, &row.Slug, &row.Status, &row.Domain, &row.DomainStatus, &firstTxn, &row.Txns7d, &volume, &lastTxn, &row.StaffCount, &row.PriceCount, &row.OpenShifts, &row.ActivityCount, &created, &updated); err != nil {
 			continue
 		}
+		row.ID = id.String()
+		row.RawStatus = strings.ToLower(fallbackString(row.Status, "provisioning"))
 		row.Name = fallbackString(row.Name, "Unnamed plant")
 		if row.City == "" {
 			row.City = "Coming soon"
