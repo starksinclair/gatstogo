@@ -1,8 +1,58 @@
 package tickets
 
 import (
+	"context"
 	"strings"
 	"testing"
+	"time"
+
+	"gatstogo/internal/tenantdb"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+// fakeRow/fakeQuerier let Purchase's INSERT be exercised (and its exact
+// argument list inspected) without a real Postgres connection -- the same
+// pattern internal/audit's tests use.
+type fakeRow struct {
+	id uuid.UUID
+}
+
+func (r fakeRow) Scan(dest ...any) error {
+	if len(dest) > 0 {
+		if idPtr, ok := dest[0].(*uuid.UUID); ok {
+			*idPtr = r.id
+		}
+	}
+	return nil
+}
+
+type fakeQuerier struct {
+	lastArgs []any
+	returnID uuid.UUID
+}
+
+func (f *fakeQuerier) Exec(context.Context, string, ...any) (pgconn.CommandTag, error) {
+	return pgconn.CommandTag{}, nil
+}
+func (f *fakeQuerier) Query(context.Context, string, ...any) (pgx.Rows, error) { return nil, nil }
+func (f *fakeQuerier) QueryRow(_ context.Context, _ string, args ...any) pgx.Row {
+	f.lastArgs = args
+	return fakeRow{id: f.returnID}
+}
+
+var _ tenantdb.Querier = (*fakeQuerier)(nil)
+
+// tickets INSERT column order (see Purchase): plant_id, reference, code,
+// customer_name, customer_phone, size_grams, rate_per_kg, price_id,
+// amount, channel, status, paid_at, sold_by, shift_id.
+const (
+	argStatus  = 10
+	argPaidAt  = 11
+	argSoldBy  = 12
+	argShiftID = 13
 )
 
 func TestNewReference(t *testing.T) {
@@ -98,6 +148,98 @@ func TestInitialsFromName(t *testing.T) {
 	}
 	if got := initialsFromName(nil); got != "" {
 		t.Errorf("initialsFromName(nil) = %q, want empty (no customer name on file, e.g. a cash-sale ticket)", got)
+	}
+}
+
+func TestCreatePendingGoesThroughSharedPurchaseCore(t *testing.T) {
+	q := &fakeQuerier{returnID: uuid.New()}
+	ticket, err := CreatePending(context.Background(), q, PurchaseParams{
+		PlantID: uuid.New(), PlantSlug: "sunrise", PriceID: uuid.New(),
+		RatePerKgKobo: 150000, AmountKobo: 1875000, SizeGrams: 12500,
+		Channel: "transfer", CustomerName: "Ada Nwosu", CustomerPhone: "08030000000",
+	})
+	if err != nil {
+		t.Fatalf("CreatePending: %v", err)
+	}
+	if ticket.ID != q.returnID {
+		t.Errorf("expected the ticket ID scanned from the INSERT, got %v want %v", ticket.ID, q.returnID)
+	}
+	if len(q.lastArgs) != 14 {
+		t.Fatalf("expected 14 INSERT args, got %d", len(q.lastArgs))
+	}
+	if status := q.lastArgs[argStatus]; status != "pending" {
+		t.Errorf("expected status 'pending' for an online purchase, got %v", status)
+	}
+	if paidAt := q.lastArgs[argPaidAt]; paidAt != (*time.Time)(nil) {
+		t.Errorf("expected a nil paid_at for a pending purchase, got %v", paidAt)
+	}
+	if soldBy := q.lastArgs[argSoldBy]; soldBy != (*uuid.UUID)(nil) {
+		t.Errorf("expected a nil sold_by for an online purchase (nobody at the plant sold it), got %v", soldBy)
+	}
+	if shiftID := q.lastArgs[argShiftID]; shiftID != (*uuid.UUID)(nil) {
+		t.Errorf("expected a nil shift_id for an online purchase, got %v", shiftID)
+	}
+}
+
+func TestCreatePaidCashGoesThroughSharedPurchaseCore(t *testing.T) {
+	q := &fakeQuerier{returnID: uuid.New()}
+	soldBy, shiftID := uuid.New(), uuid.New()
+	ticket, err := CreatePaidCash(context.Background(), q, PurchaseParams{
+		PlantID: uuid.New(), PlantSlug: "sunrise", PriceID: uuid.New(),
+		RatePerKgKobo: 150000, AmountKobo: 1875000, SizeGrams: 12500,
+		CustomerPhone: "08030000000",
+		// Channel/Paid/SoldBy/ShiftID are deliberately left unset here --
+		// CreatePaidCash must override them regardless of what's passed,
+		// which is exactly what this test checks.
+	}, soldBy, shiftID)
+	if err != nil {
+		t.Fatalf("CreatePaidCash: %v", err)
+	}
+	if ticket.ID != q.returnID {
+		t.Errorf("expected the ticket ID scanned from the INSERT, got %v want %v", ticket.ID, q.returnID)
+	}
+	if len(q.lastArgs) != 14 {
+		t.Fatalf("expected 14 INSERT args, got %d", len(q.lastArgs))
+	}
+	if channel := q.lastArgs[9]; channel != "cash" {
+		t.Errorf("expected channel forced to 'cash', got %v", channel)
+	}
+	if status := q.lastArgs[argStatus]; status != "paid" {
+		t.Errorf("expected status 'paid' immediately for a cash sale, got %v", status)
+	}
+	paidAt, ok := q.lastArgs[argPaidAt].(*time.Time)
+	if !ok || paidAt == nil {
+		t.Fatalf("expected a non-nil paid_at for a cash sale, got %v", q.lastArgs[argPaidAt])
+	}
+	if time.Since(*paidAt) > time.Minute {
+		t.Errorf("expected paid_at to be ~now, got %v", paidAt)
+	}
+	gotSoldBy, ok := q.lastArgs[argSoldBy].(*uuid.UUID)
+	if !ok || gotSoldBy == nil || *gotSoldBy != soldBy {
+		t.Errorf("expected sold_by = %v, got %v", soldBy, q.lastArgs[argSoldBy])
+	}
+	gotShiftID, ok := q.lastArgs[argShiftID].(*uuid.UUID)
+	if !ok || gotShiftID == nil || *gotShiftID != shiftID {
+		t.Errorf("expected shift_id = %v, got %v", shiftID, q.lastArgs[argShiftID])
+	}
+}
+
+func TestAmountFromGramsAndGramsFromAmountAgree(t *testing.T) {
+	const pricePerKgKobo = int64(150000) // ₦1,500/kg, matching the seed data
+
+	amount := AmountFromGrams(12500, pricePerKgKobo) // 12.5kg
+	if want := int64(1875000); amount != want {       // ₦18,750
+		t.Errorf("AmountFromGrams(12500, %d) = %d, want %d", pricePerKgKobo, amount, want)
+	}
+
+	// The online path derives grams from an amount; the terminal cash
+	// path derives an amount from grams. Round-tripping through both
+	// directions should land back where it started -- if it doesn't, the
+	// two purchase paths could show a customer and a cashier two
+	// different weights for what should be the same money.
+	grams := GramsFromAmount(amount, pricePerKgKobo)
+	if grams != 12500 {
+		t.Errorf("GramsFromAmount(%d, %d) = %d, want 12500 (round trip)", amount, pricePerKgKobo, grams)
 	}
 }
 

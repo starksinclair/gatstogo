@@ -294,9 +294,13 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 			if err != nil {
 				return err
 			}
-			amountKobo = int64(math.Round(float64(sizeGrams) * float64(pricePerKg) / 1000))
+			amountKobo = tickets.AmountFromGrams(sizeGrams, pricePerKg)
 
-			t, err := tickets.CreatePaidCash(ctx, q, tickets.CreatePaidCashParams{
+			// Same tickets.Purchase core the online checkout
+			// (buyGasSubmitHandler, cmd/server/tickets.go) goes through --
+			// CreatePaidCash is just the 'paid'-immediately,
+			// channel='cash' entry point into it.
+			t, err := tickets.CreatePaidCash(ctx, q, tickets.PurchaseParams{
 				PlantID:       plant.ID,
 				PlantSlug:     plant.Slug,
 				PriceID:       priceID,
@@ -304,9 +308,7 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 				AmountKobo:    amountKobo,
 				SizeGrams:     sizeGrams,
 				CustomerPhone: phone,
-				SoldBy:        actor.UserID,
-				ShiftID:       *actor.ShiftID,
-			})
+			}, actor.UserID, *actor.ShiftID)
 			if err != nil {
 				return err
 			}

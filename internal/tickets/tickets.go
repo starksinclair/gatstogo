@@ -10,8 +10,10 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
+	"time"
 	"unicode"
 
 	"gatstogo/internal/tenantdb"
@@ -20,6 +22,20 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
+
+// AmountFromGrams and GramsFromAmount are the two directions of the same
+// price conversion (kobo per kg <-> grams), shared by every purchase path
+// -- the customer's online checkout computes grams from a naira amount
+// they typed in, the staff terminal's cash sale computes an amount from a
+// cylinder size the cashier picked -- so the rounding rule can't quietly
+// drift between the two.
+func AmountFromGrams(sizeGrams int, pricePerKgKobo int64) int64 {
+	return int64(math.Round(float64(sizeGrams) * float64(pricePerKgKobo) / 1000))
+}
+
+func GramsFromAmount(amountKobo int64, pricePerKgKobo int64) int {
+	return int(math.Round(float64(amountKobo) * 1000 / float64(pricePerKgKobo)))
+}
 
 // NewReference mints a ticket reference that's unique across the whole
 // platform, not just within one plant. tickets.reference is only
@@ -88,11 +104,23 @@ type Ticket struct {
 	Code      string
 }
 
-// CreatePendingParams are the fields needed to insert a new pending
-// ticket. RatePerKgKobo/PriceID are a snapshot of the price in effect at
-// creation time -- prices are immutable history, so a later price change
-// must never retroactively change what an in-flight ticket charges.
-type CreatePendingParams struct {
+const maxCodeAttempts = 6
+
+// PurchaseParams are every field a ticket can be created with, across
+// every way this app sells gas. This is the one shared core both purchase
+// paths build on:
+//   - the customer's online checkout (CreatePending) -- 'pending', an
+//     async gateway confirms payment later (MarkPaid).
+//   - the staff terminal's cash sale (CreatePaidCash) -- 'paid'
+//     immediately, cash is already in hand.
+//
+// Before this was factored out, those two had their own near-identical
+// copies of the code-collision retry loop and INSERT; a change to one
+// (a new column, a fixed bug) had no way to reach the other. Now there's
+// exactly one place that allocates a reference+code and inserts a ticket
+// row, and the two purchase paths are thin, clearly-named wrappers around
+// it that only differ in which columns they actually set.
+type PurchaseParams struct {
 	PlantID       uuid.UUID
 	PlantSlug     string
 	PriceID       uuid.UUID
@@ -102,23 +130,61 @@ type CreatePendingParams struct {
 	// Channel must be one of the tickets.channel check constraint's
 	// values: transfer, terminal, ussd, cash.
 	Channel       string
-	CustomerName  string
-	CustomerPhone string
+	CustomerName  string // optional
+	CustomerPhone string // optional
+	// Paid, if true, inserts the ticket already in 'paid' status with
+	// paid_at set to now -- the terminal cash-sale case. If false (the
+	// default), inserts 'pending', for a later MarkPaid to confirm.
+	Paid bool
+	// SoldBy/ShiftID identify the staff member and shift recording a cash
+	// sale. Both nil for an online (Paid: false) purchase -- nobody at
+	// the plant "sold" it, the customer bought it themselves.
+	SoldBy  *uuid.UUID
+	ShiftID *uuid.UUID
 }
 
-const maxCodeAttempts = 6
+// CreatePending inserts a new ticket in 'pending' status. A thin wrapper
+// over Purchase for the online checkout path -- see PurchaseParams.
+func CreatePending(ctx context.Context, q tenantdb.Querier, p PurchaseParams) (*Ticket, error) {
+	p.Paid = false
+	p.SoldBy, p.ShiftID = nil, nil
+	return Purchase(ctx, q, p)
+}
 
-// CreatePending inserts a new ticket in 'pending' status, retrying with a
-// freshly generated 4-digit code on the rare event of a collision against
-// another currently-live ticket at this plant. idx_tickets_open_code (0001)
-// is a partial unique index on (plant_id, code) WHERE status IN ('pending',
-// 'paid') -- a code only has to be unique among tickets that are still
-// redeemable, not for all time, so a collision is expected to be rare but
-// not impossible.
-func CreatePending(ctx context.Context, q tenantdb.Querier, p CreatePendingParams) (*Ticket, error) {
+// CreatePaidCash inserts a new ticket already in 'paid' status with
+// channel='cash', sold_by/shift_id set to the terminal operator recording
+// it. A thin wrapper over Purchase for the staff terminal's cash-sale
+// path -- see PurchaseParams. soldBy/shiftID are required (not pointers)
+// here specifically so a cash sale can't accidentally be recorded without
+// them, unlike the shared Purchase entry point where they're optional.
+func CreatePaidCash(ctx context.Context, q tenantdb.Querier, p PurchaseParams, soldBy, shiftID uuid.UUID) (*Ticket, error) {
+	p.Channel = "cash"
+	p.Paid = true
+	p.SoldBy, p.ShiftID = &soldBy, &shiftID
+	return Purchase(ctx, q, p)
+}
+
+// Purchase inserts a new ticket, retrying with a freshly generated 4-digit
+// code on the rare event of a collision against another currently-live
+// ticket at this plant. idx_tickets_open_code (0001) is a partial unique
+// index on (plant_id, code) WHERE status IN ('pending', 'paid') -- a code
+// only has to be unique among tickets that are still redeemable, not for
+// all time, so a collision is expected to be rare but not impossible.
+// RatePerKgKobo/PriceID should be a snapshot of the price in effect at
+// creation time -- prices are immutable history, so a later price change
+// must never retroactively change what an in-flight ticket charges.
+func Purchase(ctx context.Context, q tenantdb.Querier, p PurchaseParams) (*Ticket, error) {
 	reference, err := NewReference(p.PlantSlug)
 	if err != nil {
 		return nil, err
+	}
+
+	status := "pending"
+	var paidAt *time.Time
+	if p.Paid {
+		status = "paid"
+		now := time.Now()
+		paidAt = &now
 	}
 
 	for attempt := 0; attempt < maxCodeAttempts; attempt++ {
@@ -130,11 +196,13 @@ func CreatePending(ctx context.Context, q tenantdb.Querier, p CreatePendingParam
 		row := q.QueryRow(ctx, `
 			INSERT INTO tickets (
 				plant_id, reference, code, customer_name, customer_phone,
-				size_grams, rate_per_kg, price_id, amount, channel, status
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
+				size_grams, rate_per_kg, price_id, amount, channel, status,
+				paid_at, sold_by, shift_id
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 			RETURNING id
 		`, p.PlantID, reference, code, nullIfEmpty(p.CustomerName), nullIfEmpty(p.CustomerPhone),
-			p.SizeGrams, p.RatePerKgKobo, p.PriceID, p.AmountKobo, p.Channel)
+			p.SizeGrams, p.RatePerKgKobo, p.PriceID, p.AmountKobo, p.Channel, status,
+			paidAt, p.SoldBy, p.ShiftID)
 
 		var id uuid.UUID
 		switch scanErr := row.Scan(&id); {
@@ -142,59 +210,6 @@ func CreatePending(ctx context.Context, q tenantdb.Querier, p CreatePendingParam
 			return &Ticket{ID: id, Reference: reference, Code: code}, nil
 		case isUniqueViolation(scanErr):
 			continue // code collision against another live ticket -- try another code
-		default:
-			return nil, scanErr
-		}
-	}
-	return nil, errors.New("tickets: could not allocate a unique redemption code after several attempts")
-}
-
-// CreatePaidCashParams are the fields needed to record a cash sale at the
-// staff terminal -- unlike CreatePending, this is paid the instant it's
-// recorded (cash is already in hand), not an async gateway round trip.
-type CreatePaidCashParams struct {
-	PlantID       uuid.UUID
-	PlantSlug     string
-	PriceID       uuid.UUID
-	RatePerKgKobo int64
-	AmountKobo    int64
-	SizeGrams     int
-	CustomerPhone string // optional -- the terminal's cash-sale flow doesn't collect a name at all
-	SoldBy        uuid.UUID
-	ShiftID       uuid.UUID
-}
-
-// CreatePaidCash inserts a new ticket already in 'paid' status with
-// channel='cash', sold_by/shift_id set to the terminal operator recording
-// it. Retries on a code collision the same way CreatePending does.
-func CreatePaidCash(ctx context.Context, q tenantdb.Querier, p CreatePaidCashParams) (*Ticket, error) {
-	reference, err := NewReference(p.PlantSlug)
-	if err != nil {
-		return nil, err
-	}
-
-	for attempt := 0; attempt < maxCodeAttempts; attempt++ {
-		code, err := NewCode()
-		if err != nil {
-			return nil, err
-		}
-
-		row := q.QueryRow(ctx, `
-			INSERT INTO tickets (
-				plant_id, reference, code, customer_phone,
-				size_grams, rate_per_kg, price_id, amount, channel, status,
-				paid_at, sold_by, shift_id
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'cash', 'paid', now(), $9, $10)
-			RETURNING id
-		`, p.PlantID, reference, code, nullIfEmpty(p.CustomerPhone),
-			p.SizeGrams, p.RatePerKgKobo, p.PriceID, p.AmountKobo, p.SoldBy, p.ShiftID)
-
-		var id uuid.UUID
-		switch scanErr := row.Scan(&id); {
-		case scanErr == nil:
-			return &Ticket{ID: id, Reference: reference, Code: code}, nil
-		case isUniqueViolation(scanErr):
-			continue
 		default:
 			return nil, scanErr
 		}

@@ -139,12 +139,12 @@ func buyGasSubmitHandler(s *Server) http.HandlerFunc {
 			if pricePerKg <= 0 {
 				return fmt.Errorf("invalid current price for plant")
 			}
-			sizeGrams := int(math.Round(float64(amountKobo) * 1000 / float64(pricePerKg)))
+			sizeGrams := tickets.GramsFromAmount(amountKobo, pricePerKg)
 			if sizeGrams <= 0 {
 				return fmt.Errorf("amount too small to buy any gas at the current price")
 			}
 
-			created, err := tickets.CreatePending(ctx, q, tickets.CreatePendingParams{
+			created, err := tickets.CreatePending(ctx, q, tickets.PurchaseParams{
 				PlantID:       plant.ID,
 				PlantSlug:     plant.Slug,
 				PriceID:       priceID,
