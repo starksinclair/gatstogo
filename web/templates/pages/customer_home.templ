@@ -308,6 +308,13 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 				function buyGasForm(pricePerKg) {
 					return {
 						amount: '',
+						// Tracks the same radio group the server reads via
+						// name="channel" -- this is purely an additional
+						// client-side read for the live order-summary sidebar
+						// (see .summary-card), not a replacement for the
+						// native radios' own name/value/checked, which are
+						// still what actually gets submitted.
+						channel: 'transfer',
 						pricePerKg: pricePerKg,
 						get naira() {
 							var n = Number(this.amount);
@@ -315,6 +322,12 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 						},
 						get kg() {
 							return this.naira > 0 ? this.naira / this.pricePerKg : 0;
+						},
+						get channelLabel() {
+							if (this.channel === 'transfer') return 'Bank transfer';
+							if (this.channel === 'terminal') return 'POS terminal';
+							if (this.channel === 'ussd') return 'USSD';
+							return '';
 						},
 						formatNaira: function (n) {
 							return '₦' + Number(n).toLocaleString('en-NG');
@@ -359,7 +372,7 @@ templ customerBrand(theme customerHomeTheme) {
 
 templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfToken string, errorMsg string) {
 	<div class="page has-sticky-pay">
-		<div class="wrap buy-main">
+		<div class="wrap">
 			<header class="topbar">
 				@customerBrand(theme)
 				<a class="nav-link" href="/receipts">
@@ -368,100 +381,124 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 				</a>
 			</header>
 			<main>
-				<section class="card panel buy-card" aria-label="Buy gas" x-data={ buyGasAlpineInit(pricePerKgKobo) }>
-					<div class="form-heading">
-						<div class="form-heading-row">
-							<h1>Buy gas</h1>
-							<div class="price-chip">
-								@components.Icon("gas-pump")
-								{ formatPricePerKg(pricePerKgKobo) } <span>/kg</span>
+				<div class="buy-layout" x-data={ buyGasAlpineInit(pricePerKgKobo) }>
+					<div class="buy-form-col">
+						<section class="card panel buy-card" aria-label="Buy gas">
+							<div class="form-heading">
+								<h1>Buy gas</h1>
+								<p>No signup. Enter how much you want to spend, then your name and phone.</p>
 							</div>
-						</div>
-						<p>No signup. Enter how much you want to spend, then your name and phone.</p>
+							if errorMsg != "" {
+								<div class="form-error">
+									@components.Icon("warning-circle")
+									{ errorMsg }
+								</div>
+							}
+							<form id="buy-form" method="post" action="/tickets">
+								<input type="hidden" name="csrf_token" value={ csrfToken }/>
+								<div class="step-label"><span class="step-num">1</span> How much do you want to buy?</div>
+								<div class="amount-field">
+									<span class="amount-prefix">₦</span>
+									<input
+										type="number"
+										name="amount"
+										inputmode="numeric"
+										min="1"
+										step="1"
+										placeholder="14375"
+										x-model="amount"
+										aria-label="Amount in naira"
+										required
+									/>
+								</div>
+								<p class="kg-preview">
+									<span x-show="naira <= 0">Enter an amount to see how many kg you will get.</span>
+									<span x-show="naira > 0" x-cloak>
+										You will get <strong x-text="formatKg(kg)">0.00 kg</strong>.
+									</span>
+								</p>
+								<div class="step-label"><span class="step-num">2</span> Your details</div>
+								<div class="field-grid">
+									<div class="field">
+										<div class="label">Your name</div>
+										<input type="text" name="name" placeholder="Full name" autocomplete="name" required/>
+									</div>
+									<div class="field">
+										<div class="label">Phone number</div>
+										<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required/>
+									</div>
+								</div>
+								<div class="step-label"><span class="step-num">3</span> How will you pay?</div>
+								<div class="payment-list" role="radiogroup" aria-label="Payment method">
+									<label class="payment">
+										<input type="radio" name="channel" value="transfer" class="sr-only" x-model="channel" checked/>
+										<span class="radio"></span>
+										@components.Icon("bank")
+										<span>Bank transfer</span>
+									</label>
+									<label class="payment">
+										<input type="radio" name="channel" value="terminal" class="sr-only" x-model="channel"/>
+										<span class="radio"></span>
+										@components.Icon("credit-card")
+										<span>POS terminal</span>
+									</label>
+									<label class="payment">
+										<input type="radio" name="channel" value="ussd" class="sr-only" x-model="channel"/>
+										<span class="radio"></span>
+										@components.Icon("device-mobile")
+										<span>USSD</span>
+									</label>
+								</div>
+							</form>
+						</section>
 					</div>
-					if errorMsg != "" {
-						<div class="form-error">
-							@components.Icon("warning-circle")
-							{ errorMsg }
-						</div>
-					}
-					<form method="post" action="/tickets">
-						<input type="hidden" name="csrf_token" value={ csrfToken }/>
-						<div class="step-label"><span class="step-num">1</span> How much do you want to buy?</div>
-						<div class="amount-field">
-							<span class="amount-prefix">₦</span>
-							<input
-								type="number"
-								name="amount"
-								inputmode="numeric"
-								min="1"
-								step="1"
-								placeholder="14375"
-								x-model="amount"
-								aria-label="Amount in naira"
-								required
-							/>
-						</div>
-						<p class="kg-preview">
-							<span x-show="naira <= 0">Enter an amount to see how many kg you will get.</span>
-							<span x-show="naira > 0" x-cloak>
-								You will get <strong x-text="formatKg(kg)">0.00 kg</strong>.
-							</span>
-						</p>
-						<div class="step-label"><span class="step-num">2</span> Your details</div>
-						<div class="field-grid">
-							<div class="field">
-								<div class="label">Your name</div>
-								<input type="text" name="name" placeholder="Full name" autocomplete="name" required/>
+					<aside class="buy-summary-col">
+						<section class="card panel summary-card" aria-label="Order summary">
+							<div class="summary-header">
+								<span>Order summary</span>
+								<div class="price-chip">
+									@components.Icon("gas-pump")
+									{ formatPricePerKg(pricePerKgKobo) } <span>/kg</span>
+								</div>
 							</div>
-							<div class="field">
-								<div class="label">Phone number</div>
-								<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required/>
+							<div class="summary-rows">
+								<div class="summary-row">
+									<span>Amount</span>
+									<strong x-text="naira > 0 ? formatNaira(naira) : '—'">—</strong>
+								</div>
+								<div class="summary-row">
+									<span>Gas you'll get</span>
+									<strong x-text="naira > 0 ? formatKg(kg) : '—'">—</strong>
+								</div>
+								<div class="summary-row">
+									<span>Paying by</span>
+									<strong x-text="channelLabel">Bank transfer</strong>
+								</div>
 							</div>
-						</div>
-						<div class="step-label"><span class="step-num">3</span> How will you pay?</div>
-						<div class="payment-list" role="radiogroup" aria-label="Payment method">
-							<label class="payment">
-								<input type="radio" name="channel" value="transfer" class="sr-only" checked/>
-								<span class="radio"></span>
-								@components.Icon("bank")
-								<span>Bank transfer</span>
-							</label>
-							<label class="payment">
-								<input type="radio" name="channel" value="terminal" class="sr-only"/>
-								<span class="radio"></span>
-								@components.Icon("credit-card")
-								<span>POS terminal</span>
-							</label>
-							<label class="payment">
-								<input type="radio" name="channel" value="ussd" class="sr-only"/>
-								<span class="radio"></span>
-								@components.Icon("device-mobile")
-								<span>USSD</span>
-							</label>
-						</div>
-						<p class="help">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p>
-						<div class="pay-bar">
-							<button
-								class="button button-primary full-width"
-								type="submit"
-								:disabled="naira <= 0"
-								x-text="naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'"
-							>
-								Enter amount to pay
-							</button>
-						</div>
-					</form>
-					<div class="confirm-box">
-						<div class="confirm-box-label">
-							@components.Icon("hourglass-medium")
-							After payment
-						</div>
-						<strong>Your 4-digit code appears here.</strong>
-						<div class="code code-placeholder" aria-hidden="true">– – – –</div>
-						<p class="help" style="margin-bottom: 0;">Join the queue as normal. Read this code to the attendant when you reach the front.</p>
-					</div>
-				</section>
+							<div class="summary-paybar">
+								<button
+									class="button button-primary full-width"
+									form="buy-form"
+									type="submit"
+									:disabled="naira <= 0"
+									x-text="naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'"
+								>
+									Enter amount to pay
+								</button>
+							</div>
+							<p class="help">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p>
+							<div class="confirm-box">
+								<div class="confirm-box-label">
+									@components.Icon("hourglass-medium")
+									After payment
+								</div>
+								<strong>Your 4-digit code appears here.</strong>
+								<div class="code code-placeholder" aria-hidden="true">– – – –</div>
+								<p class="help" style="margin-bottom: 0;">Join the queue as normal. Read this code to the attendant when you reach the front.</p>
+							</div>
+						</section>
+					</aside>
+				</div>
 			</main>
 		</div>
 	</div>

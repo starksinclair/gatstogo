@@ -148,6 +148,57 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	max-width: 640px;
 	margin: 0 auto;
 }
+/* Buy-gas page layout: form on the left, a live order-summary sidebar on
+   the right (sticky while the form scrolls) -- replaces a single narrow
+   column that, on anything wider than a phone, left most of the page as
+   dead space either side of it. The sidebar is genuinely functional, not
+   decorative: it's the same Alpine component the form's amount field
+   already uses (x-data lives on .buy-layout, one scope for both
+   columns), so amount/kg/payment-method there update live as the form
+   is filled in, and it's where the actual submit button lives -- see
+   #buy-form / [form=buy-form] below. */
+.buy-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 360px;
+	gap: 24px;
+	align-items: start;
+}
+.buy-form-col { min-width: 0; }
+.buy-summary-col {
+	position: sticky;
+	top: 24px;
+}
+.summary-card {
+	border-top: 3px solid var(--brand-button);
+}
+.summary-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 16px;
+	color: var(--slate-600);
+	font-size: 13px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.summary-rows {
+	margin-bottom: 18px;
+	border-top: 1px solid var(--slate-100);
+}
+.summary-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--slate-100);
+	font-size: 15px;
+}
+.summary-row span { color: var(--slate-600); }
+.summary-row strong { font-variant-numeric: tabular-nums; }
+.summary-paybar { margin: 4px 0 18px; }
 .card {
 	border: 1px solid var(--slate-200);
 	border-radius: 10px;
@@ -183,13 +234,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	flex: none;
 }
 .form-heading { margin-bottom: 8px; }
-.form-heading-row {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 12px;
-	margin-bottom: 6px;
-}
 .form-heading h1 {
 	display: flex;
 	align-items: center;
@@ -314,6 +358,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .payment .icon { color: var(--slate-500); font-size: 20px; }
 .payment.is-selected .icon,
 .payment:has(input:checked) .icon { color: var(--brand); }
+/* From tablet width up there's room for the three payment options to sit
+   as one segmented row (tab-like) instead of stacked full-width rows --
+   below it they stay stacked, which is the better shape for a narrow
+   phone screen and three short labels. */
+@media (min-width: 560px) {
+	.payment-list { grid-template-columns: repeat(3, 1fr); }
+	.payment {
+		flex-direction: column;
+		justify-content: center;
+		text-align: center;
+		gap: 8px;
+		padding: 16px 10px;
+	}
+	.payment .icon { font-size: 24px; }
+}
 .payment:focus-within {
 	outline: 3px solid var(--brand);
 	outline-offset: 2px;
@@ -367,12 +426,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .full-width { width: 100%; }
 .pay-bar {
 	margin-top: 8px;
-}
-.actions-row {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 10px;
-	margin-top: 14px;
 }
 .confirm-box {
 	margin-top: 18px;
@@ -558,13 +611,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-weight: 700;
 	text-align: right;
 }
-.trust {
-	margin-top: 14px;
-	padding: 14px 0 0;
-	color: var(--slate-600);
-	font-size: 14px;
-	line-height: 1.55;
-}
 .state-grid {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
@@ -582,23 +628,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	margin: 0;
 	color: var(--slate-600);
 	font-size: 14px;
-}
-.sms {
-	margin-top: 16px;
-	border-radius: 12px;
-	background: var(--slate-100);
-	padding: 16px 14px;
-}
-.sms-bubble {
-	max-width: 92%;
-	border-radius: 14px;
-	border-bottom-left-radius: 4px;
-	background: #fff;
-	border: 1px solid var(--slate-200);
-	padding: 12px 14px;
-	color: #111;
-	font-size: 15px;
-	line-height: 1.5;
 }
 .confirmed-strip {
 	display: flex;
@@ -635,9 +664,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 @media (max-width: 920px) {
 	.receipts-grid,
 	.state-grid { grid-template-columns: 1fr; }
+	.buy-layout { grid-template-columns: 1fr; }
+	.buy-summary-col { position: static; }
 }
 @media (max-width: 720px) {
-	.pay-bar {
+	.pay-bar,
+	.summary-paybar {
 		position: fixed;
 		left: 0;
 		right: 0;
