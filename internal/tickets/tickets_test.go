@@ -26,6 +26,33 @@ func TestNewReference(t *testing.T) {
 	}
 }
 
+func TestNewReferenceSanitizesSlug(t *testing.T) {
+	// Nothing in the schema constrains plants.slug's character set, but
+	// Paystack's transaction reference only allows alphanumerics, -, ., =.
+	ref, err := NewReference("Sunrise Gas Plant #1 (Owerri)")
+	if err != nil {
+		t.Fatalf("NewReference: %v", err)
+	}
+	for _, r := range ref {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '-', r == '.', r == '=':
+			// allowed
+		default:
+			t.Fatalf("reference %q contains a character Paystack would reject: %q", ref, r)
+		}
+	}
+
+	// A slug that sanitizes down to nothing shouldn't produce a malformed
+	// (empty-prefix) reference.
+	ref, err = NewReference("   ")
+	if err != nil {
+		t.Fatalf("NewReference: %v", err)
+	}
+	if !strings.HasPrefix(ref, "plant-") {
+		t.Errorf("expected a fallback prefix for an all-whitespace slug, got %q", ref)
+	}
+}
+
 func TestNewCode(t *testing.T) {
 	seen := map[string]bool{}
 	for i := 0; i < 200; i++ {

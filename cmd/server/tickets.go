@@ -224,7 +224,7 @@ func ticketCallbackHandler(s *Server) http.HandlerFunc {
 			amountLabel = formatNaira(amountKobo)
 			sizeLabel = formatKg(int64(sizeGrams))
 
-			if verifyErr != nil || verify.Status != "success" || verify.AmountKobo != amountKobo {
+			if verifyErr != nil || verify.Status != "success" || verify.AmountKobo != amountKobo || (verify.Currency != "" && verify.Currency != "NGN") {
 				// Not confirmed from here -- leave it pending. The webhook
 				// (cmd/server: paystackWebhookHandler) is the primary
 				// confirmation path and may simply not have arrived yet.
@@ -290,13 +290,29 @@ func paystackWebhookHandler(s *Server) http.HandlerFunc {
 			return
 		}
 
+		// The signature check above proves this request genuinely came
+		// from Paystack and wasn't tampered with in transit, but Paystack's
+		// own guidance is to still independently re-confirm via the Verify
+		// API before granting value, rather than trust the webhook body's
+		// own status/amount fields at face value. A network error here
+		// returns 5xx (below) so Paystack retries -- this is the "genuine
+		// processing failure" case, not a data mismatch retrying wouldn't
+		// fix.
+		verify, err := s.Paystack.Verify(r.Context(), event.Data.Reference)
+		if err != nil {
+			log.Println("paystack webhook: verify call failed:", err)
+			http.Error(w, "could not confirm transaction", http.StatusInternalServerError)
+			return
+		}
+
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plantID, func(ctx context.Context, q tenantdb.Querier) error {
 			var amountKobo int64
 			if err := q.QueryRow(ctx, `SELECT amount FROM tickets WHERE id = $1 AND plant_id = $2`, ticketID, plantID).Scan(&amountKobo); err != nil {
 				return err
 			}
-			if event.Data.Amount != amountKobo {
-				log.Printf("paystack webhook: amount mismatch for %s: webhook=%d ticket=%d", event.Data.Reference, event.Data.Amount, amountKobo)
+			if verify.Status != "success" || verify.AmountKobo != amountKobo || (verify.Currency != "" && verify.Currency != "NGN") {
+				log.Printf("paystack webhook: verify mismatch for %s: status=%s verify_amount=%d ticket_amount=%d currency=%s",
+					event.Data.Reference, verify.Status, verify.AmountKobo, amountKobo, verify.Currency)
 				return nil // don't mark paid, but don't ask Paystack to retry a mismatch either
 			}
 
@@ -307,7 +323,10 @@ func paystackWebhookHandler(s *Server) http.HandlerFunc {
 			if !ok {
 				return nil
 			}
-			return audit.Log(ctx, q, &plantID, nil, "ticket.paid", event.Data.Reference, map[string]any{"via": "webhook"})
+			return audit.Log(ctx, q, &plantID, nil, "ticket.paid", event.Data.Reference, map[string]any{
+				"via":              "webhook",
+				"gateway_response": verify.GatewayResponse,
+			})
 		})
 		if err != nil {
 			log.Println("paystack webhook: processing failed:", err)

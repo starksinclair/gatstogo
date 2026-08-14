@@ -7,6 +7,37 @@
 // documentation and reliability track record, HMAC-signed webhooks, and
 // its bank_transfer/ussd/card channels map directly onto the payment
 // options already present in the customer-facing buy form.
+//
+// Cross-checked against Paystack's public docs (paystack.com/docs) on top
+// of the live-API test in live_test.go, specifically for webhook handling
+// (cmd/server/tickets.go's paystackWebhookHandler):
+//   - Signature: HMAC-SHA512 of the raw request body, hex-encoded, in the
+//     X-Paystack-Signature header (HTTP header names are case-insensitive,
+//     so this matches Paystack's own lowercase x-paystack-signature).
+//   - Ack window: Paystack expects a response within 30 seconds; slow work
+//     should be deferred rather than done inline. This app's webhook
+//     handler does a small, fast DB transaction inline (a handful of
+//     single-row queries), which comfortably fits -- worth revisiting if
+//     that ever stops being true (e.g. under DB contention).
+//   - Retries: a non-2xx response is retried every 3 minutes for the
+//     first 4 tries, then hourly for 72 hours (live mode); hourly for 72
+//     hours in test mode. This is why paystackWebhookHandler deliberately
+//     returns 200 for "understood but not actionable" cases (unknown
+//     reference, wrong event type, a verify mismatch) but 5xx for genuine
+//     processing failures -- retrying fixes the latter, not the former.
+//   - Paystack's own guidance is to independently re-confirm a webhook via
+//     the Verify API rather than trust the webhook body's own status/
+//     amount fields at face value, even after the signature checks out --
+//     paystackWebhookHandler does this.
+//   - Paystack also supports whitelisting up to 10 known-good source IPs
+//     per environment from the dashboard (their documented webhook IPs:
+//     52.31.139.75, 52.49.173.169, 52.214.14.220, for both test and live).
+//     Deliberately NOT enforced in code here: doing that correctly depends
+//     on the production deployment's reverse-proxy/load-balancer topology
+//     (get it wrong and a real webhook's client IP silently isn't
+//     Paystack's anymore), which isn't known at this layer. Recommended as
+//     a deploy-time hardening step on top of the signature check, not a
+//     replacement for it.
 package payments
 
 import (
@@ -80,12 +111,16 @@ func (c *Client) Initialize(ctx context.Context, p InitializeParams) (*Initializ
 }
 
 // VerifyResult is the subset of Paystack's verify response this app acts
-// on.
+// on. Field names/shape confirmed directly against Paystack's real API via
+// internal/payments/live_test.go, and cross-checked against their public
+// docs (paystack.com/docs/api/transaction/).
 type VerifyResult struct {
-	Status     string `json:"status"` // "success", "failed", "abandoned", ...
-	Reference  string `json:"reference"`
-	AmountKobo int64  `json:"amount"`
-	Channel    string `json:"channel"`
+	Status          string `json:"status"` // "success", "failed", "abandoned", ...
+	Reference       string `json:"reference"`
+	AmountKobo      int64  `json:"amount"`
+	Channel         string `json:"channel"`
+	Currency        string `json:"currency"`
+	GatewayResponse string `json:"gateway_response"` // human-readable reason, useful in logs for a non-"success" status
 }
 
 // Verify checks a transaction's actual status directly with Paystack. Used

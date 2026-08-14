@@ -32,7 +32,32 @@ func NewReference(plantSlug string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return strings.ToLower(strings.TrimSpace(plantSlug)) + "-" + suffix, nil
+	return sanitizeReferenceSegment(plantSlug) + "-" + suffix, nil
+}
+
+// sanitizeReferenceSegment strips everything except what Paystack's API
+// actually allows in a transaction reference: alphanumeric characters,
+// '-', '.', and '=' (confirmed against Paystack's docs). Nothing in the
+// schema constrains plants.slug's character set, so this guards against a
+// slug containing anything else -- a space, an underscore, non-ASCII --
+// turning into a reference Paystack's Initialize API would reject
+// outright. Slugs themselves should also be validated at creation time
+// (plant onboarding, M11) since they're used in subdomain routing too
+// (which is more restrictive than this), but this is a cheap, independent
+// backstop specifically for what this package sends to Paystack.
+func sanitizeReferenceSegment(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '-', r == '.', r == '=':
+			b.WriteRune(r)
+		}
+	}
+	if b.Len() == 0 {
+		return "plant" // slug sanitized down to nothing -- fall back rather than produce an empty segment
+	}
+	return b.String()
 }
 
 // NewCode generates a 4-digit numeric redemption code -- the thing a
