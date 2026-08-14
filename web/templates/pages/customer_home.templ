@@ -2,6 +2,7 @@ package pages
 
 import (
 	"gatstogo/internal/domain"
+	"gatstogo/web/templates/components"
 	"strconv"
 	"strings"
 )
@@ -359,23 +360,28 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 		<div class="wrap buy-main">
 			<header class="topbar">
 				@customerBrand(theme)
-				<a class="nav-link" href="/receipts">My receipts</a>
+				<a class="nav-link" href="/receipts">
+					@components.Icon("receipt")
+					My receipts
+				</a>
 			</header>
-			<div class="status-strip" role="status" aria-label="Plant status">
-				<span class="status-pill"><span class="dot"></span>Open now</span>
-				<span class="status-pill quiet"><span class="dot"></span>We have gas</span>
-			</div>
 			<main>
-				<section class="card panel" aria-label="Buy gas" x-data={ buyGasAlpineInit(pricePerKgKobo) }>
+				<section class="card panel buy-card" aria-label="Buy gas" x-data={ buyGasAlpineInit(pricePerKgKobo) }>
 					<div class="form-heading">
 						<div class="form-heading-row">
 							<h1>Buy gas</h1>
-							<div class="price-chip">{ formatPricePerKg(pricePerKgKobo) } <span>/kg</span></div>
+							<div class="price-chip">
+								@components.Icon("gas-pump")
+								{ formatPricePerKg(pricePerKgKobo) } <span>/kg</span>
+							</div>
 						</div>
 						<p>No signup. Enter how much you want to spend, then your name and phone.</p>
 					</div>
 					if errorMsg != "" {
-						<div class="form-error">{ errorMsg }</div>
+						<div class="form-error">
+							@components.Icon("warning-circle")
+							{ errorMsg }
+						</div>
 					}
 					<form method="post" action="/tickets">
 						<input type="hidden" name="csrf_token" value={ csrfToken }/>
@@ -415,15 +421,21 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 						<div class="payment-list" role="radiogroup" aria-label="Payment method">
 							<label class="payment">
 								<input type="radio" name="channel" value="transfer" class="sr-only" checked/>
-								<span class="radio"></span><span>Bank transfer</span>
+								<span class="radio"></span>
+								@components.Icon("bank")
+								<span>Bank transfer</span>
 							</label>
 							<label class="payment">
 								<input type="radio" name="channel" value="terminal" class="sr-only"/>
-								<span class="radio"></span><span>POS terminal</span>
+								<span class="radio"></span>
+								@components.Icon("credit-card")
+								<span>POS terminal</span>
 							</label>
 							<label class="payment">
 								<input type="radio" name="channel" value="ussd" class="sr-only"/>
-								<span class="radio"></span><span>USSD</span>
+								<span class="radio"></span>
+								@components.Icon("device-mobile")
+								<span>USSD</span>
 							</label>
 						</div>
 						<p class="help">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p>
@@ -439,9 +451,12 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 						</div>
 					</form>
 					<div class="confirm-box">
-						<div class="label">After payment</div>
+						<div class="confirm-box-label">
+							@components.Icon("hourglass-medium")
+							After payment
+						</div>
 						<strong>Your 4-digit code appears here.</strong>
-						<div class="code">7042</div>
+						<div class="code code-placeholder" aria-hidden="true">– – – –</div>
 						<p class="help" style="margin-bottom: 0;">Join the queue as normal. Read this code to the attendant when you reach the front.</p>
 					</div>
 				</section>

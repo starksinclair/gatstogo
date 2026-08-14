@@ -105,6 +105,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	color: var(--slate-300);
 }
 .nav-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
 	flex: none;
 	color: var(--brand);
 	font-size: 16px;
@@ -178,38 +181,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-weight: 800;
 	flex: none;
 }
-.status-strip {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 10px 18px;
-	margin: 0 0 16px;
-	padding: 12px 16px;
-	border-radius: 999px;
-	background: #ECFDF5;
-	border: 1px solid #BBF7D0;
-}
-.status-pill {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 15px;
-	font-weight: 800;
-	color: var(--success-text);
-}
-.status-pill.quiet {
-	color: var(--slate-600);
-	font-weight: 700;
-}
-.status-pill.quiet .dot { background: var(--brand-secondary); }
-.dot {
-	width: 10px;
-	height: 10px;
-	border-radius: 50%;
-	background: var(--success);
-	flex: none;
-	box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
-}
 .form-heading { margin-bottom: 8px; }
 .form-heading-row {
 	display: flex;
@@ -233,8 +204,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .price-chip {
 	flex: none;
 	display: inline-flex;
-	align-items: baseline;
-	gap: 4px;
+	align-items: center;
+	gap: 6px;
 	border-radius: 8px;
 	background: var(--brand-tint);
 	color: var(--brand);
@@ -244,6 +215,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 }
+.price-chip .icon { font-size: 0.8em; }
 .price-chip span {
 	color: var(--slate-600);
 	font-size: 13px;
@@ -334,6 +306,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	border-color: var(--brand);
 	background: var(--brand-subtle);
 }
+.payment .icon { color: var(--slate-500); font-size: 20px; }
+.payment.is-selected .icon,
+.payment:has(input:checked) .icon { color: var(--brand); }
 .payment:focus-within {
 	outline: 3px solid var(--brand);
 	outline-offset: 2px;
@@ -366,6 +341,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	border: 0;
 }
 .form-error {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 	margin: 0 0 16px;
 	border-radius: 8px;
 	background: var(--danger-bg);
@@ -374,6 +352,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-size: 14px;
 	font-weight: 700;
 }
+.form-error .icon { flex: none; font-size: 18px; }
 .help {
 	margin: 0 0 16px;
 	color: var(--slate-600);
@@ -395,6 +374,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	border-top: 1px solid var(--slate-200);
 	padding-top: 18px;
 }
+.confirm-box-label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 8px;
+	color: var(--slate-600);
+	font-size: 13px;
+	font-weight: 700;
+}
 .code {
 	display: inline-block;
 	margin: 10px 0;
@@ -407,6 +395,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-weight: 800;
 	letter-spacing: 0.14em;
 	font-variant-numeric: tabular-nums;
+}
+/* The buy-gas page's "after payment" preview -- illustrative only, not a
+   real code (a real one only exists once a real ticket has actually been
+   paid for, see ticket_confirmation.templ, which reuses the base .code
+   style above unmodified). Dashed and muted rather than solid-brand so
+   it can't be mistaken for an actual redemption code at a glance. */
+.code-placeholder {
+	border-style: dashed;
+	border-color: var(--slate-300);
+	color: var(--slate-500);
+	background: var(--slate-100);
 }
 .receipts-grid {
 	display: grid;
