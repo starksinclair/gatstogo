@@ -23,7 +23,7 @@ body {
 	min-height: 100vh;
 	background: var(--paper);
 	color: var(--charcoal);
-	font-family: "IBM Plex Sans", system-ui, sans-serif;
+	font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
 	font-size: 16px;
 	line-height: 1.45;
 }
@@ -50,7 +50,7 @@ button:disabled {
 }
 
 .mono {
-	font-family: "IBM Plex Mono", ui-monospace, monospace;
+	font-family: var(--font-mono, "IBM Plex Mono", ui-monospace, monospace);
 }
 
 .terminal-page {
@@ -100,7 +100,7 @@ button:disabled {
 .end-grid h1,
 .lock-panel h1 {
 	margin: 10px 0 8px;
-	font-family: Archivo, sans-serif;
+	font-family: var(--font-display, Archivo, sans-serif);
 	font-size: clamp(30px, 4vw, 48px);
 	line-height: 0.98;
 }
@@ -141,7 +141,7 @@ button:disabled {
 	margin: 0 auto 8px;
 	border: 2px solid var(--charcoal);
 	border-radius: 50%;
-	font-family: "IBM Plex Mono", ui-monospace, monospace;
+	font-family: var(--font-mono, "IBM Plex Mono", ui-monospace, monospace);
 	font-size: 13px;
 	font-weight: 900;
 }
@@ -194,7 +194,7 @@ button:disabled {
 .config-button strong {
 	display: block;
 	margin-bottom: 4px;
-	font-family: Archivo, sans-serif;
+	font-family: var(--font-display, Archivo, sans-serif);
 	font-size: 20px;
 }
 
@@ -292,7 +292,7 @@ button:disabled {
 	border: 3px solid var(--charcoal);
 	background: #FFFFFF;
 	color: var(--charcoal);
-	font-family: "IBM Plex Mono", ui-monospace, monospace;
+	font-family: var(--font-mono, "IBM Plex Mono", ui-monospace, monospace);
 	font-size: 34px;
 	font-weight: 900;
 }
@@ -334,7 +334,7 @@ button:disabled {
 	place-items: center;
 	border: 2px solid var(--off-white);
 	color: var(--off-white);
-	font-family: Archivo, sans-serif;
+	font-family: var(--font-display, Archivo, sans-serif);
 	font-size: 12px;
 }
 
@@ -368,7 +368,7 @@ button:disabled {
 	min-height: 40px;
 	border: 1px solid #475569;
 	padding: 0 12px;
-	font-family: "IBM Plex Mono", ui-monospace, monospace;
+	font-family: var(--font-mono, "IBM Plex Mono", ui-monospace, monospace);
 }
 
 .shift-strip button {
@@ -472,7 +472,7 @@ button:disabled {
 
 .initials {
 	margin: 14px 0 8px;
-	font-family: Archivo, sans-serif;
+	font-family: var(--font-display, Archivo, sans-serif);
 	font-size: 56px;
 	font-weight: 900;
 	text-align: center;
@@ -634,7 +634,7 @@ button:disabled {
 	border: 2px solid var(--amber);
 	background: #FFFBEB;
 	color: #92400E;
-	font-family: "IBM Plex Mono", ui-monospace, monospace;
+	font-family: var(--font-mono, "IBM Plex Mono", ui-monospace, monospace);
 	font-size: 18px;
 	font-weight: 900;
 }
@@ -648,7 +648,7 @@ button:disabled {
 .empty-token {
 	width: auto;
 	padding: 0 14px;
-	font-family: "IBM Plex Sans", system-ui, sans-serif !important;
+	font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif) !important;
 	font-size: 15px !important;
 }
 

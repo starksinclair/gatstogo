@@ -21,7 +21,7 @@ body {
 	margin: 0;
 	background: var(--page);
 	color: var(--ink);
-	font-family: "IBM Plex Sans", system-ui, sans-serif;
+	font-family: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
 	font-size: 14px;
 	line-height: 1.45;
 }
@@ -50,7 +50,7 @@ a { color: inherit; text-decoration: none; }
 	gap: 10px;
 	padding: 4px 4px 16px;
 	border-bottom: 1px solid #303941;
-	font-family: Archivo, sans-serif;
+	font-family: var(--font-display, Archivo, sans-serif);
 	font-weight: 800;
 	letter-spacing: 0.02em;
 }
@@ -139,7 +139,7 @@ a { color: inherit; text-decoration: none; }
 	margin-bottom: 6px;
 }
 h1, h2, h3 {
-	font-family: Archivo, sans-serif;
+	font-family: var(--font-display, Archivo, sans-serif);
 	letter-spacing: 0;
 	margin: 0;
 }
@@ -147,7 +147,7 @@ h1 { font-size: clamp(26px, 4vw, 42px); line-height: 0.98; }
 h2 { font-size: 18px; }
 h3 { font-size: 15px; }
 .muted { color: var(--muted); }
-.mono { font-family: "IBM Plex Mono", monospace; }
+.mono { font-family: var(--font-mono, "IBM Plex Mono", monospace); }
 .toolbar {
 	display: flex;
 	flex-wrap: wrap;
@@ -231,7 +231,7 @@ h3 { font-size: 15px; }
 	text-transform: uppercase;
 }
 .kpi {
-	font-family: "IBM Plex Mono", monospace;
+	font-family: var(--font-mono, "IBM Plex Mono", monospace);
 	font-size: clamp(23px, 3vw, 34px);
 	font-weight: 800;
 	line-height: 1;
@@ -290,7 +290,7 @@ td {
 	padding: 12px;
 	vertical-align: top;
 }
-.num { text-align: right; font-family: "IBM Plex Mono", monospace; }
+.num { text-align: right; font-family: var(--font-mono, "IBM Plex Mono", monospace); }
 .empty {
 	border: 1px dashed #BAC5BD;
 	background: #F9FBF8;
@@ -336,7 +336,7 @@ td {
 	gap: 12px;
 }
 .receipt-code {
-	font-family: "IBM Plex Mono", monospace;
+	font-family: var(--font-mono, "IBM Plex Mono", monospace);
 	font-size: 48px;
 	font-weight: 800;
 	line-height: 1;
@@ -436,7 +436,7 @@ td {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	font-family: Archivo, sans-serif;
+	font-family: var(--font-display, Archivo, sans-serif);
 	font-weight: 800;
 	letter-spacing: 0.02em;
 	color: var(--ink);
@@ -461,7 +461,7 @@ td {
 	border-left: 2px solid var(--mint);
 }
 .login-card h1 {
-	font-family: Archivo, sans-serif;
+	font-family: var(--font-display, Archivo, sans-serif);
 	font-size: 20px;
 	margin: 0;
 }

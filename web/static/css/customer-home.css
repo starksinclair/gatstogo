@@ -29,7 +29,7 @@ body {
 	margin: 0;
 	background: var(--page);
 	color: var(--slate-950);
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-family: var(--font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
 	font-size: 17px;
 	line-height: 1.5;
 }
@@ -83,6 +83,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .logo-mark img { width: 100%; height: 100%; object-fit: cover; }
 .brand-name {
 	color: var(--slate-950);
+	font-family: var(--font-display, inherit);
 	font-size: 18px;
 	font-weight: 800;
 	overflow-wrap: anywhere;
@@ -219,6 +220,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .form-heading h1 {
 	margin: 0;
+	font-family: var(--font-display, inherit);
 	font-size: 28px;
 	line-height: 1.15;
 	font-weight: 800;
@@ -414,6 +416,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .page-title {
 	margin: 0 0 8px;
+	font-family: var(--font-display, inherit);
 	font-size: 28px;
 	line-height: 1.15;
 	font-weight: 800;
