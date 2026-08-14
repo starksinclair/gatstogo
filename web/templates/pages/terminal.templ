@@ -183,7 +183,16 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						render();
 					}
 					function setTab(tab) {
-						if (state.config === "operator" && tab !== "fill") return;
+						// Operators have no cash-sale UI (the nav bar doesn't
+						// even render that tab button for them -- see
+						// renderMain), so this only matters as a defensive
+						// backstop against reaching "cash" some other way.
+						// It must NOT block "end" -- every role can end
+						// their own shift; this used to say `tab !== "fill"`,
+						// which silently broke the End shift button for
+						// operators (setTab("end") was refused the same as
+						// setTab("cash") would have been).
+						if (state.config === "operator" && tab === "cash") return;
 						state.tab = tab;
 						render();
 					}
