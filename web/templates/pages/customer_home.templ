@@ -368,6 +368,43 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 						fallbackCopy();
 					}
 				});
+
+				// Live countdown on the receipts one-time-code verify step
+				// (data-code-timer, seconds). This script tag sits in <head>,
+				// before the elements it targets are parsed, so the lookup
+				// itself has to wait for DOMContentLoaded -- unlike the two
+				// listeners above, which attach to `document` and don't need
+				// the target elements to exist yet. Mirrors receipts.CodeTTL
+				// (10 minutes) server-side; purely cosmetic; the server is
+				// still the one authority on whether a code is actually still
+				// valid; a stopped clock here never extends or shortens that.
+				document.addEventListener("DOMContentLoaded", function () {
+					var timers = document.querySelectorAll("[data-code-timer]");
+					for (var i = 0; i < timers.length; i++) {
+						(function (el) {
+							var seconds = parseInt(el.dataset.codeTimer, 10);
+							if (!seconds || seconds <= 0) return;
+							var valueEl = el.querySelector(".code-timer-value");
+							function render() {
+								var m = Math.floor(seconds / 60);
+								var s = seconds % 60;
+								if (valueEl) valueEl.textContent = m + ":" + (s < 10 ? "0" : "") + s;
+							}
+							render();
+							var interval = setInterval(function () {
+								seconds -= 1;
+								if (seconds <= 0) {
+									clearInterval(interval);
+									el.classList.add("is-expired");
+									el.textContent = "";
+									el.append("This code has expired -- request a new one.");
+									return;
+								}
+								render();
+							}, 1000);
+						})(timers[i]);
+					}
+				});
 			</script>
 			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -598,7 +635,11 @@ templ receiptsVerifyView(data ReceiptsViewData) {
 			@components.Icon("shield-check")
 		</div>
 		<h1 class="page-headline">Enter your code</h1>
-		<p class="lede">We sent a 6-digit code by SMS to { data.Phone }. It expires in 10 minutes.</p>
+		<p class="lede">We sent a 6-digit code by SMS to { data.Phone }.</p>
+		<p class="code-timer" data-code-timer="600" role="status" aria-live="polite">
+			@components.Icon("clock")
+			<span>Expires in <span class="code-timer-value">10:00</span></span>
+		</p>
 		<form method="post" action="/receipts/verify">
 			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 			<input type="hidden" name="phone" value={ data.Phone }/>

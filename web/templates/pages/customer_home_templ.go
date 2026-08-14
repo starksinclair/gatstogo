@@ -379,14 +379,14 @@ func customerPageShell(theme customerHomeTheme, title string, content templ.Comp
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><script>\n\t\t\t\tfunction buyGasForm(pricePerKg) {\n\t\t\t\t\treturn {\n\t\t\t\t\t\tamount: '',\n\t\t\t\t\t\t// Tracks the same radio group the server reads via\n\t\t\t\t\t\t// name=\"channel\" -- this is purely an additional\n\t\t\t\t\t\t// client-side read for the live order-summary sidebar\n\t\t\t\t\t\t// (see .summary-card), not a replacement for the\n\t\t\t\t\t\t// native radios' own name/value/checked, which are\n\t\t\t\t\t\t// still what actually gets submitted.\n\t\t\t\t\t\tchannel: 'transfer',\n\t\t\t\t\t\tpricePerKg: pricePerKg,\n\t\t\t\t\t\tget naira() {\n\t\t\t\t\t\t\tvar n = Number(this.amount);\n\t\t\t\t\t\t\treturn Number.isFinite(n) && n > 0 ? Math.round(n) : 0;\n\t\t\t\t\t\t},\n\t\t\t\t\t\tget kg() {\n\t\t\t\t\t\t\treturn this.naira > 0 ? this.naira / this.pricePerKg : 0;\n\t\t\t\t\t\t},\n\t\t\t\t\t\tget channelLabel() {\n\t\t\t\t\t\t\tif (this.channel === 'transfer') return 'Bank transfer';\n\t\t\t\t\t\t\tif (this.channel === 'terminal') return 'POS terminal';\n\t\t\t\t\t\t\tif (this.channel === 'ussd') return 'USSD';\n\t\t\t\t\t\t\treturn '';\n\t\t\t\t\t\t},\n\t\t\t\t\t\tformatNaira: function (n) {\n\t\t\t\t\t\t\treturn '₦' + Number(n).toLocaleString('en-NG');\n\t\t\t\t\t\t},\n\t\t\t\t\t\tformatKg: function (n) {\n\t\t\t\t\t\t\treturn n.toFixed(2) + ' kg';\n\t\t\t\t\t\t}\n\t\t\t\t\t};\n\t\t\t\t}\n\n\t\t\t\t// Copy-to-clipboard for a real redemption code (ticket\n\t\t\t\t// confirmation, receipt detail -- never the buy-gas page's\n\t\t\t\t// illustrative placeholder, which never renders a\n\t\t\t\t// .copy-button at all). One delegated listener rather than\n\t\t\t\t// per-button wiring, so it works for however many\n\t\t\t\t// .copy-button elements a given page has, present or future.\n\t\t\t\tdocument.addEventListener(\"click\", function (event) {\n\t\t\t\t\tvar btn = event.target.closest(\".copy-button\");\n\t\t\t\t\tif (!btn) return;\n\t\t\t\t\tvar code = btn.dataset.copy;\n\t\t\t\t\tif (!code) return;\n\n\t\t\t\t\tvar label = btn.querySelector(\".copy-label\");\n\t\t\t\t\tfunction markCopied() {\n\t\t\t\t\t\tbtn.classList.add(\"is-copied\");\n\t\t\t\t\t\tif (label) label.textContent = \"Copied\";\n\t\t\t\t\t\tclearTimeout(btn._copyResetTimer);\n\t\t\t\t\t\tbtn._copyResetTimer = setTimeout(function () {\n\t\t\t\t\t\t\tbtn.classList.remove(\"is-copied\");\n\t\t\t\t\t\t\tif (label) label.textContent = \"Copy\";\n\t\t\t\t\t\t}, 1600);\n\t\t\t\t\t}\n\t\t\t\t\tfunction fallbackCopy() {\n\t\t\t\t\t\tvar ta = document.createElement(\"textarea\");\n\t\t\t\t\t\tta.value = code;\n\t\t\t\t\t\tta.style.position = \"fixed\";\n\t\t\t\t\t\tta.style.opacity = \"0\";\n\t\t\t\t\t\tdocument.body.appendChild(ta);\n\t\t\t\t\t\tta.focus();\n\t\t\t\t\t\tta.select();\n\t\t\t\t\t\ttry { document.execCommand(\"copy\"); markCopied(); } catch (e) {}\n\t\t\t\t\t\tdocument.body.removeChild(ta);\n\t\t\t\t\t}\n\n\t\t\t\t\tif (navigator.clipboard && navigator.clipboard.writeText) {\n\t\t\t\t\t\tnavigator.clipboard.writeText(code).then(markCopied, fallbackCopy);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tfallbackCopy();\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t</script><script defer src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js\"></script><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/customer-home.css\"></head><body style=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><script>\n\t\t\t\tfunction buyGasForm(pricePerKg) {\n\t\t\t\t\treturn {\n\t\t\t\t\t\tamount: '',\n\t\t\t\t\t\t// Tracks the same radio group the server reads via\n\t\t\t\t\t\t// name=\"channel\" -- this is purely an additional\n\t\t\t\t\t\t// client-side read for the live order-summary sidebar\n\t\t\t\t\t\t// (see .summary-card), not a replacement for the\n\t\t\t\t\t\t// native radios' own name/value/checked, which are\n\t\t\t\t\t\t// still what actually gets submitted.\n\t\t\t\t\t\tchannel: 'transfer',\n\t\t\t\t\t\tpricePerKg: pricePerKg,\n\t\t\t\t\t\tget naira() {\n\t\t\t\t\t\t\tvar n = Number(this.amount);\n\t\t\t\t\t\t\treturn Number.isFinite(n) && n > 0 ? Math.round(n) : 0;\n\t\t\t\t\t\t},\n\t\t\t\t\t\tget kg() {\n\t\t\t\t\t\t\treturn this.naira > 0 ? this.naira / this.pricePerKg : 0;\n\t\t\t\t\t\t},\n\t\t\t\t\t\tget channelLabel() {\n\t\t\t\t\t\t\tif (this.channel === 'transfer') return 'Bank transfer';\n\t\t\t\t\t\t\tif (this.channel === 'terminal') return 'POS terminal';\n\t\t\t\t\t\t\tif (this.channel === 'ussd') return 'USSD';\n\t\t\t\t\t\t\treturn '';\n\t\t\t\t\t\t},\n\t\t\t\t\t\tformatNaira: function (n) {\n\t\t\t\t\t\t\treturn '₦' + Number(n).toLocaleString('en-NG');\n\t\t\t\t\t\t},\n\t\t\t\t\t\tformatKg: function (n) {\n\t\t\t\t\t\t\treturn n.toFixed(2) + ' kg';\n\t\t\t\t\t\t}\n\t\t\t\t\t};\n\t\t\t\t}\n\n\t\t\t\t// Copy-to-clipboard for a real redemption code (ticket\n\t\t\t\t// confirmation, receipt detail -- never the buy-gas page's\n\t\t\t\t// illustrative placeholder, which never renders a\n\t\t\t\t// .copy-button at all). One delegated listener rather than\n\t\t\t\t// per-button wiring, so it works for however many\n\t\t\t\t// .copy-button elements a given page has, present or future.\n\t\t\t\tdocument.addEventListener(\"click\", function (event) {\n\t\t\t\t\tvar btn = event.target.closest(\".copy-button\");\n\t\t\t\t\tif (!btn) return;\n\t\t\t\t\tvar code = btn.dataset.copy;\n\t\t\t\t\tif (!code) return;\n\n\t\t\t\t\tvar label = btn.querySelector(\".copy-label\");\n\t\t\t\t\tfunction markCopied() {\n\t\t\t\t\t\tbtn.classList.add(\"is-copied\");\n\t\t\t\t\t\tif (label) label.textContent = \"Copied\";\n\t\t\t\t\t\tclearTimeout(btn._copyResetTimer);\n\t\t\t\t\t\tbtn._copyResetTimer = setTimeout(function () {\n\t\t\t\t\t\t\tbtn.classList.remove(\"is-copied\");\n\t\t\t\t\t\t\tif (label) label.textContent = \"Copy\";\n\t\t\t\t\t\t}, 1600);\n\t\t\t\t\t}\n\t\t\t\t\tfunction fallbackCopy() {\n\t\t\t\t\t\tvar ta = document.createElement(\"textarea\");\n\t\t\t\t\t\tta.value = code;\n\t\t\t\t\t\tta.style.position = \"fixed\";\n\t\t\t\t\t\tta.style.opacity = \"0\";\n\t\t\t\t\t\tdocument.body.appendChild(ta);\n\t\t\t\t\t\tta.focus();\n\t\t\t\t\t\tta.select();\n\t\t\t\t\t\ttry { document.execCommand(\"copy\"); markCopied(); } catch (e) {}\n\t\t\t\t\t\tdocument.body.removeChild(ta);\n\t\t\t\t\t}\n\n\t\t\t\t\tif (navigator.clipboard && navigator.clipboard.writeText) {\n\t\t\t\t\t\tnavigator.clipboard.writeText(code).then(markCopied, fallbackCopy);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tfallbackCopy();\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\t// Live countdown on the receipts one-time-code verify step\n\t\t\t\t// (data-code-timer, seconds). This script tag sits in <head>,\n\t\t\t\t// before the elements it targets are parsed, so the lookup\n\t\t\t\t// itself has to wait for DOMContentLoaded -- unlike the two\n\t\t\t\t// listeners above, which attach to `document` and don't need\n\t\t\t\t// the target elements to exist yet. Mirrors receipts.CodeTTL\n\t\t\t\t// (10 minutes) server-side; purely cosmetic; the server is\n\t\t\t\t// still the one authority on whether a code is actually still\n\t\t\t\t// valid; a stopped clock here never extends or shortens that.\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tvar timers = document.querySelectorAll(\"[data-code-timer]\");\n\t\t\t\t\tfor (var i = 0; i < timers.length; i++) {\n\t\t\t\t\t\t(function (el) {\n\t\t\t\t\t\t\tvar seconds = parseInt(el.dataset.codeTimer, 10);\n\t\t\t\t\t\t\tif (!seconds || seconds <= 0) return;\n\t\t\t\t\t\t\tvar valueEl = el.querySelector(\".code-timer-value\");\n\t\t\t\t\t\t\tfunction render() {\n\t\t\t\t\t\t\t\tvar m = Math.floor(seconds / 60);\n\t\t\t\t\t\t\t\tvar s = seconds % 60;\n\t\t\t\t\t\t\t\tif (valueEl) valueEl.textContent = m + \":\" + (s < 10 ? \"0\" : \"\") + s;\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\trender();\n\t\t\t\t\t\t\tvar interval = setInterval(function () {\n\t\t\t\t\t\t\t\tseconds -= 1;\n\t\t\t\t\t\t\t\tif (seconds <= 0) {\n\t\t\t\t\t\t\t\t\tclearInterval(interval);\n\t\t\t\t\t\t\t\t\tel.classList.add(\"is-expired\");\n\t\t\t\t\t\t\t\t\tel.textContent = \"\";\n\t\t\t\t\t\t\t\t\tel.append(\"This code has expired -- request a new one.\");\n\t\t\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\trender();\n\t\t\t\t\t\t\t}, 1000);\n\t\t\t\t\t\t})(timers[i]);\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t</script><script defer src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js\"></script><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/customer-home.css\"></head><body style=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(customerCSSVars(theme))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 378, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 415, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -447,7 +447,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(theme.LogoPath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 393, Col: 47}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 430, Col: 47}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 			if templ_7745c5c3_Err != nil {
@@ -465,7 +465,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 396, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 433, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -478,7 +478,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Address)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 398, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 435, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -491,7 +491,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 		var templ_7745c5c3_Var10 templ.SafeURL
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(theme.PhoneHref)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 400, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 437, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -504,7 +504,7 @@ func customerBrand(theme customerHomeTheme) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(theme.Phone)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 400, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 437, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -562,7 +562,7 @@ func customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfToke
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(buyGasAlpineInit(pricePerKgKobo))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 418, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 455, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 		if templ_7745c5c3_Err != nil {
@@ -584,7 +584,7 @@ func customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfToke
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(errorMsg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 425, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 462, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -602,7 +602,7 @@ func customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfToke
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 429, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 466, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 		if templ_7745c5c3_Err != nil {
@@ -643,7 +643,7 @@ func customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfToke
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(formatPricePerKg(pricePerKgKobo))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 502, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 539, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -718,7 +718,7 @@ func customerReceiptsContent(theme customerHomeTheme, data ReceiptsViewData) tem
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(data.ErrorMsg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 559, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 596, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -790,7 +790,7 @@ func receiptsLookupView(data ReceiptsViewData) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 582, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 619, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
 		if templ_7745c5c3_Err != nil {
@@ -848,39 +848,47 @@ func receiptsVerifyView(data ReceiptsViewData) templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(data.Phone)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 601, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 638, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, ". It expires in 10 minutes.</p><form method=\"post\" action=\"/receipts/verify\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, ".</p><p class=\"code-timer\" data-code-timer=\"600\" role=\"status\" aria-live=\"polite\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("clock").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<span>Expires in <span class=\"code-timer-value\">10:00</span></span></p><form method=\"post\" action=\"/receipts/verify\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 603, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 644, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\"> <input type=\"hidden\" name=\"phone\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\"> <input type=\"hidden\" name=\"phone\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Phone)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 604, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 645, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var24)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\"><div class=\"field-underline\"><label for=\"code\">6-digit code</label> <input id=\"code\" type=\"text\" name=\"code\" inputmode=\"numeric\" pattern=\"[0-9]{6}\" maxlength=\"6\" placeholder=\"123456\" autocomplete=\"one-time-code\" autofocus required></div><button class=\"button-primary full-width\" type=\"submit\">Verify")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\"><div class=\"field-underline\"><label for=\"code\">6-digit code</label> <input id=\"code\" type=\"text\" name=\"code\" inputmode=\"numeric\" pattern=\"[0-9]{6}\" maxlength=\"6\" placeholder=\"123456\" autocomplete=\"one-time-code\" autofocus required></div><button class=\"button-primary full-width\" type=\"submit\">Verify")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -888,33 +896,33 @@ func receiptsVerifyView(data ReceiptsViewData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</button></form><form method=\"post\" action=\"/receipts/lookup\" class=\"resend-form\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</button></form><form method=\"post\" action=\"/receipts/lookup\" class=\"resend-form\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 615, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 656, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\"> <input type=\"hidden\" name=\"phone\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\"> <input type=\"hidden\" name=\"phone\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Phone)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 616, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 657, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var26)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\"> <button class=\"text-button full-width\" type=\"submit\">Resend code</button></form></main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\"> <button class=\"text-button full-width\" type=\"submit\">Resend code</button></form></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -943,25 +951,25 @@ func receiptsListView(data ReceiptsViewData) templ.Component {
 			templ_7745c5c3_Var27 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<main class=\"receipts-layout\"><aside class=\"receipts-list-col\"><div class=\"section-eyebrow\">Receipts</div><p class=\"lede\">Recent purchases linked to ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<main class=\"receipts-layout\"><aside class=\"receipts-list-col\"><div class=\"section-eyebrow\">Receipts</div><p class=\"lede\">Recent purchases linked to ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(data.Phone)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 626, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 667, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, ".</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, ".</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.Tickets) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<div class=\"empty-state\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<div class=\"empty-state\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -969,12 +977,12 @@ func receiptsListView(data ReceiptsViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<strong>No purchases yet</strong><p>Receipts for anything bought with this phone number will show up here.</p><a class=\"text-button\" href=\"/\">Buy gas</a></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<strong>No purchases yet</strong><p>Receipts for anything bought with this phone number will show up here.</p><a class=\"text-button\" href=\"/\">Buy gas</a></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<div class=\"receipt-list\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<div class=\"receipt-list\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -984,7 +992,7 @@ func receiptsListView(data ReceiptsViewData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<a class=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<a class=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -997,46 +1005,46 @@ func receiptsListView(data ReceiptsViewData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "\" href=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\" href=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var31 templ.SafeURL
 				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinURLErrs(item.Href)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 637, Col: 67}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 678, Col: 67}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\"><div><strong>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "\"><div><strong>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var32 string
 				templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(item.Kg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 638, Col: 29}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 679, Col: 29}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</strong><span class=\"muted\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</strong><span class=\"muted\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var33 string
 				templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(item.When)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 638, Col: 71}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 679, Col: 71}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</span></div><div class=\"receipt-item-end\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</span></div><div class=\"receipt-item-end\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1045,7 +1053,7 @@ func receiptsListView(data ReceiptsViewData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<span class=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<span class=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1058,43 +1066,43 @@ func receiptsListView(data ReceiptsViewData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var36 string
 				templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(item.StatusLabel)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 640, Col: 72}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 681, Col: 72}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</span> <strong>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</span> <strong>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var37 string
 				templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(item.Amount)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 641, Col: 29}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 682, Col: 29}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</strong></div></a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</strong></div></a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</aside>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</aside>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1104,7 +1112,7 @@ func receiptsListView(data ReceiptsViewData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1133,46 +1141,46 @@ func receiptDetailView(d ReceiptDetail) templ.Component {
 			templ_7745c5c3_Var38 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<section class=\"receipt-detail-col\" aria-label=\"Receipt proof\"><div class=\"detail-top\"><div><div class=\"section-eyebrow\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<section class=\"receipt-detail-col\" aria-label=\"Receipt proof\"><div class=\"detail-top\"><div><div class=\"section-eyebrow\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var39 string
 		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(d.StatusLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 658, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 699, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><div class=\"muted\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"muted\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var40 string
 		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(d.When)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 659, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 700, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, " · Ticket ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, " · Ticket ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var41 string
 		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(d.Reference)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 659, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 700, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1181,7 +1189,7 @@ func receiptDetailView(d ReceiptDetail) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "<span class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "<span class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1194,111 +1202,111 @@ func receiptDetailView(d ReceiptDetail) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var44 string
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(d.StatusLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 661, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 702, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</span></div><div class=\"big-figure\"><span class=\"big-figure-label\">Gas you bought</span> <span class=\"big-figure-value\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</span></div><div class=\"big-figure\"><span class=\"big-figure-label\">Gas you bought</span> <span class=\"big-figure-value\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(d.Kg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 665, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 706, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</span></div><div class=\"detail-rows\"><div class=\"detail-row\"><span>Weight received</span><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</span></div><div class=\"detail-rows\"><div class=\"detail-row\"><span>Weight received</span><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var46 string
 		templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(d.NetKg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 668, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 709, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</span></div><div class=\"detail-row\"><span>Rate per kg</span><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</span></div><div class=\"detail-row\"><span>Rate per kg</span><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(d.Rate)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 669, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 710, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</span></div><div class=\"detail-row\"><span>Amount paid</span><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</span></div><div class=\"detail-row\"><span>Amount paid</span><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var48 string
 		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(d.Amount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 670, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 711, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</span></div><div class=\"detail-row\"><span>Paid by</span><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</span></div><div class=\"detail-row\"><span>Paid by</span><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var49 string
 		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(d.Channel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 671, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 712, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</span></div></div><div class=\"after-payment\"><div class=\"section-eyebrow\">Redemption code</div><div class=\"code-row\"><div class=\"code-preview\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</span></div></div><div class=\"after-payment\"><div class=\"section-eyebrow\">Redemption code</div><div class=\"code-row\"><div class=\"code-preview\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var50 string
 		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(d.Code)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 676, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 717, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</div><button type=\"button\" class=\"copy-button\" data-copy=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</div><button type=\"button\" class=\"copy-button\" data-copy=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var51 string
 		templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.ResolveAttributeValue(d.Code)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 677, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 718, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var51)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "\" aria-label=\"Copy code\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "\" aria-label=\"Copy code\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1306,12 +1314,12 @@ func receiptDetailView(d ReceiptDetail) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "<span class=\"copy-label\">Copy</span></button></div><p class=\"fine-print\">Show this code to the attendant to collect your gas.</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "<span class=\"copy-label\">Copy</span></button></div><p class=\"fine-print\">Show this code to the attendant to collect your gas.</p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if d.ConfirmedAt != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "<div class=\"confirmed-strip\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "<div class=\"confirmed-strip\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1319,56 +1327,56 @@ func receiptDetailView(d ReceiptDetail) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "Confirmed ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "Confirmed ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var52 string
 			templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(d.ConfirmedAt)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 687, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 728, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "<div class=\"detail-actions\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "<div class=\"detail-actions\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if d.CanConfirm {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "<form method=\"post\" action=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<form method=\"post\" action=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var53 templ.SafeURL
 			templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinURLErrs(d.ConfirmAction)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 692, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 733, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var54 string
 			templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.ResolveAttributeValue(d.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 693, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/customer_home.templ`, Line: 734, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var54)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "\"> <button class=\"button-primary\" type=\"submit\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "\"> <button class=\"button-primary\" type=\"submit\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1376,12 +1384,12 @@ func receiptDetailView(d ReceiptDetail) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "Confirm received</button></form>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "Confirm received</button></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "<a class=\"text-button\" href=\"/\">Buy again</a></div></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "<a class=\"text-button\" href=\"/\">Buy again</a></div></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
