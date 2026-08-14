@@ -6,6 +6,13 @@
 --     phone: 08012345678   password: sunrise-owner-dev
 --   Cashier PIN login (http://sunrise.localhost:8080/terminal)
 --     phone: 08098765432   PIN: 1234
+--   Platform admin login (http://localhost:8080/admin/login)
+--     phone: 08000000000   password: platform-admin-dev
+--   Note: there is currently no bootstrap mechanism for creating the
+--   *first* admin user against a real production database (no seed data
+--   runs there, and every /admin route requires an existing admin
+--   session) -- provisioning one for real is an open gap, not something
+--   this seed row solves beyond local dev/demo.
 -- The hashes below are real bcrypt hashes of those two values (generated
 -- with golang.org/x/crypto/bcrypt, DefaultCost -- see internal/auth), not
 -- placeholders -- this seed data was previously unusable for actually
@@ -47,6 +54,22 @@ VALUES (
            '08098765432',
            'cashier',
            '$2a$10$TduoJx1ueqG/UMhrQ4Opnu7o4jGlkoaJu2oZFgHhLdpiTmWnqZmzm', -- "1234"
+           true
+       );
+
+-- Insert a platform admin. Admin access is platform-wide, not scoped to
+-- whichever plant this row's plant_id happens to point at (see
+-- internal/session.Data's own doc comment) -- plant_id only exists here
+-- because the schema's users table requires one for every row regardless
+-- of role.
+INSERT INTO users (id, plant_id, name, phone, role, password_hash, active)
+VALUES (
+           '44444444-4444-4444-4444-444444444444',
+           '11111111-1111-1111-1111-111111111111',
+           'Platform Admin',
+           '08000000000',
+           'admin',
+           '$2a$10$1.oUke7upONDQt.3LeGF9.J37sL9j3TZEr.rAtwU3zJzYzGpIuuWO', -- "platform-admin-dev"
            true
        );
 
