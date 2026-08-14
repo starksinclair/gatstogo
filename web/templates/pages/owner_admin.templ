@@ -26,6 +26,8 @@ type OwnerDashboardData struct {
 	PriceHistory    []OwnerPriceRow
 	Activity        []OwnerActivityRow
 	CSRFToken       string
+	ErrorMessage    string
+	HasOpenShift    bool
 }
 
 type OwnerTicketRow struct {
@@ -46,14 +48,23 @@ type OwnerTicketRow struct {
 }
 
 type OwnerStaffRow struct {
+	ID          string
 	Name        string
 	Phone       string
 	Role        string
 	Status      string
-	SalesCount  int64
-	ShiftsCount int64
-	Joined      string
-	BadgeCSS    string
+	Active      bool
+	// CanToggleActive is false for the owner's own row (and any
+	// platform-admin row that happens to share this plant_id) --
+	// internal/staff.SetActive already refuses those server-side, but the
+	// button shouldn't be offered at all where it could only ever fail,
+	// and specifically not where clicking it could lock the owner out of
+	// their own dashboard.
+	CanToggleActive bool
+	SalesCount      int64
+	ShiftsCount     int64
+	Joined          string
+	BadgeCSS        string
 }
 
 type OwnerShiftRow struct {
@@ -186,8 +197,13 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 						});
 						var select = root.querySelector("[data-tab-select]");
 						if (select) select.addEventListener("change", function () { show(select.value); });
+						// A write action (set price, add staff, ...) redirects back
+						// to #<tab> so the owner lands back where they were, not on
+						// Overview -- see cmd/server/owner_write.go.
+						var hashTab = location.hash.replace("#", "");
+						var hashTarget = hashTab && root.querySelector('[data-tab-panel="' + hashTab + '"]');
 						var initial = root.querySelector("[data-tab].active");
-						show(initial ? initial.dataset.tab : "overview");
+						show(hashTarget ? hashTab : (initial ? initial.dataset.tab : "overview"));
 					});
 				});
 			</script>
@@ -267,6 +283,9 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			<button class="btn primary" type="button">Set price</button>
 		</div>
 	</div>
+	if data.ErrorMessage != "" {
+		<div class="owner-error">{ data.ErrorMessage }</div>
+	}
 	<section class="tab-panel active" data-tab-panel="overview">
 		<div class="kpi-grid">
 			<div class="kpi-card"><div class="kpi-label">Money today</div><div class="kpi">{ data.MoneyToday }</div><div class="kpi-small">{ data.SalesCount } sales recorded</div></div>
@@ -360,13 +379,27 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				</div>
 			</div>
 			<div class="panel panel-pad">
-				<div class="section-title"><h2>Record cash count</h2><span class="badge badge-warn">UI only</span></div>
-				<div class="form-grid">
-					<div class="field"><label>Counted cash</label><input type="text" placeholder="₦0"/></div>
-					<div class="field"><label>Kind</label><select><option>Closing count</option><option>Deposit</option><option>Payout</option></select></div>
-					<div class="field" style="grid-column: 1 / -1;"><label>Note</label><textarea placeholder="Optional note for the owner"></textarea></div>
-				</div>
-				<div class="action-strip"><button class="btn primary" type="button">Save count</button><button class="btn" type="button">Print drawer sheet</button></div>
+				<div class="section-title"><h2>Record cash count</h2><span class="badge badge-ok">live</span></div>
+				if data.HasOpenShift {
+					<form method="post" action="/owner/cash-movements">
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<div class="form-grid">
+							<div class="field"><label>Counted cash</label><input type="text" name="amount" placeholder="0" inputmode="decimal" required/></div>
+							<div class="field">
+								<label>Kind</label>
+								<select name="kind">
+									<option value="count">Closing count</option>
+									<option value="deposit">Deposit</option>
+									<option value="payout">Payout</option>
+								</select>
+							</div>
+							<div class="field" style="grid-column: 1 / -1;"><label>Note</label><textarea name="note" placeholder="Optional note for the owner"></textarea></div>
+						</div>
+						<div class="action-strip"><button class="btn primary" type="submit">Save count</button></div>
+					</form>
+				} else {
+					<p class="muted">No shift is open right now -- a cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>
+				}
 			</div>
 		</div>
 	</section>
@@ -392,27 +425,53 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<div class="section-title"><h2>Staff access</h2><span class="badge badge-ok">users</span></div>
 				<div class="table-wrap">
 					<table style="min-width:680px">
-						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th></tr></thead>
+						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th><th></th></tr></thead>
 						<tbody>
 							if len(data.Staff) == 0 {
-								<tr><td colspan="7"><div class="empty">No staff yet. Placeholder: owners, managers, cashiers, and operators will appear here.</div></td></tr>
+								<tr><td colspan="8"><div class="empty">No staff yet. Placeholder: owners, managers, cashiers, and operators will appear here.</div></td></tr>
 							}
 							for _, row := range data.Staff {
-								<tr><td><strong>{ row.Name }</strong></td><td class="mono">{ row.Phone }</td><td>{ row.Role }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td class="num">{ row.SalesCount }</td><td class="num">{ row.ShiftsCount }</td><td>{ row.Joined }</td></tr>
+								<tr>
+									<td><strong>{ row.Name }</strong></td><td class="mono">{ row.Phone }</td><td>{ row.Role }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td class="num">{ row.SalesCount }</td><td class="num">{ row.ShiftsCount }</td><td>{ row.Joined }</td>
+									<td>
+										if row.CanToggleActive {
+											<form method="post" action={ templ.SafeURL("/owner/staff/" + row.ID + "/status") }>
+												<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+												if row.Active {
+													<input type="hidden" name="active" value="false"/>
+													<button class="btn" type="submit">Deactivate</button>
+												} else {
+													<input type="hidden" name="active" value="true"/>
+													<button class="btn" type="submit">Activate</button>
+												}
+											</form>
+										}
+									</td>
+								</tr>
 							}
 						</tbody>
 					</table>
 				</div>
 			</div>
 			<div class="panel panel-pad">
-				<div class="section-title"><h2>Add staff</h2><span class="badge badge-warn">UI only</span></div>
-				<div class="form-grid">
-					<div class="field"><label>Name</label><input placeholder="Full name"/></div>
-					<div class="field"><label>Phone</label><input placeholder="0803 000 0000"/></div>
-					<div class="field"><label>Role</label><select><option>Cashier</option><option>Operator</option><option>Manager</option></select></div>
-					<div class="field"><label>PIN</label><input placeholder="Set temporary PIN"/></div>
-				</div>
-				<div class="action-strip"><button class="btn primary" type="button">Create staff</button></div>
+				<div class="section-title"><h2>Add staff</h2><span class="badge badge-ok">live</span></div>
+				<form method="post" action="/owner/staff">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="form-grid">
+						<div class="field"><label>Name</label><input type="text" name="name" placeholder="Full name" required/></div>
+						<div class="field"><label>Phone</label><input type="tel" name="phone" placeholder="0803 000 0000" required/></div>
+						<div class="field">
+							<label>Role</label>
+							<select name="role">
+								<option value="cashier">Cashier</option>
+								<option value="operator">Operator</option>
+								<option value="manager">Manager</option>
+							</select>
+						</div>
+						<div class="field"><label>PIN</label><input type="text" name="pin" placeholder="4-digit PIN" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required/></div>
+					</div>
+					<div class="action-strip"><button class="btn primary" type="submit">Create staff</button></div>
+				</form>
 			</div>
 		</div>
 	</section>
@@ -435,12 +494,15 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				</div>
 			</div>
 			<div class="panel panel-pad">
-				<div class="section-title"><h2>Set new rate</h2><span class="badge badge-warn">UI only</span></div>
-				<div class="form-grid">
-					<div class="field"><label>Price per kg</label><input placeholder="₦1,150"/></div>
-					<div class="field"><label>Effective from</label><input placeholder="Now"/></div>
-				</div>
-				<div class="action-strip"><button class="btn primary" type="button">Save new price</button><button class="btn" type="button">Preview SMS price board</button></div>
+				<div class="section-title"><h2>Set new rate</h2><span class="badge badge-ok">live</span></div>
+				<form method="post" action="/owner/prices">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="form-grid">
+						<div class="field"><label>Price per kg</label><input type="text" name="price_per_kg" placeholder="1150" inputmode="decimal" required/></div>
+						<div class="field"><label>Effective from</label><input type="text" value="Immediately" disabled/></div>
+					</div>
+					<div class="action-strip"><button class="btn primary" type="submit">Save new price</button></div>
+				</form>
 			</div>
 		</div>
 	</section>

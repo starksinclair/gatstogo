@@ -195,6 +195,14 @@ h3 { font-size: 15px; }
 .badge-warn { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
 .badge-danger { background: #FEF2F2; color: #B91C1C; border-color: #FCA5A5; }
 .badge-muted { background: #F1F5F9; color: #475569; border-color: #CBD5E1; }
+.owner-error {
+	margin: 0 0 16px;
+	border: 1px solid #FCA5A5;
+	background: #FEF2F2;
+	color: #B91C1C;
+	padding: 12px 14px;
+	font-weight: 700;
+}
 .panel {
 	border: 1px solid var(--line);
 	background: var(--panel);

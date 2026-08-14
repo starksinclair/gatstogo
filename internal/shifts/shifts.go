@@ -10,6 +10,7 @@ package shifts
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"gatstogo/internal/tenantdb"
@@ -281,6 +282,58 @@ func Summary(ctx context.Context, q tenantdb.Querier, plantID, shiftID uuid.UUID
 		WHERE plant_id = $1 AND shift_id = $2 AND kind = 'sale'
 	`, plantID, shiftID).Scan(&cashHeldKobo)
 	return fillsCompleted, gramsDispensed, cashHeldKobo, err
+}
+
+// MostRecentOpenShiftID returns the plant's most recently opened
+// still-open shift. cash_movements.shift_id is NOT NULL, but an
+// owner-initiated cash entry (recorded from the dashboard, not the
+// terminal -- cmd/server/owner_write.go) has no shift context of its own
+// the way a terminal action naturally does. More than one shift can
+// legitimately be open at once (idx_shifts_one_open_per_user is scoped
+// per user, not per plant -- a cashier and an operator can each have
+// their own open shift simultaneously), so this is a deliberate
+// simplification: it always targets the most recent one. Letting the
+// owner pick a specific shift is a reasonable future enhancement, not
+// built here.
+func MostRecentOpenShiftID(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := q.QueryRow(ctx, `
+		SELECT id FROM shifts
+		WHERE plant_id = $1 AND closed_at IS NULL
+		ORDER BY opened_at DESC
+		LIMIT 1
+	`, plantID).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return uuid.Nil, ErrNoOpenShift
+	}
+	return id, err
+}
+
+// ErrNoOpenShift is returned by MostRecentOpenShiftID when a plant has no
+// currently-open shift for an owner-initiated cash entry to attach to.
+var ErrNoOpenShift = errors.New("shifts: no open shift to record this against")
+
+// cashMovementKinds a manual, owner-initiated entry may use.
+// opening_float/sale/closing are written by StartOrResume, the terminal's
+// cash-sale handler, and Close respectively -- never through this path.
+var cashMovementKinds = map[string]bool{"deposit": true, "payout": true, "count": true}
+
+// RecordCashMovement inserts a manual cash_movements row -- the owner
+// dashboard's "Record cash count" panel. amountKobo's sign follows the
+// column's own convention (positive = in, negative = out): a deposit or
+// payout both remove physical cash from the drawer (to the bank, or to
+// pay for something), so callers should pass a negative amount for
+// those; a 'count' entry is a snapshot rather than a flow, so it's
+// typically 0 with countedKobo carrying the actual counted figure.
+func RecordCashMovement(ctx context.Context, q tenantdb.Querier, plantID, shiftID uuid.UUID, kind string, amountKobo int64, countedKobo *int64, recordedBy uuid.UUID, note string) error {
+	if !cashMovementKinds[kind] {
+		return fmt.Errorf("shifts: %q is not a valid manual cash movement kind", kind)
+	}
+	_, err := q.Exec(ctx, `
+		INSERT INTO cash_movements (plant_id, shift_id, kind, amount_kobo, counted_kobo, recorded_by, note)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`, plantID, shiftID, kind, amountKobo, countedKobo, recordedBy, nullIfEmpty(note))
+	return err
 }
 
 func nullIfEmpty(s string) *string {

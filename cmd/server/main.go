@@ -28,6 +28,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
@@ -262,6 +263,10 @@ func (s *Server) MountHandlers() {
 			r.Get("/owner/dashboard", ownerDashboardHandler(s))
 			r.Post("/owner/logout", ownerLogoutHandler(s))
 			r.Post("/tickets/{reference}/void", ticketVoidHandler(s))
+			r.Post("/owner/prices", ownerSetPriceHandler(s))
+			r.Post("/owner/staff", ownerCreateStaffHandler(s))
+			r.Post("/owner/staff/{id}/status", ownerStaffStatusHandler(s))
+			r.Post("/owner/cash-movements", ownerCashMovementHandler(s))
 		})
 
 		r.Get("/home/summary", func(w http.ResponseWriter, r *http.Request) {
@@ -353,6 +358,7 @@ func ownerDashboardHandler(s *Server) http.HandlerFunc {
 		if actor := middleware.GetActor(r.Context()); actor != nil {
 			data.CSRFToken, _ = csrf.Token(actor.Token)
 		}
+		data.ErrorMessage = ownerErrorMessage(r.URL.Query().Get("error"))
 
 		if err := pages.OwnerDashboard(data).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -402,6 +408,27 @@ func buyGasErrorMessage(code string) string {
 	case "payment":
 		return "We could not start your payment just now. Please try again."
 	case "form", "server":
+		return "Something went wrong. Please try again."
+	default:
+		return ""
+	}
+}
+
+// ownerErrorMessage maps the short ?error= code the owner write handlers
+// (cmd/server/owner_write.go) redirect back with to a human-readable
+// message, the same pattern buyGasErrorMessage uses for the customer
+// buy-gas form.
+func ownerErrorMessage(code string) string {
+	switch code {
+	case "price":
+		return "Enter a valid price greater than zero."
+	case "staff":
+		return "Check the staff details -- name, phone, role, and a 4-digit PIN are all required, and the phone number must not already be in use."
+	case "staff-status":
+		return "Could not update that staff member."
+	case "cash":
+		return "Enter a valid amount, and make sure a shift is currently open."
+	case "form":
 		return "Something went wrong. Please try again."
 	default:
 		return ""
@@ -460,6 +487,9 @@ func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.
 	data.CashMovements = loadOwnerCashMovements(ctx, db, plant)
 	data.PriceHistory = loadOwnerPriceHistory(ctx, db, plant)
 	data.Activity = loadActivity(ctx, db, plant.ID, 6)
+	if _, err := shifts.MostRecentOpenShiftID(ctx, db, plant.ID); err == nil {
+		data.HasOpenShift = true
+	}
 	return data
 }
 
@@ -513,7 +543,7 @@ func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Pl
 
 func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerStaffRow {
 	rows, err := db.Query(ctx, `
-		SELECT u.name, u.phone, u.role, u.active, u.created_at,
+		SELECT u.id, u.name, u.phone, u.role, u.active, u.created_at,
 		       COUNT(DISTINCT t.id),
 		       COUNT(DISTINCT s.id)
 		FROM users u
@@ -530,15 +560,20 @@ func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plan
 
 	out := []pages.OwnerStaffRow{}
 	for rows.Next() {
+		var id uuid.UUID
+		var rawRole string
 		var active bool
 		var row pages.OwnerStaffRow
 		var created time.Time
-		if err := rows.Scan(&row.Name, &row.Phone, &row.Role, &active, &created, &row.SalesCount, &row.ShiftsCount); err != nil {
+		if err := rows.Scan(&id, &row.Name, &row.Phone, &rawRole, &active, &created, &row.SalesCount, &row.ShiftsCount); err != nil {
 			continue
 		}
+		row.ID = id.String()
 		row.Name = fallbackString(row.Name, "Unnamed staff")
 		row.Phone = fallbackString(row.Phone, "No phone")
-		row.Role = humanize(row.Role, "Staff")
+		row.Role = humanize(rawRole, "Staff")
+		row.Active = active
+		row.CanToggleActive = rawRole == "manager" || rawRole == "cashier" || rawRole == "operator"
 		if active {
 			row.Status = "Active"
 			row.BadgeCSS = "badge-ok"
