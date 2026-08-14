@@ -191,12 +191,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	margin-bottom: 6px;
 }
 .form-heading h1 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
 	margin: 0;
 	font-family: var(--font-display, inherit);
 	font-size: 28px;
 	line-height: 1.15;
 	font-weight: 800;
 }
+.form-heading h1 .icon { flex: none; font-size: 0.85em; }
 .form-heading p {
 	margin: 0;
 	color: var(--slate-600);
