@@ -1,5 +1,7 @@
 package pages
 
+import "gatstogo/web/templates/components"
+
 type OwnerDashboardData struct {
 	PlantName       string
 	PlantSlug       string
@@ -224,7 +226,12 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 					</div>
 					<form method="post" action={ templ.SafeURL(logoutAction) } class="rail-signout">
 						<input type="hidden" name="csrf_token" value={ csrfToken }/>
-						<button class="nav-button" type="submit">Sign out</button>
+						<button class="nav-button" type="submit">
+							<span class="nav-button-label">
+								@components.Icon("sign-out")
+								Sign out
+							</span>
+						</button>
 					</form>
 				</aside>
 				<main class="main">
@@ -235,26 +242,42 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 	</html>
 }
 
+templ kpiLabel(icon string, label string) {
+	<div class="kpi-label">
+		@components.Icon(icon)
+		{ label }
+	</div>
+}
+
+templ navButton(active bool, tab string, icon string, label string) {
+	<button class={ "nav-button", templ.KV("active", active) } type="button" data-tab={ tab }>
+		<span class="nav-button-label">
+			@components.Icon(icon)
+			{ label }
+		</span>
+	</button>
+}
+
 templ ownerNav() {
 	<nav class="rail-nav" aria-label="Owner sections">
-		<button class="nav-button active" type="button" data-tab="overview">Overview</button>
-		<button class="nav-button" type="button" data-tab="sales">Sales and receipts</button>
-		<button class="nav-button" type="button" data-tab="cash">Cash drawer</button>
-		<button class="nav-button" type="button" data-tab="shifts">Shifts</button>
-		<button class="nav-button" type="button" data-tab="staff">Staff</button>
-		<button class="nav-button" type="button" data-tab="prices">Prices</button>
-		<button class="nav-button" type="button" data-tab="activity">Activity</button>
+		@navButton(true, "overview", "squares-four", "Overview")
+		@navButton(false, "sales", "receipt", "Sales and receipts")
+		@navButton(false, "cash", "money", "Cash drawer")
+		@navButton(false, "shifts", "clock", "Shifts")
+		@navButton(false, "staff", "users", "Staff")
+		@navButton(false, "prices", "gas-pump", "Prices")
+		@navButton(false, "activity", "pulse", "Activity")
 	</nav>
 }
 
 templ adminNav() {
 	<nav class="rail-nav" aria-label="Admin sections">
-		<button class="nav-button active" type="button" data-tab="overview">Overview</button>
-		<button class="nav-button" type="button" data-tab="plants">Plants</button>
-		<button class="nav-button" type="button" data-tab="onboarding">Onboarding</button>
-		<button class="nav-button" type="button" data-tab="domains">Domains and slugs</button>
-		<button class="nav-button" type="button" data-tab="activity">Activity</button>
-		<button class="nav-button" type="button" data-tab="system">System</button>
+		@navButton(true, "overview", "squares-four", "Overview")
+		@navButton(false, "plants", "factory", "Plants")
+		@navButton(false, "onboarding", "plus", "Onboarding")
+		@navButton(false, "domains", "list-checks", "Domains and slugs")
+		@navButton(false, "activity", "pulse", "Activity")
+		@navButton(false, "system", "gear", "System")
 	</nav>
 }
 
@@ -283,19 +306,24 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			</div>
 		</div>
 		<div class="toolbar">
-			<button class="btn" type="button">Export report</button>
-			<button class="btn primary" type="button">Set price</button>
+			<button class="btn primary" type="button" data-tab="prices">
+				@components.Icon("gas-pump")
+				Set price
+			</button>
 		</div>
 	</div>
 	if data.ErrorMessage != "" {
-		<div class="owner-error">{ data.ErrorMessage }</div>
+		<div class="owner-error">
+			@components.Icon("warning-circle")
+			{ data.ErrorMessage }
+		</div>
 	}
 	<section class="tab-panel active" data-tab-panel="overview">
 		<div class="kpi-grid">
-			<div class="kpi-card"><div class="kpi-label">Money today</div><div class="kpi">{ data.MoneyToday }</div><div class="kpi-small">{ data.SalesCount } sales recorded</div></div>
-			<div class="kpi-card"><div class="kpi-label">Gas sold</div><div class="kpi">{ data.GasSoldKg }</div><div class="kpi-small">Paid ticket size</div></div>
-			<div class="kpi-card"><div class="kpi-label">Current price</div><div class="kpi">{ data.CurrentPrice }</div><div class="kpi-small">Snapshot used for new tickets</div></div>
-			<div class="kpi-card"><div class="kpi-label">Cash / electronic</div><div class="kpi">{ data.CashTotal }</div><div class="kpi-small">Electronic { data.ElectronicTotal }</div></div>
+			<div class="kpi-card">@kpiLabel("wallet", "Money today")<div class="kpi">{ data.MoneyToday }</div><div class="kpi-small">{ data.SalesCount } sales recorded</div></div>
+			<div class="kpi-card">@kpiLabel("gas-pump", "Gas sold")<div class="kpi">{ data.GasSoldKg }</div><div class="kpi-small">Paid ticket size</div></div>
+			<div class="kpi-card">@kpiLabel("receipt", "Current price")<div class="kpi">{ data.CurrentPrice }</div><div class="kpi-small">Snapshot used for new tickets</div></div>
+			<div class="kpi-card">@kpiLabel("bank", "Cash / electronic")<div class="kpi">{ data.CashTotal }</div><div class="kpi-small">Electronic { data.ElectronicTotal }</div></div>
 		</div>
 		<div class="dashboard-grid">
 			<div class="panel panel-pad">
@@ -353,14 +381,15 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			<div class="receipt-card">
 				<div class="section-title"><h2>Receipt preview</h2><span class="badge badge-muted">SMS proof</span></div>
 				if len(data.RecentTickets) == 0 {
-					<div class="receipt-code">0000</div>
-					<div class="muted">Placeholder code. The latest paid ticket code appears here.</div>
+					<div class="empty">
+						@components.Icon("receipt")
+						No sales yet. The latest paid ticket's code will appear here.
+					</div>
 				} else {
 					<div class="receipt-code">{ data.RecentTickets[0].Code }</div>
 					<div><strong>{ data.RecentTickets[0].Kg }</strong> paid at { data.RecentTickets[0].Rate } by { data.RecentTickets[0].Channel }.</div>
 					<div class="muted">Paid { data.RecentTickets[0].PaidAt } · Filled { data.RecentTickets[0].FilledAt }</div>
 				}
-				<button class="btn primary" type="button">Open receipt</button>
 			</div>
 		</div>
 	</section>
@@ -399,7 +428,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 							</div>
 							<div class="field" style="grid-column: 1 / -1;"><label>Note</label><textarea name="note" placeholder="Optional note for the owner"></textarea></div>
 						</div>
-						<div class="action-strip"><button class="btn primary" type="submit">Save count</button></div>
+						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save count</button></div>
 					</form>
 				} else {
 					<p class="muted">No shift is open right now -- a cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>
@@ -474,7 +503,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						</div>
 						<div class="field"><label>PIN</label><input type="text" name="pin" placeholder="4-digit PIN" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required/></div>
 					</div>
-					<div class="action-strip"><button class="btn primary" type="submit">Create staff</button></div>
+					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Create staff</button></div>
 				</form>
 			</div>
 		</div>
@@ -505,7 +534,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						<div class="field"><label>Price per kg</label><input type="text" name="price_per_kg" placeholder="1150" inputmode="decimal" required/></div>
 						<div class="field"><label>Effective from</label><input type="text" value="Immediately" disabled/></div>
 					</div>
-					<div class="action-strip"><button class="btn primary" type="submit">Save new price</button></div>
+					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save new price</button></div>
 				</form>
 			</div>
 		</div>
@@ -571,18 +600,24 @@ templ adminConsoleContent(data AdminConsoleData) {
 			</div>
 		</div>
 		<div class="toolbar">
-			<button class="btn" type="button">Export plants</button>
+			<button class="btn primary" type="button" data-tab="onboarding">
+				@components.Icon("plus")
+				Onboard a plant
+			</button>
 		</div>
 	</div>
 	if data.ErrorMessage != "" {
-		<div class="owner-error">{ data.ErrorMessage }</div>
+		<div class="owner-error">
+			@components.Icon("warning-circle")
+			{ data.ErrorMessage }
+		</div>
 	}
 	<section class="tab-panel active" data-tab-panel="overview">
 		<div class="kpi-grid">
-			<div class="kpi-card"><div class="kpi-label">Plants</div><div class="kpi">{ data.PlantCount }</div><div class="kpi-small">All tenants</div></div>
-			<div class="kpi-card"><div class="kpi-label">Transactions 7d</div><div class="kpi">{ data.TotalTickets7d }</div><div class="kpi-small">Across all plants</div></div>
-			<div class="kpi-card"><div class="kpi-label">Volume 30d</div><div class="kpi">{ data.TotalVolume30d }</div><div class="kpi-small">Paid ticket weight</div></div>
-			<div class="kpi-card"><div class="kpi-label">Domain issues</div><div class="kpi">{ data.DomainBroken }</div><div class="kpi-small">{ data.DomainPending } pending checks</div></div>
+			<div class="kpi-card">@kpiLabel("factory", "Plants")<div class="kpi">{ data.PlantCount }</div><div class="kpi-small">All tenants</div></div>
+			<div class="kpi-card">@kpiLabel("list-checks", "Transactions 7d")<div class="kpi">{ data.TotalTickets7d }</div><div class="kpi-small">Across all plants</div></div>
+			<div class="kpi-card">@kpiLabel("gas-pump", "Volume 30d")<div class="kpi">{ data.TotalVolume30d }</div><div class="kpi-small">Paid ticket weight</div></div>
+			<div class="kpi-card">@kpiLabel("warning-circle", "Domain issues")<div class="kpi">{ data.DomainBroken }</div><div class="kpi-small">{ data.DomainPending } pending checks</div></div>
 		</div>
 		<div class="dashboard-grid">
 			<div class="panel panel-pad">
@@ -655,7 +690,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 						<div class="field"><label>Owner phone</label><input type="tel" name="owner_phone" placeholder="0803 000 0000" required/></div>
 						<div class="field"><label>Owner temporary password</label><input type="text" name="owner_password" placeholder="Set a temporary password" required/></div>
 					</div>
-					<div class="action-strip"><button class="btn primary" type="submit">Provision plant</button></div>
+					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Provision plant</button></div>
 				</form>
 			</div>
 			<div class="panel panel-pad">
