@@ -228,16 +228,7 @@ func (s *Server) MountHandlers() {
 			}
 		})
 
-		r.Get("/terminal", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			if err := pages.StaffTerminal(plant).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
+		r.Get("/terminal", terminalPageHandler(s))
 
 		// Staff terminal backend. JSON, not HTML -- see cmd/server/terminal.go.
 		// /terminal/pin is public (no staff session exists yet, so CSRF here

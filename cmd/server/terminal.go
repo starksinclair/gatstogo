@@ -18,16 +18,17 @@ import (
 	"gatstogo/internal/shifts"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/internal/tickets"
+	"gatstogo/web/templates/pages"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-// These endpoints are JSON, not HTML -- the staff terminal is a
-// fetch()-driven single-page UI (see web/templates/pages/terminal.templ
-// and its eventual rewiring), unlike the rest of this server-rendered
-// app. writeJSON/writeJSONError are this file's equivalent of the render
-// calls everywhere else.
+// These endpoints (besides terminalPageHandler) are JSON, not HTML -- the
+// staff terminal is a fetch()-driven single-page UI (see
+// web/templates/pages/terminal.templ), unlike the rest of this
+// server-rendered app. writeJSON/writeJSONError are this file's
+// equivalent of the render calls everywhere else.
 
 func writeJSON(w http.ResponseWriter, status int, payload map[string]any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -37,6 +38,73 @@ func writeJSON(w http.ResponseWriter, status int, payload map[string]any) {
 
 func writeJSONError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]any{"error": message})
+}
+
+// ---- GET /terminal (the page itself) ----
+
+// terminalInitPayload is embedded in the page as JSON (see
+// terminal.templ) for the frontend to bootstrap from -- the real staff
+// list and live price, replacing what used to be hardcoded demo data
+// baked into the JS itself.
+type terminalInitPayload struct {
+	PlantName      string                 `json:"plantName"`
+	Staff          []terminalStaffPayload `json:"staff"`
+	CSRFToken      string                 `json:"csrfToken"`
+	PricePerKgKobo int64                  `json:"pricePerKgKobo"`
+}
+
+type terminalStaffPayload struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Role string `json:"role"`
+}
+
+func terminalPageHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		if plant == nil {
+			http.Error(w, "Plant not found", http.StatusNotFound)
+			return
+		}
+
+		var (
+			staff      []shifts.StaffMember
+			pricePerKg int64
+		)
+		_ = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			var err error
+			if staff, err = shifts.ListStaff(ctx, q, plant.ID); err != nil {
+				log.Println("terminal page: list staff failed:", err)
+			}
+			if _, pricePerKg, err = loadCurrentPrice(ctx, q, plant.ID); err != nil {
+				log.Println("terminal page: load price failed:", err)
+			}
+			return nil // best-effort: an empty staff list or zero price still renders a usable (if unusable-until-fixed) page
+		})
+
+		plantName := strings.TrimSpace(plant.Name)
+		if plantName == "" {
+			plantName = "Gas plant" // same fallback pages.StaffTerminal's own <title>/data-plant uses
+		}
+		payload := terminalInitPayload{
+			PlantName:      plantName,
+			Staff:          make([]terminalStaffPayload, len(staff)),
+			CSRFToken:      middleware.EnsurePublicCSRFCookie(w, r),
+			PricePerKgKobo: pricePerKg,
+		}
+		for i, m := range staff {
+			payload.Staff[i] = terminalStaffPayload{ID: m.ID.String(), Name: m.Name, Role: m.Role}
+		}
+		initJSON, err := json.Marshal(payload)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := pages.StaffTerminal(plant, string(initJSON)).Render(r.Context(), w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
 }
 
 // ---- POST /terminal/pin (public: no staff session exists yet) ----
@@ -131,8 +199,10 @@ func terminalPinHandler(s *Server) http.HandlerFunc {
 		_ = s.PINLimiter.Reset(r.Context(), userID)
 
 		var (
-			shift   *shifts.Shift
-			resumed bool
+			shift                        *shifts.Shift
+			resumed                      bool
+			fillsCompleted               int
+			gramsDispensed, cashHeldKobo int64
 		)
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			sh, wasResumed, err := shifts.StartOrResume(ctx, q, plant.ID, userID, openingCashKobo, deviceID)
@@ -141,9 +211,12 @@ func terminalPinHandler(s *Server) http.HandlerFunc {
 			}
 			shift, resumed = sh, wasResumed
 			if !wasResumed {
-				return audit.Log(ctx, q, &plant.ID, &userID, "shift.opened", "", map[string]any{"opening_cash_kobo": sh.OpeningCashKobo})
+				if err := audit.Log(ctx, q, &plant.ID, &userID, "shift.opened", "", map[string]any{"opening_cash_kobo": sh.OpeningCashKobo}); err != nil {
+					return err
+				}
 			}
-			return nil
+			fillsCompleted, gramsDispensed, cashHeldKobo, err = shifts.Summary(ctx, q, plant.ID, sh.ID)
+			return err
 		})
 		if err != nil {
 			log.Println("terminal pin: start shift failed:", err)
@@ -175,6 +248,9 @@ func terminalPinHandler(s *Server) http.HandlerFunc {
 			"opening_cash_kobo": shift.OpeningCashKobo,
 			"tokens_issued":     shift.TokensIssued,
 			"tokens_returned":   shift.TokensReturned,
+			"fills_completed":   fillsCompleted,
+			"grams_dispensed":   gramsDispensed,
+			"cash_held_kobo":    cashHeldKobo,
 			"resumed":           resumed,
 			"csrf_token":        csrfToken,
 		})
@@ -248,18 +324,29 @@ func terminalFillHandler(s *Server) http.HandlerFunc {
 			return
 		}
 
+		var fillsCompleted int
+		var gramsDispensed int64
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			if err := tickets.Fill(ctx, q, plant.ID, ticketID, *actor.ShiftID); err != nil {
 				return err
 			}
-			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "ticket.filled", ticketID.String(), nil)
+			if err := audit.Log(ctx, q, &plant.ID, &actor.UserID, "ticket.filled", ticketID.String(), nil); err != nil {
+				return err
+			}
+			var err error
+			fillsCompleted, gramsDispensed, _, err = shifts.Summary(ctx, q, plant.ID, *actor.ShiftID)
+			return err
 		})
 		if err != nil {
 			log.Println("terminal fill: failed:", err)
 			writeJSONError(w, http.StatusBadRequest, "could not confirm fill")
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":              true,
+			"fills_completed": fillsCompleted,
+			"grams_dispensed": gramsDispensed,
+		})
 	}
 }
 
@@ -284,10 +371,11 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 		sizeGrams := int(math.Round(cylinderKg * 1000))
 
 		var (
-			ticket      *tickets.Ticket
-			amountKobo  int64
-			tokenNumber int
-			tokenIssued bool
+			ticket       *tickets.Ticket
+			amountKobo   int64
+			tokenNumber  int
+			tokenIssued  bool
+			cashHeldKobo int64
 		)
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			priceID, pricePerKg, err := loadCurrentPrice(ctx, q, plant.ID)
@@ -329,10 +417,15 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 				tokenNumber, tokenIssued = n, true
 			}
 
-			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "ticket.cash_sale", ticket.Reference, map[string]any{
+			if err := audit.Log(ctx, q, &plant.ID, &actor.UserID, "ticket.cash_sale", ticket.Reference, map[string]any{
 				"amount_kobo": amountKobo,
 				"size_grams":  sizeGrams,
-			})
+			}); err != nil {
+				return err
+			}
+
+			cashHeldKobo, err = shiftCashHeld(ctx, q, plant.ID, *actor.ShiftID)
+			return err
 		})
 		if err != nil {
 			log.Println("terminal cash sale: failed:", err)
@@ -341,13 +434,19 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"ticket_id":    ticket.ID,
-			"code":         ticket.Code,
-			"amount":       formatNaira(amountKobo),
-			"token_issued": tokenIssued,
-			"token_number": tokenNumber,
+			"ticket_id":      ticket.ID,
+			"code":           ticket.Code,
+			"amount":         formatNaira(amountKobo),
+			"token_issued":   tokenIssued,
+			"token_number":   tokenNumber,
+			"cash_held_kobo": cashHeldKobo,
 		})
 	}
+}
+
+func shiftCashHeld(ctx context.Context, q tenantdb.Querier, plantID, shiftID uuid.UUID) (int64, error) {
+	_, _, cashHeldKobo, err := shifts.Summary(ctx, q, plantID, shiftID)
+	return cashHeldKobo, err
 }
 
 func terminalTokenReturnHandler(s *Server) http.HandlerFunc {

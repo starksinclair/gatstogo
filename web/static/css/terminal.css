@@ -444,6 +444,27 @@ button:disabled {
 	color: #92400E;
 }
 
+/* Pre-existing gap: the .templ source has always used "wrong" as a
+   state-message modifier (an incorrect PIN/code, a failed request), but
+   no matching rule existed even in the original design -- it fell back to
+   the base .state-message's amber styling instead of reading as an error.
+   Only matters now that these are real failure states firing from actual
+   server responses, not just a demo flow. */
+.state-message.wrong {
+	border-color: var(--danger);
+	background: #FEF2F2;
+	color: var(--danger);
+}
+
+/* Also pre-existing: .token-panel (nested inside .cash-side) never had a
+   layout rule of its own -- each child still had its own spacing, but the
+   panel itself contributed no rhythm between them. */
+.token-panel {
+	display: grid;
+	gap: 10px;
+	margin: 18px 0 0;
+}
+
 .authorised-card {
 	border-color: var(--mint);
 	background: #ECFDF5;

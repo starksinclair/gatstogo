@@ -258,6 +258,31 @@ func IncrementTokensReturned(ctx context.Context, q tenantdb.Querier, plantID, s
 	return newCount, err
 }
 
+// Summary reports a shift's running totals: fills completed and grams
+// dispensed (from tickets this shift filled), and cash collected via
+// terminal cash sales (from cash_movements). The terminal frontend
+// overwrites its local counters from this after every state-changing
+// call rather than incrementing them itself, so a reload mid-shift (or a
+// request that silently failed) can never leave it showing stale or
+// drifted numbers -- the server is always the source of truth. A brand
+// new shift naturally has all-zero totals anyway, so this is safe to call
+// unconditionally rather than special-casing "was this shift resumed?".
+func Summary(ctx context.Context, q tenantdb.Querier, plantID, shiftID uuid.UUID) (fillsCompleted int, gramsDispensed int64, cashHeldKobo int64, err error) {
+	if err = q.QueryRow(ctx, `
+		SELECT COUNT(*), COALESCE(SUM(size_grams), 0)
+		FROM tickets
+		WHERE plant_id = $1 AND filled_shift_id = $2 AND status = 'filled'
+	`, plantID, shiftID).Scan(&fillsCompleted, &gramsDispensed); err != nil {
+		return 0, 0, 0, err
+	}
+	err = q.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount_kobo), 0)
+		FROM cash_movements
+		WHERE plant_id = $1 AND shift_id = $2 AND kind = 'sale'
+	`, plantID, shiftID).Scan(&cashHeldKobo)
+	return fillsCompleted, gramsDispensed, cashHeldKobo, err
+}
+
 func nullIfEmpty(s string) *string {
 	if s == "" {
 		return nil
