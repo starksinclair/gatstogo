@@ -327,6 +327,47 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 						}
 					};
 				}
+
+				// Copy-to-clipboard for a real redemption code (ticket
+				// confirmation, receipt detail -- never the buy-gas page's
+				// illustrative placeholder, which never renders a
+				// .copy-button at all). One delegated listener rather than
+				// per-button wiring, so it works for however many
+				// .copy-button elements a given page has, present or future.
+				document.addEventListener("click", function (event) {
+					var btn = event.target.closest(".copy-button");
+					if (!btn) return;
+					var code = btn.dataset.copy;
+					if (!code) return;
+
+					var label = btn.querySelector(".copy-label");
+					function markCopied() {
+						btn.classList.add("is-copied");
+						if (label) label.textContent = "Copied";
+						clearTimeout(btn._copyResetTimer);
+						btn._copyResetTimer = setTimeout(function () {
+							btn.classList.remove("is-copied");
+							if (label) label.textContent = "Copy";
+						}, 1600);
+					}
+					function fallbackCopy() {
+						var ta = document.createElement("textarea");
+						ta.value = code;
+						ta.style.position = "fixed";
+						ta.style.opacity = "0";
+						document.body.appendChild(ta);
+						ta.focus();
+						ta.select();
+						try { document.execCommand("copy"); markCopied(); } catch (e) {}
+						document.body.removeChild(ta);
+					}
+
+					if (navigator.clipboard && navigator.clipboard.writeText) {
+						navigator.clipboard.writeText(code).then(markCopied, fallbackCopy);
+					} else {
+						fallbackCopy();
+					}
+				});
 			</script>
 			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -631,7 +672,13 @@ templ receiptDetailView(d ReceiptDetail) {
 		</div>
 		<div class="after-payment">
 			<div class="section-eyebrow">Redemption code</div>
-			<div class="code-preview">{ d.Code }</div>
+			<div class="code-row">
+				<div class="code-preview">{ d.Code }</div>
+				<button type="button" class="copy-button" data-copy={ d.Code } aria-label="Copy code">
+					@components.Icon("copy")
+					<span class="copy-label">Copy</span>
+				</button>
+			</div>
 			<p class="fine-print">Show this code to the attendant to collect your gas.</p>
 		</div>
 		if d.ConfirmedAt != "" {

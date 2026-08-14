@@ -31,7 +31,13 @@ templ ticketConfirmationContent(theme customerHomeTheme, paid bool, code string,
 					<p class="lede">You paid { amount }. That covers { sizeKg } of gas. Show this code to the attendant when you reach the front.</p>
 					<div class="after-payment">
 						<div class="section-eyebrow">Your code</div>
-						<div class="code-preview">{ code }</div>
+						<div class="code-row">
+							<div class="code-preview">{ code }</div>
+							<button type="button" class="copy-button" data-copy={ code } aria-label="Copy code">
+								@components.Icon("copy")
+								<span class="copy-label">Copy</span>
+							</button>
+						</div>
 						<p class="fine-print">Keep this code. You will also need it if you look up this purchase on the receipts page.</p>
 					</div>
 				} else {

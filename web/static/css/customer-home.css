@@ -420,6 +420,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
    unmodified). Muted rather than full-strength ink so it can't be
    mistaken for an actual redemption code at a glance. */
 .code-preview-placeholder { color: var(--faint); }
+/* Only wraps a real code (ticket confirmation, receipt detail) --
+   the illustrative placeholder above never gets a .copy-button, there's
+   nothing real to copy yet. */
+.code-row {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	margin: 10px 0;
+}
+.code-row .code-preview { margin: 0; }
+.copy-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	border: 1px solid var(--line-strong);
+	background: transparent;
+	color: var(--ink-soft);
+	padding: 8px 14px;
+	font-size: 13px;
+	font-weight: 700;
+	cursor: pointer;
+}
+.copy-button:hover { border-color: var(--ink); color: var(--ink); }
+.copy-button .icon { font-size: 15px; }
+.copy-button.is-copied { border-color: var(--success); color: var(--success); }
 
 /* ==========================================================================
    Lookup / verify (receipts phone entry, OTP entry) and payment
