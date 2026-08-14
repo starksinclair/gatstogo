@@ -1,0 +1,20 @@
+package components
+
+// Icon renders one of the curated Phosphor icons from iconPaths
+// (icon_paths.go) as an inline SVG. fill="currentColor" means it always
+// takes the surrounding text color -- no separate color prop needed,
+// consistent with how every other piece of UI in this app already gets
+// its color (CSS, not a Go parameter). An unknown name renders an empty
+// (but still correctly-sized) <svg>, not an error -- a bad icon name is a
+// cosmetic gap, never worth a 500.
+//
+// Sizing is deliberately left to CSS (the .icon class in each surface's
+// stylesheet, or an inline size on the call site) rather than a size
+// parameter here, so an icon inside a button/label naturally scales with
+// its surrounding font-size via `width: 1em; height: 1em;` the same way
+// a glyph would.
+templ Icon(name string) {
+	<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false">
+		<path d={ iconPaths[name] }></path>
+	</svg>
+}

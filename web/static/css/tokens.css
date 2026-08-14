@@ -125,3 +125,18 @@
 		--duration-base: 0ms;
 	}
 }
+
+/* ---- Icons (see web/templates/components/icon.templ) ----
+   1em square by default so an icon sits inline with text at whatever
+   font-size its container already has, rather than needing its own size
+   picked at every call site. stroke: none because Phosphor's "regular"
+   weight icons are filled shapes, not stroked outlines -- fill alone
+   (inherited via currentColor from icon.templ) is correct. */
+.icon {
+	width: 1em;
+	height: 1em;
+	flex: none;
+	stroke: none;
+	vertical-align: -0.125em;
+}
+
