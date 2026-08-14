@@ -400,33 +400,40 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						var canStart = canStartShift();
 						var locked = Date.now() < state.lockedUntil;
 						var selected = staff.find(function (m) { return m.id === state.employeeId; });
-						return '<main class="start-grid">' +
-							'<section class="terminal-card start-card">' +
-								'<div class="section-kicker">Shift start</div>' +
+						return '<main class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Shift start</div>' +
 								'<h1>Start terminal shift</h1>' +
-								'<p class="strong-help">Pick your name, enter your PIN, then count opening cash.</p>' +
-								(staff.length === 0 ? '<p class="strong-help">No staff are set up for this plant yet. Ask an owner to add staff from the owner dashboard.</p>' : '<div class="staff-grid">' + staff.map(employeeButton).join("") + '</div>') +
-								(selected ? '<p class="strong-help">Terminal mode: <strong>' + roleLabel(selected.role) + '</strong> (' + (configForRole(selected.role) === "operator" ? "fill only" : configForRole(selected.role) === "cashier" ? "cash, tokens, fill" : "cash + fill") + ')</p>' : '') +
-								'<label class="field-label" for="opening-cash">Opening cash drawer</label>' +
-								'<input id="opening-cash" class="terminal-input mono" value="' + state.openingCash + '" placeholder="₦20,000" inputmode="numeric" data-action="opening-cash" ' + (locked ? "disabled" : "") + '/>' +
+								'<p class="helper-text">Pick your name, enter your PIN, then count opening cash.</p>' +
+								(staff.length === 0 ? '<p class="helper-text">No staff are set up for this plant yet. Ask an owner to add staff from the owner dashboard.</p>' : '<div class="staff-grid">' + staff.map(employeeButton).join("") + '</div>') +
+								(selected ? '<p class="helper-text">Terminal mode: <strong>' + roleLabel(selected.role) + '</strong> — ' + (configForRole(selected.role) === "operator" ? "fill only" : configForRole(selected.role) === "cashier" ? "cash, tokens, fill" : "cash + fill") + '</p>' : '') +
+								'<div class="term-field">' +
+									'<label class="field-label" for="opening-cash">Opening cash drawer</label>' +
+									'<input id="opening-cash" class="term-input mono" value="' + state.openingCash + '" placeholder="₦20,000" inputmode="numeric" data-action="opening-cash" ' + (locked ? "disabled" : "") + '/>' +
+								'</div>' +
 								(state.startError ? '<div class="state-message wrong">' + icon("x-circle") + state.startError + (locked ? ' (' + lockSecondsRemaining() + 's)' : '') + '</div>' : '') +
 								'<button class="primary-action" type="button" data-action="start-shift" ' + (canStart ? "" : "disabled") + '>' + (state.busy ? "Starting…" : "Start shift") + '</button>' +
-							'</section>' +
-							'<section class="terminal-card pin-card">' +
-								'<div class="section-kicker">Employee PIN</div>' +
+							'</div>' +
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Employee PIN</div>' +
 								'<div class="pin-dots">' + [0,1,2,3].map(function (i) { return '<span class="' + (i < state.pin.length ? "filled" : "") + '"></span>'; }).join("") + '</div>' +
 								'<div class="keypad small">' + keypad("pin") + '</div>' +
-							'</section>' +
+							'</aside>' +
 						'</main>';
 					}
 					function employeeButton(m) {
-						return '<button class="staff-button ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span>' + initials(m.name) + '</span><strong>' + m.name + '</strong><em>' + roleLabel(m.role) + '</em></button>';
+						return '<button class="staff-tile ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span class="initial mono">' + initials(m.name) + '</span><strong>' + m.name + '</strong><em>' + roleLabel(m.role) + '</em></button>';
 					}
 
 					function renderMain() {
 						return '<header class="terminal-top">' +
-							'<div><div class="brand-row"><span class="brand-mark">G</span><strong>GATSTOGO</strong><span>' + init.plantName + '</span></div></div>' +
-							'<div class="shift-strip"><strong>' + state.name + '</strong><strong>' + state.fills + ' fills</strong><strong>' + kg(state.gramsDispensed) + '</strong><button type="button" data-action="end-screen">' + icon("sign-out") + 'End shift</button></div>' +
+							'<div class="brand-row"><span class="brand-mark">G</span><strong>GATSTOGO</strong><span class="plant-name">' + init.plantName + '</span></div>' +
+							'<div class="shift-strip">' +
+								'<div class="stat"><span>Staff</span><strong>' + state.name + '</strong></div>' +
+								'<div class="stat"><span>Fills</span><strong class="mono">' + state.fills + '</strong></div>' +
+								'<div class="stat"><span>Dispensed</span><strong class="mono">' + kg(state.gramsDispensed) + '</strong></div>' +
+								'<button type="button" data-action="end-screen">' + icon("sign-out") + 'End shift</button>' +
+							'</div>' +
 						'</header>' +
 						'<nav class="terminal-tabs">' +
 							tabButton("fill", "Fill") +
@@ -442,77 +449,98 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					function renderFill() {
 						if (state.revealed) {
 							var t = state.revealed;
-							return '<section class="fill-grid">' +
-								'<div class="terminal-card authorised-card">' +
-									'<div class="section-kicker">Authorised fill</div>' +
+							return '<div class="term-layout">' +
+								'<div class="term-main fill-result">' +
+									'<div class="section-eyebrow">' + icon("check-circle") + 'Authorised fill</div>' +
 									'<div class="initials">' + (t.initials || "—") + '</div>' +
 									'<div class="weight mono">' + t.size_kg + '</div>' +
 									'<div class="proof-row"><span>Amount paid</span><strong class="mono">' + t.amount + '</strong></div>' +
 									'<div class="proof-row"><span>Method</span><strong>' + t.channel + '</strong></div>' +
 									'<button class="primary-action valve" type="button" data-action="confirm-fill" ' + (state.busy ? "disabled" : "") + '>' + (state.busy ? "Confirming…" : "Open valve") + '</button>' +
 								'</div>' +
-								'<aside class="terminal-card privacy-card"><div class="section-kicker">Privacy</div><p>' + icon("shield-check") + 'No customer name, phone number, or ticket reference appears on this terminal.</p><button class="secondary-action" type="button" data-action="code-clear">Try another code</button></aside>' +
-							'</section>';
+								'<aside class="term-aside">' +
+									'<div class="section-eyebrow">Privacy</div>' +
+									'<p class="privacy-note">' + icon("shield-check") + 'No customer name, phone number, or ticket reference appears on this terminal.</p>' +
+									'<button class="secondary-action" type="button" data-action="code-clear">Try another code</button>' +
+								'</aside>' +
+							'</div>';
 						}
-						return '<section class="fill-grid">' +
-							'<div class="terminal-card code-card">' +
-								'<div class="section-kicker">Fill tab</div>' +
+						return '<div class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Fill</div>' +
 								'<h1>Enter customer code</h1>' +
-								'<div class="code-boxes">' + [0,1,2,3].map(function (i) { return '<span class="mono">' + (state.code[i] || "-") + '</span>'; }).join("") + '</div>' +
+								'<div class="code-boxes">' + [0,1,2,3].map(function (i) { return '<span class="mono' + (state.code[i] ? " filled" : "") + '">' + (state.code[i] || "–") + '</span>'; }).join("") + '</div>' +
 								(state.message ? '<div class="state-message ' + state.messageKind + '">' + stateMessageIcon(state.messageKind) + state.message + '</div>' : '') +
 								'<div class="keypad">' + keypad("code") + '</div>' +
 							'</div>' +
-							'<aside class="terminal-card summary-card"><div class="section-kicker">Shift summary</div><div class="big-stat mono">' + state.fills + '</div><p>Fills completed</p><div class="big-stat mono">' + kg(state.gramsDispensed) + '</div><p>Kg dispensed</p></aside>' +
-						'</section>';
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Shift summary</div>' +
+								'<div class="stat-block"><div class="stat-value mono">' + state.fills + '</div><div class="stat-label">Fills completed</div></div>' +
+								'<div class="stat-block"><div class="stat-value mono">' + kg(state.gramsDispensed) + '</div><div class="stat-label">Kg dispensed</div></div>' +
+							'</aside>' +
+						'</div>';
 					}
 
 					function renderCash() {
 						var amountKobo = Math.round(state.cylinder * pricePerKgNaira * 100);
 						var blocked = state.cashHeldKobo >= blockLimitKobo;
-						return '<section class="cash-grid">' +
-							'<div class="terminal-card">' +
-								'<div class="section-kicker">Cash sale</div>' +
+						return '<div class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Cash sale</div>' +
 								'<h1>Record cash and queue fill</h1>' +
 								'<div class="cylinder-grid">' + [3,6,12.5,25,50].map(function (size) { return '<button class="' + (state.cylinder === size ? "active" : "") + '" type="button" data-action="cylinder" data-value="' + size + '"><span class="mono">' + kg(size * 1000) + '</span></button>'; }).join("") + '</div>' +
-								'<label class="field-label" for="phone">Phone number optional</label>' +
-								'<input id="phone" class="terminal-input mono" value="' + state.phone + '" placeholder="0803 000 0000" inputmode="tel" data-action="phone"/>' +
-								'<div class="amount-panel"><span>Amount at ' + naira(pricePerKgNaira * 100) + '/kg</span><strong class="mono">' + naira(amountKobo) + '</strong><em>Not editable</em></div>' +
+								'<div class="term-field">' +
+									'<label class="field-label" for="phone">Phone number optional</label>' +
+									'<input id="phone" class="term-input mono" value="' + state.phone + '" placeholder="0803 000 0000" inputmode="tel" data-action="phone"/>' +
+								'</div>' +
+								'<div class="amount-row">' +
+									'<span class="label">Amount at ' + naira(pricePerKgNaira * 100) + '/kg<em class="note">Not editable</em></span>' +
+									'<strong class="value mono">' + naira(amountKobo) + '</strong>' +
+								'</div>' +
 								(blocked ? '<div class="state-message used">' + icon("warning-circle") + 'Cash limit reached. Record a deposit before taking more cash.</div>' : '') +
 								'<button class="primary-action" type="button" data-action="record-cash" ' + (blocked || state.busy ? "disabled" : "") + '>' + (state.busy ? "Recording…" : (state.config === "cashier" ? "Record cash and issue a token" : "Record cash and queue fill")) + '</button>' +
 								(state.message ? '<div class="state-message ' + (state.messageKind || "confirmed") + '">' + stateMessageIcon(state.messageKind || "confirmed") + state.message + '</div>' : '') +
 							'</div>' +
-							'<aside class="terminal-card cash-side">' +
-								'<div class="section-kicker">Cash holding</div>' +
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Cash holding</div>' +
 								'<div class="cash-held ' + cashClass() + '"><strong class="mono">' + naira(state.cashHeldKobo) + '</strong><span>' + (cashClass() === "ok" ? "Normal" : cashClass() === "warn" ? "Deposit soon" : "Deposit required") + '</span></div>' +
-								(state.config === "cashier" ? renderTokens() : '<p class="strong-help">Combined staff can take cash and move straight to filling.</p>') +
+								(state.config === "cashier" ? renderTokens() : '<p class="helper-text">Combined staff can take cash and move straight to filling.</p>') +
 							'</aside>' +
-						'</section>';
+						'</div>';
 					}
 					function renderTokens() {
 						return '<div class="token-panel">' +
-							'<div class="section-kicker">Tokens</div>' +
+							'<div class="field-label">Tokens</div>' +
 							'<div class="proof-row"><span>Issued this shift</span><strong class="mono">' + state.tokensIssued + '</strong></div>' +
 							'<div class="proof-row"><span>Returned this shift</span><strong class="mono">' + state.tokensReturned + '</strong></div>' +
 							'<button class="secondary-action" type="button" data-action="return-token" ' + (state.tokensReturned >= state.tokensIssued || state.busy ? "disabled" : "") + '>Mark one token returned</button>' +
-							'<p class="strong-help">Tap when a customer hands their token back.</p>' +
+							'<p class="helper-text small">Tap when a customer hands their token back.</p>' +
 						'</div>';
 					}
 
 					function renderEnd() {
 						var expectedKobo = state.cashHeldKobo + parseNairaInputToKobo(state.openingCash);
 						if (!state.closingCash) state.closingCash = String(Math.round(expectedKobo / 100));
-						return '<section class="end-grid">' +
-							'<div class="terminal-card">' +
-								'<div class="section-kicker">Shift end</div>' +
+						return '<div class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Shift end</div>' +
 								'<h1>Count and close shift</h1>' +
-								'<label class="field-label" for="closing-cash">Closing cash count</label>' +
-								'<input id="closing-cash" class="terminal-input mono" value="' + state.closingCash + '" placeholder="' + naira(expectedKobo) + '" inputmode="numeric" data-action="closing-cash"/>' +
+								'<div class="term-field">' +
+									'<label class="field-label" for="closing-cash">Closing cash count</label>' +
+									'<input id="closing-cash" class="term-input mono" value="' + state.closingCash + '" placeholder="' + naira(expectedKobo) + '" inputmode="numeric" data-action="closing-cash"/>' +
+								'</div>' +
 								(state.config === "cashier" && state.tokensReturned < state.tokensIssued ? '<div class="state-message wrong">' + icon("x-circle") + (state.tokensIssued - state.tokensReturned) + ' token(s) still out.</div>' : '') +
 								(state.message ? '<div class="state-message ' + (state.messageKind || "wrong") + '">' + stateMessageIcon(state.messageKind || "wrong") + state.message + '</div>' : '') +
 								'<button class="primary-action" type="button" data-action="finish-shift" ' + (state.busy ? "disabled" : "") + '>' + (state.busy ? "Closing…" : "Submit and end shift") + '</button>' +
 							'</div>' +
-							'<aside class="terminal-card"><div class="section-kicker">Summary</div><div class="proof-row"><span>Fills completed</span><strong class="mono">' + state.fills + '</strong></div><div class="proof-row"><span>Kg dispensed</span><strong class="mono">' + kg(state.gramsDispensed) + '</strong></div><div class="proof-row"><span>Cash recorded</span><strong class="mono">' + naira(state.cashHeldKobo) + '</strong></div><div class="proof-row"><span>Expected close</span><strong class="mono">' + naira(expectedKobo) + '</strong></div></aside>' +
-						'</section>';
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Summary</div>' +
+								'<div class="proof-row"><span>Fills completed</span><strong class="mono">' + state.fills + '</strong></div>' +
+								'<div class="proof-row"><span>Kg dispensed</span><strong class="mono">' + kg(state.gramsDispensed) + '</strong></div>' +
+								'<div class="proof-row"><span>Cash recorded</span><strong class="mono">' + naira(state.cashHeldKobo) + '</strong></div>' +
+								'<div class="proof-row"><span>Expected close</span><strong class="mono">' + naira(expectedKobo) + '</strong></div>' +
+							'</aside>' +
+						'</div>';
 					}
 
 					function render() {
