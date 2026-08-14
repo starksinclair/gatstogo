@@ -99,11 +99,13 @@ Every authenticated route sits behind a session (`internal/session`, Redis-backe
 
 ## Current Status
 
-Authentication, tenant isolation (RLS), sessions, CSRF, and every write path listed above are real and database-backed -- this is no longer a UI-only prototype. What's still worth knowing before treating this as fully production-ready:
+Authentication, tenant isolation (RLS), sessions, CSRF, and every write path listed above are real and database-backed -- this is no longer a UI-only prototype. Every one of them (owner/admin login, terminal PIN login -> shift -> cash sale -> redeem -> fill -> shift close, price/staff/cash-movement/void writes, plant onboarding, the full receipts lookup -> OTP -> confirm flow, and a real Paystack Initialize call returning a live `checkout.paystack.com` URL) has been exercised end-to-end against a real Postgres + Redis + Paystack test-mode stack, not just unit-tested -- that pass caught and fixed three real bugs static review and mocked tests had missed (see git history: a `psql -c` variable-substitution bug that broke `migrations/migrate.sh` on every run, a templ `<script>`-interpolation bug that meant the staff terminal never actually booted in a real browser, and seed-data password/PIN hashes that were literal placeholders no login could ever match). `go.mod`/`go.sum` are also confirmed complete -- `go mod tidy` with real module-proxy access made no changes.
 
-- **Paystack and SMS have not been exercised against live traffic from this environment.** The Paystack integration (`internal/payments`) has been verified against the real Paystack API using a test secret key (`internal/payments/live_test.go`, skipped unless `PAYSTACK_SECRET_KEY` is set) and cross-checked against Paystack's own documentation, but a full live checkout -> webhook -> terminal redemption run needs to happen in an environment with real network access and a real (even if test-mode) Paystack account.
-- **SMS is not actually sent yet.** `internal/sms.LoggingSender` is the only `Sender` implementation -- receipts one-time codes are written to the server log, not delivered to a phone. Swapping in a real provider (Termii, Africa's Talking, Twilio, etc.) is meant to be a one-file change (implement `sms.Sender`), but that provider integration itself hasn't been built.
-- **`go.sum` may need regenerating.** This build-out added `redis/go-redis/v9`, `golang.org/x/crypto` (bcrypt), and, test-only, `alicebob/miniredis/v2` to `go.mod`. If `go.sum` wasn't generated with real module-proxy network access, run `go mod tidy` once before deploying.
+What's still worth knowing before treating this as fully production-ready:
+
+- **The Paystack *webhook* path (`POST /webhooks/paystack`) hasn't been exercised live.** Initialize and Verify have (see above, and `internal/payments/live_test.go`), but the webhook needs Paystack's servers to reach a public URL, which no environment used in this build-out has had. The browser-driven callback path (`GET /tickets/{reference}/callback`) is the fallback for exactly this reason, but a real webhook delivery is still worth confirming once this is deployed somewhere reachable.
+- **SMS is not actually sent yet.** `internal/sms.LoggingSender` is the only `Sender` implementation -- receipts one-time codes are written to the server log, not delivered to a phone (confirmed live: the OTP appears in the app's own logs, never on an actual handset). Swapping in a real provider (Termii, Africa's Talking, Twilio, etc.) is meant to be a one-file change (implement `sms.Sender`), but that provider integration itself hasn't been built.
+- **There's no bootstrap path for the first platform admin on a real deployment.** Locally, `migrations/0002_seed_data.up.sql` seeds one (see below) -- but that migration is explicitly dev/demo-only and shouldn't run against production. Provisioning the very first admin for real is an open gap: no CLI tool, no documented manual step.
 - **Default credentials in `docker-compose.yaml` and `.env.example` are placeholders.** Rotate `GATSTOGO_APP_ROLE_PASSWORD`, `GATSTOGO_ADMIN_ROLE_PASSWORD`, `SESSION_HMAC_SECRET`, and the Postgres bootstrap superuser password for any real deployment; none of them are safe to use as-is in production.
 
 ## Environment Variables
@@ -175,6 +177,16 @@ Admin console:
 ```text
 http://localhost:8080/admin/login
 ```
+
+`migrations/0002_seed_data.up.sql` (local dev/demo only -- never run against a real production database) seeds these logins, real bcrypt hashes, not placeholders:
+
+| Login | Phone | Password / PIN |
+| --- | --- | --- |
+| Owner (`sunrise` plant) | `08012345678` | `sunrise-owner-dev` |
+| Cashier (`sunrise` terminal PIN) | `08098765432` | `1234` |
+| Platform admin | `08000000000` | `platform-admin-dev` |
+
+There is currently no bootstrap path for creating the *first* admin against a real production database (0002 never runs there, and every `/admin` route requires an existing admin session) -- that's an open gap, not something this seed data solves beyond local dev.
 
 Optional Adminer database UI is available through the `tools` profile:
 
