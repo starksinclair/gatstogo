@@ -9,7 +9,6 @@ import (
 
 type customerHomeTheme struct {
 	Name       string
-	Initial    string
 	Address    string
 	City       string
 	Phone      string
@@ -87,7 +86,6 @@ func customerTheme(plant *domain.Plant) customerHomeTheme {
 
 	return customerHomeTheme{
 		Name:       name,
-		Initial:    plantInitial(name),
 		Address:    address,
 		City:       city,
 		Phone:      phone,
@@ -124,14 +122,6 @@ func validHexColor(value string) bool {
 		}
 	}
 	return true
-}
-
-func plantInitial(name string) string {
-	name = strings.TrimSpace(name)
-	if name == "" {
-		return "P"
-	}
-	return strings.ToUpper(string([]rune(name)[0]))
 }
 
 func whatsappHref(phone string) string {
@@ -350,15 +340,17 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 	</html>
 }
 
+// customerBrand renders the plant's identity as a wordmark: the name set
+// as text, never a placeholder. A fabricated logo (a colored square with
+// the plant's first letter in it, standing in for a real one) read as
+// unprofessional and got removed entirely -- if a plant has actually
+// uploaded a logo image it's shown small and plain; if not, there's just
+// no mark at all, not a substitute for one.
 templ customerBrand(theme customerHomeTheme) {
 	<div class="brand-lockup">
-		<div class="logo-mark" aria-hidden="true">
-			if theme.LogoPath != "" {
-				<img src={ theme.LogoPath } alt=""/>
-			} else {
-				<span>{ theme.Initial }</span>
-			}
-		</div>
+		if theme.LogoPath != "" {
+			<img class="brand-logo" src={ theme.LogoPath } alt=""/>
+		}
 		<div>
 			<div class="brand-name">{ theme.Name }</div>
 			<div class="brand-meta">
@@ -373,33 +365,35 @@ templ customerBrand(theme customerHomeTheme) {
 templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfToken string, errorMsg string) {
 	<div class="page has-sticky-pay">
 		<div class="wrap">
-			<header class="topbar">
+			<header class="site-header">
 				@customerBrand(theme)
-				<a class="nav-link" href="/receipts">
-					@components.Icon("receipt")
-					My receipts
-				</a>
+				<nav class="site-nav">
+					<a href="/receipts">
+						@components.Icon("receipt")
+						Receipts
+					</a>
+				</nav>
 			</header>
-			<main>
-				<div class="buy-layout" x-data={ buyGasAlpineInit(pricePerKgKobo) }>
-					<div class="buy-form-col">
-						<section class="card panel buy-card" aria-label="Buy gas">
-							<div class="form-heading">
-								<h1>Buy gas</h1>
-								<p>No signup. Enter how much you want to spend, then your name and phone.</p>
-							</div>
-							if errorMsg != "" {
-								<div class="form-error">
-									@components.Icon("warning-circle")
-									{ errorMsg }
-								</div>
-							}
-							<form id="buy-form" method="post" action="/tickets">
-								<input type="hidden" name="csrf_token" value={ csrfToken }/>
-								<div class="step-label"><span class="step-num">1</span> How much do you want to buy?</div>
+			<main class="buy-layout" x-data={ buyGasAlpineInit(pricePerKgKobo) }>
+				<div class="buy-form-col">
+					<h1 class="page-headline">Buy gas</h1>
+					<p class="lede">No signup. Enter how much you want to spend, then your name and phone.</p>
+					if errorMsg != "" {
+						<div class="inline-alert">
+							@components.Icon("warning-circle")
+							{ errorMsg }
+						</div>
+					}
+					<form id="buy-form" method="post" action="/tickets">
+						<input type="hidden" name="csrf_token" value={ csrfToken }/>
+						<div class="field-step">
+							<div class="step-index">01</div>
+							<div class="step-body">
+								<label class="step-title" for="amount">How much do you want to buy?</label>
 								<div class="amount-field">
 									<span class="amount-prefix">₦</span>
 									<input
+										id="amount"
 										type="number"
 										name="amount"
 										inputmode="numeric"
@@ -417,88 +411,90 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 										You will get <strong x-text="formatKg(kg)">0.00 kg</strong>.
 									</span>
 								</p>
-								<div class="step-label"><span class="step-num">2</span> Your details</div>
+							</div>
+						</div>
+						<div class="field-step">
+							<div class="step-index">02</div>
+							<div class="step-body">
+								<div class="step-title">Your details</div>
 								<div class="field-grid">
-									<div class="field">
-										<div class="label">Your name</div>
-										<input type="text" name="name" placeholder="Full name" autocomplete="name" required/>
+									<div class="field-underline">
+										<label for="name">Full name</label>
+										<input id="name" type="text" name="name" placeholder="e.g. Ada Obi" autocomplete="name" required/>
 									</div>
-									<div class="field">
-										<div class="label">Phone number</div>
-										<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required/>
+									<div class="field-underline">
+										<label for="phone">Phone number</label>
+										<input id="phone" type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required/>
 									</div>
 								</div>
-								<div class="step-label"><span class="step-num">3</span> How will you pay?</div>
+							</div>
+						</div>
+						<div class="field-step">
+							<div class="step-index">03</div>
+							<div class="step-body">
+								<div class="step-title">How will you pay?</div>
 								<div class="payment-list" role="radiogroup" aria-label="Payment method">
 									<label class="payment">
 										<input type="radio" name="channel" value="transfer" class="sr-only" x-model="channel" checked/>
-										<span class="radio"></span>
 										@components.Icon("bank")
 										<span>Bank transfer</span>
 									</label>
 									<label class="payment">
 										<input type="radio" name="channel" value="terminal" class="sr-only" x-model="channel"/>
-										<span class="radio"></span>
 										@components.Icon("credit-card")
 										<span>POS terminal</span>
 									</label>
 									<label class="payment">
 										<input type="radio" name="channel" value="ussd" class="sr-only" x-model="channel"/>
-										<span class="radio"></span>
 										@components.Icon("device-mobile")
 										<span>USSD</span>
 									</label>
 								</div>
-							</form>
-						</section>
-					</div>
-					<aside class="buy-summary-col">
-						<section class="card panel summary-card" aria-label="Order summary">
-							<div class="summary-header">
-								<span>Order summary</span>
-								<div class="price-chip">
-									@components.Icon("gas-pump")
-									{ formatPricePerKg(pricePerKgKobo) } <span>/kg</span>
-								</div>
 							</div>
-							<div class="summary-rows">
-								<div class="summary-row">
-									<span>Amount</span>
-									<strong x-text="naira > 0 ? formatNaira(naira) : '—'">—</strong>
-								</div>
-								<div class="summary-row">
-									<span>Gas you'll get</span>
-									<strong x-text="naira > 0 ? formatKg(kg) : '—'">—</strong>
-								</div>
-								<div class="summary-row">
-									<span>Paying by</span>
-									<strong x-text="channelLabel">Bank transfer</strong>
-								</div>
-							</div>
-							<div class="summary-paybar">
-								<button
-									class="button button-primary full-width"
-									form="buy-form"
-									type="submit"
-									:disabled="naira <= 0"
-									x-text="naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'"
-								>
-									Enter amount to pay
-								</button>
-							</div>
-							<p class="help">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p>
-							<div class="confirm-box">
-								<div class="confirm-box-label">
-									@components.Icon("hourglass-medium")
-									After payment
-								</div>
-								<strong>Your 4-digit code appears here.</strong>
-								<div class="code code-placeholder" aria-hidden="true">– – – –</div>
-								<p class="help" style="margin-bottom: 0;">Join the queue as normal. Read this code to the attendant when you reach the front.</p>
-							</div>
-						</section>
-					</aside>
+						</div>
+					</form>
 				</div>
+				<aside class="buy-summary-col">
+					<div class="section-eyebrow">Order summary</div>
+					<div class="summary-price">
+						@components.Icon("gas-pump")
+						{ formatPricePerKg(pricePerKgKobo) } <span>/kg</span>
+					</div>
+					<div class="summary-rows">
+						<div class="summary-row">
+							<span>Amount</span>
+							<strong x-text="naira > 0 ? formatNaira(naira) : '—'">—</strong>
+						</div>
+						<div class="summary-row">
+							<span>Gas you'll get</span>
+							<strong x-text="naira > 0 ? formatKg(kg) : '—'">—</strong>
+						</div>
+						<div class="summary-row">
+							<span>Paying by</span>
+							<strong x-text="channelLabel">Bank transfer</strong>
+						</div>
+					</div>
+					<div class="summary-paybar">
+						<button
+							class="button-primary full-width"
+							form="buy-form"
+							type="submit"
+							:disabled="naira <= 0"
+							x-text="naira > 0 ? 'Pay ' + formatNaira(naira) : 'Enter amount to pay'"
+						>
+							Enter amount to pay
+						</button>
+					</div>
+					<p class="fine-print">Your purchase is linked to this phone number. Keep the SMS receipt as proof of the weight you received.</p>
+					<div class="after-payment">
+						<div class="section-eyebrow">
+							@components.Icon("hourglass-medium")
+							After payment
+						</div>
+						<div class="code-preview code-preview-placeholder" aria-hidden="true">– – – –</div>
+						<p class="fine-print">Join the queue as normal. Read this code to the attendant when you reach the front.</p>
+					</div>
+				</aside>
 			</main>
 		</div>
 	</div>
@@ -507,15 +503,17 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 templ customerReceiptsContent(theme customerHomeTheme, data ReceiptsViewData) {
 	<div class="page">
 		<div class="wrap">
-			<header class="topbar">
+			<header class="site-header">
 				@customerBrand(theme)
-				<a class="nav-link" href="/">
-					@components.Icon("gas-pump")
-					Buy gas
-				</a>
+				<nav class="site-nav">
+					<a href="/">
+						@components.Icon("gas-pump")
+						Buy gas
+					</a>
+				</nav>
 			</header>
 			if data.ErrorMsg != "" {
-				<div class="form-error">
+				<div class="inline-alert">
 					@components.Icon("warning-circle")
 					{ data.ErrorMsg }
 				</div>
@@ -533,77 +531,73 @@ templ customerReceiptsContent(theme customerHomeTheme, data ReceiptsViewData) {
 }
 
 templ receiptsLookupView(data ReceiptsViewData) {
-	<main class="receipts-grid">
-		<section class="card panel lookup-card" aria-label="Find your receipts">
-			<div class="lookup-icon">
-				@components.Icon("receipt")
+	<main class="lookup-layout">
+		<div class="lookup-icon">
+			@components.Icon("receipt")
+		</div>
+		<h1 class="page-headline">Receipts</h1>
+		<p class="lede">Enter the phone number you used to buy gas. We'll text you a 6-digit code to confirm it's you.</p>
+		<form method="post" action="/receipts/lookup">
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			<div class="field-underline">
+				<label for="phone">Phone number</label>
+				<input id="phone" type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required autofocus/>
 			</div>
-			<h1 class="page-title">Receipts</h1>
-			<p class="help">Enter the phone number you used to buy gas. We'll text you a 6-digit code to confirm it's you.</p>
-			<form method="post" action="/receipts/lookup">
-				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-				<div class="field">
-					<div class="label">Phone number</div>
-					<input type="tel" name="phone" placeholder="0803 000 0000" autocomplete="tel" required autofocus/>
-				</div>
-				<button class="button button-primary full-width" type="submit" style="margin-top: 12px;">
-					Send code
-					@components.Icon("arrow-right")
-				</button>
-			</form>
-		</section>
+			<button class="button-primary full-width" type="submit">
+				Send code
+				@components.Icon("arrow-right")
+			</button>
+		</form>
 	</main>
 }
 
 templ receiptsVerifyView(data ReceiptsViewData) {
-	<main class="receipts-grid">
-		<section class="card panel lookup-card" aria-label="Enter your code">
-			<div class="lookup-icon">
-				@components.Icon("shield-check")
+	<main class="lookup-layout">
+		<div class="lookup-icon">
+			@components.Icon("shield-check")
+		</div>
+		<h1 class="page-headline">Enter your code</h1>
+		<p class="lede">We sent a 6-digit code by SMS to { data.Phone }. It expires in 10 minutes.</p>
+		<form method="post" action="/receipts/verify">
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			<input type="hidden" name="phone" value={ data.Phone }/>
+			<div class="field-underline">
+				<label for="code">6-digit code</label>
+				<input id="code" type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" autocomplete="one-time-code" autofocus required/>
 			</div>
-			<h1 class="page-title">Enter your code</h1>
-			<p class="help">We sent a 6-digit code by SMS to { data.Phone }. It expires in 10 minutes.</p>
-			<form method="post" action="/receipts/verify">
-				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-				<input type="hidden" name="phone" value={ data.Phone }/>
-				<div class="field">
-					<div class="label">6-digit code</div>
-					<input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" autocomplete="one-time-code" autofocus required/>
-				</div>
-				<button class="button button-primary full-width" type="submit" style="margin-top: 12px;">
-					Verify
-					@components.Icon("arrow-right")
-				</button>
-			</form>
-			<form method="post" action="/receipts/lookup" style="margin-top: 12px;">
-				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-				<input type="hidden" name="phone" value={ data.Phone }/>
-				<button class="button button-secondary full-width" type="submit">Resend code</button>
-			</form>
-		</section>
+			<button class="button-primary full-width" type="submit">
+				Verify
+				@components.Icon("arrow-right")
+			</button>
+		</form>
+		<form method="post" action="/receipts/lookup" class="resend-form">
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			<input type="hidden" name="phone" value={ data.Phone }/>
+			<button class="text-button full-width" type="submit">Resend code</button>
+		</form>
 	</main>
 }
 
 templ receiptsListView(data ReceiptsViewData) {
-	<main class="receipts-grid">
-		<aside class="card panel" aria-label="Recent receipts">
-			<h1 class="page-title">Receipts</h1>
-			<p class="help">Recent purchases linked to { data.Phone }.</p>
+	<main class="receipts-layout">
+		<aside class="receipts-list-col">
+			<div class="section-eyebrow">Receipts</div>
+			<p class="lede">Recent purchases linked to { data.Phone }.</p>
 			if len(data.Tickets) == 0 {
 				<div class="empty-state">
 					@components.Icon("receipt")
 					<strong>No purchases yet</strong>
 					<p>Receipts for anything bought with this phone number will show up here.</p>
-					<a class="button button-secondary" href="/">Buy gas</a>
+					<a class="text-button" href="/">Buy gas</a>
 				</div>
 			} else {
 				<div class="receipt-list">
 					for _, item := range data.Tickets {
 						<a class={ receiptItemClass(item.Selected) } href={ item.Href }>
-							<div><strong>{ item.Kg }</strong><small>{ item.When }</small></div>
+							<div><strong>{ item.Kg }</strong><span class="muted">{ item.When }</span></div>
 							<div class="receipt-item-end">
-								<span class={ "badge " + item.BadgeCSS }>{ item.StatusLabel }</span>
-								<div class="amount">{ item.Amount }</div>
+								<span class={ "status-tag " + item.BadgeCSS }>{ item.StatusLabel }</span>
+								<strong>{ item.Amount }</strong>
 							</div>
 						</a>
 					}
@@ -617,27 +611,28 @@ templ receiptsListView(data ReceiptsViewData) {
 }
 
 templ receiptDetailView(d ReceiptDetail) {
-	<section class="card panel" aria-label="Receipt proof">
-		<div class="receipt-top">
+	<section class="receipt-detail-col" aria-label="Receipt proof">
+		<div class="detail-top">
 			<div>
-				<h1 class="page-title">{ d.StatusLabel }</h1>
-				<div class="brand-meta">{ d.When }</div>
-				<div class="brand-meta">Ticket { d.Reference }</div>
+				<div class="section-eyebrow">{ d.StatusLabel }</div>
+				<div class="muted">{ d.When } · Ticket { d.Reference }</div>
 			</div>
-			<span class={ "badge " + d.BadgeCSS }>{ d.StatusLabel }</span>
+			<span class={ "status-tag " + d.BadgeCSS }>{ d.StatusLabel }</span>
 		</div>
-		<div class="weight-hero">
-			<div class="label">Gas you bought</div>
-			<div class="weight">{ d.Kg }</div>
+		<div class="big-figure">
+			<span class="big-figure-label">Gas you bought</span>
+			<span class="big-figure-value">{ d.Kg }</span>
 		</div>
-		<div class="rows">
-			<div class="row"><span>Weight received</span><span>{ d.NetKg }</span></div>
-			<div class="row"><span>Rate per kg</span><span>{ d.Rate }</span></div>
-			<div class="row"><span>Amount paid</span><span>{ d.Amount }</span></div>
-			<div class="row"><span>Paid by</span><span>{ d.Channel }</span></div>
+		<div class="detail-rows">
+			<div class="detail-row"><span>Weight received</span><span>{ d.NetKg }</span></div>
+			<div class="detail-row"><span>Rate per kg</span><span>{ d.Rate }</span></div>
+			<div class="detail-row"><span>Amount paid</span><span>{ d.Amount }</span></div>
+			<div class="detail-row"><span>Paid by</span><span>{ d.Channel }</span></div>
 		</div>
-		<div class="state-grid" aria-label="Receipt states">
-			<div class="state-card"><strong>Code { d.Code }</strong><p>Show this code to the attendant to collect your gas.</p></div>
+		<div class="after-payment">
+			<div class="section-eyebrow">Redemption code</div>
+			<div class="code-preview">{ d.Code }</div>
+			<p class="fine-print">Show this code to the attendant to collect your gas.</p>
 		</div>
 		if d.ConfirmedAt != "" {
 			<div class="confirmed-strip">
@@ -645,17 +640,17 @@ templ receiptDetailView(d ReceiptDetail) {
 				Confirmed { d.ConfirmedAt }
 			</div>
 		}
-		<div class="receipt-actions">
+		<div class="detail-actions">
 			if d.CanConfirm {
 				<form method="post" action={ d.ConfirmAction }>
 					<input type="hidden" name="csrf_token" value={ d.CSRFToken }/>
-					<button class="button button-primary" type="submit">
+					<button class="button-primary" type="submit">
 						@components.Icon("check")
 						Confirm received
 					</button>
 				</form>
 			}
-			<a class="button button-secondary" href="/">Buy again</a>
+			<a class="text-button" href="/">Buy again</a>
 		</div>
 	</section>
 }

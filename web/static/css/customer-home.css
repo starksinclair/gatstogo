@@ -1,64 +1,82 @@
+/* ==========================================================================
+   GatsToGo customer surfaces (buy gas / receipts / payment confirmation)
+   ==========================================================================
+   Second-generation design for these pages: flat, editorial, restrained
+   color. No bordered/shadowed "card" containers anywhere -- sections are
+   separated by whitespace and thin hairline rules, structure comes from
+   typography and a numbered-step/eyebrow-label vocabulary instead. Color
+   is deliberately scarce: near-black ink on white for everything, and the
+   tenant's own brand color (--brand-button, set inline per plant -- see
+   customerCSSVars in customer_home.templ) reserved for exactly three
+   things -- the primary action button, the selected payment-method tile,
+   and a focus ring -- not tints, not chips, not icon fills throughout.
+
+   Loads after tokens.css, and reuses its --font-display/--font-body/
+   --font-mono and --space-* scale; the neutral color scale below is this
+   page's own (genuinely neutral greys, no navy undertone) rather than
+   tokens.css's shared --color-ink/etc, which the owner/admin/terminal
+   surfaces already use with their own personality -- see tokens.css's own
+   header comment on why that's a deliberate choice, not drift.
+   ========================================================================== */
 :root {
+	/* Set inline per plant via customerCSSVars() -- these are the
+	   fallback values before that inline style applies. */
 	--brand: #006B4D;
 	--brand-secondary: #10B981;
 	--brand-button: #006B4D;
 	--brand-button-text: #F8FAFC;
 	--brand-tint: #E7F6F1;
 	--brand-subtle: #F3FAF7;
-	--slate-950: #0F172A;
-	--slate-700: #334155;
-	--slate-600: #475569;
-	--slate-500: #64748B;
-	--slate-300: #CBD5E1;
-	--slate-200: #E2E8F0;
-	--slate-100: #F1F5F9;
-	--off-white: #F8FAFC;
-	--page: #F4F6F8;
-	--success: #16A34A;
-	--success-bg: #F0FDF4;
-	--success-text: #166534;
-	--amber-bg: #FFFBEB;
-	--amber-text: #B45309;
-	--danger-bg: #FEF2F2;
-	--danger-text: #B91C1C;
+
+	--ink: #0A0A0A;
+	--ink-soft: #3F3F3F;
+	--muted: #6B6B6B;
+	--faint: #9C9C9C;
+	--line: #E6E6E4;
+	--line-strong: #CFCFCC;
+	--bg: #FFFFFF;
+	--surface-muted: #F7F7F5;
+
+	--success: #16743F;
+	--success-bg: #EEF7F1;
+	--warning: #92580A;
+	--warning-bg: #FBF3E7;
+	--danger: #B3261E;
+	--danger-bg: #FBEEED;
 }
 * { box-sizing: border-box; }
-html { min-height: 100%; background: var(--page); }
+html { min-height: 100%; background: var(--bg); }
 body {
 	min-height: 100vh;
 	margin: 0;
-	background: var(--page);
-	color: var(--slate-950);
+	background: var(--bg);
+	color: var(--ink);
 	font-family: var(--font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
-	font-size: 17px;
+	font-size: 16px;
 	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
 }
 button, input, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
-	outline: 3px solid var(--brand);
-	outline-offset: 3px;
+	outline: 2px solid var(--ink);
+	outline-offset: 2px;
 }
 [x-cloak] { display: none !important; }
-.page {
-	min-height: 100vh;
-	padding: 16px 16px 28px;
-}
-.page.has-sticky-pay {
-	padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-}
-.wrap {
-	max-width: 1040px;
-	margin: 0 auto;
-}
-.topbar {
+
+.page { min-height: 100vh; padding: 40px 24px 56px; }
+.page.has-sticky-pay { padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+.wrap { max-width: 1120px; margin: 0 auto; }
+
+/* ---- Header / brand ---- */
+.site-header {
 	display: flex;
-	align-items: center;
+	align-items: flex-end;
 	justify-content: space-between;
-	gap: 12px;
-	margin-bottom: 18px;
-	padding-bottom: 14px;
-	border-bottom: 1px solid var(--slate-200);
+	gap: 16px;
+	margin-bottom: 48px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid var(--line);
 }
 .brand-lockup {
 	display: flex;
@@ -66,333 +84,275 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	gap: 12px;
 	min-width: 0;
 }
-.logo-mark {
-	width: 44px;
-	height: 44px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+/* No logo mark unless a real one exists -- a fabricated colored-square
+   initial used to stand in for one here, which read as unprofessional.
+   If theme.LogoPath is empty, customerBrand (customer_home.templ) simply
+   doesn't render an image at all; the name alone is the identity. */
+.brand-logo {
+	width: 36px;
+	height: 36px;
 	flex: none;
-	overflow: hidden;
-	border-radius: 8px;
-	background: var(--brand);
-	color: var(--brand-button-text);
-	font-size: 20px;
-	font-weight: 800;
+	object-fit: cover;
 }
-.logo-mark img { width: 100%; height: 100%; object-fit: cover; }
 .brand-name {
-	color: var(--slate-950);
 	font-family: var(--font-display, inherit);
-	font-size: 18px;
+	font-size: 19px;
 	font-weight: 800;
+	letter-spacing: -0.01em;
+	color: var(--ink);
 	overflow-wrap: anywhere;
 }
 .brand-meta {
 	margin-top: 2px;
-	color: var(--slate-500);
-	font-size: 14px;
+	color: var(--muted);
+	font-size: 13px;
 	overflow-wrap: anywhere;
 }
-.brand-meta a {
-	color: var(--brand);
-	font-weight: 700;
-	text-decoration: none;
-}
+.brand-meta a { color: var(--ink-soft); font-weight: 700; text-decoration: none; }
 .brand-meta a:hover { text-decoration: underline; }
-.brand-meta .sep {
-	margin: 0 6px;
-	color: var(--slate-300);
-}
-.nav-link {
+.brand-meta .sep { margin: 0 6px; color: var(--faint); }
+.site-nav a {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
-	flex: none;
-	color: var(--brand);
-	font-size: 16px;
+	gap: 8px;
+	color: var(--ink);
+	font-size: 14px;
 	font-weight: 700;
 	text-decoration: none;
-	padding: 10px 4px;
+	padding-bottom: 3px;
+	border-bottom: 1.5px solid transparent;
 }
-.nav-link:hover { text-decoration: underline; }
-.button {
+.site-nav a:hover { border-bottom-color: var(--ink); }
+.site-nav .icon { color: var(--muted); }
+
+/* ---- Headings / body copy ---- */
+.page-headline {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin: 0 0 10px;
+	font-family: var(--font-display, inherit);
+	font-size: clamp(32px, 4vw, 44px);
+	line-height: 1.05;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+}
+.page-headline .icon { flex: none; font-size: 0.7em; }
+.lede {
+	margin: 0 0 32px;
+	color: var(--muted);
+	font-size: 16px;
+	max-width: 48ch;
+}
+.muted { color: var(--muted); }
+.fine-print {
+	margin: 0;
+	color: var(--muted);
+	font-size: 13px;
+	line-height: 1.55;
+}
+.inline-alert {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 28px;
+	padding: 14px 16px;
+	background: var(--danger-bg);
+	border-left: 3px solid var(--danger);
+	color: var(--danger);
+	font-size: 14px;
+	font-weight: 700;
+}
+.inline-alert .icon { flex: none; }
+
+/* ---- Section eyebrow (small uppercase label used throughout instead of
+   a card header) ---- */
+.section-eyebrow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 16px;
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+.section-eyebrow .icon { font-size: 14px; }
+
+/* ---- Buttons -- sharp corners throughout, no radius. Two kinds: a
+   solid brand-colored primary action, and a plain underlined text
+   button for everything secondary (no bordered "secondary button" box --
+   one filled action per screen is enough weight). ---- */
+.full-width { width: 100%; }
+.button-primary {
 	display: inline-flex;
-	min-height: 56px;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
+	min-height: 54px;
 	border: 0;
-	border-radius: 8px;
-	padding: 0 20px;
-	cursor: pointer;
-	font-size: 17px;
+	background: var(--brand-button);
+	color: var(--brand-button-text);
+	padding: 0 24px;
+	font-size: 16px;
 	font-weight: 700;
 	text-align: center;
 	text-decoration: none;
+	cursor: pointer;
 }
-.button-primary {
-	background: var(--brand-button);
-	color: var(--brand-button-text);
+.button-primary:hover:not(:disabled) { opacity: 0.9; }
+.button-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.text-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 44px;
+	border: 0;
+	background: transparent;
+	color: var(--ink);
+	padding: 0;
+	font-size: 14px;
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
 }
-.button-secondary {
-	border: 1.5px solid var(--slate-300);
-	background: #fff;
-	color: var(--slate-950);
-}
-.button:disabled {
-	opacity: 0.45;
-	cursor: not-allowed;
-}
-.buy-main {
-	max-width: 640px;
-	margin: 0 auto;
-}
-/* Buy-gas page layout: form on the left, a live order-summary sidebar on
-   the right (sticky while the form scrolls) -- replaces a single narrow
-   column that, on anything wider than a phone, left most of the page as
-   dead space either side of it. The sidebar is genuinely functional, not
-   decorative: it's the same Alpine component the form's amount field
-   already uses (x-data lives on .buy-layout, one scope for both
-   columns), so amount/kg/payment-method there update live as the form
-   is filled in, and it's where the actual submit button lives -- see
-   #buy-form / [form=buy-form] below. */
+
+/* ==========================================================================
+   Buy gas
+   ========================================================================== */
 .buy-layout {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 360px;
-	gap: 24px;
+	grid-template-columns: minmax(0, 1fr) 340px;
+	gap: 64px;
 	align-items: start;
 }
 .buy-form-col { min-width: 0; }
 .buy-summary-col {
 	position: sticky;
-	top: 24px;
+	top: 32px;
+	padding-left: 40px;
+	border-left: 1px solid var(--line);
 }
-.summary-card {
-	border-top: 3px solid var(--brand-button);
+
+.field-step {
+	display: grid;
+	grid-template-columns: 40px minmax(0, 1fr);
+	gap: 16px;
+	padding: 32px 0;
+	border-top: 1px solid var(--line);
 }
-.summary-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	margin-bottom: 16px;
-	color: var(--slate-600);
-	font-size: 13px;
-	font-weight: 800;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-}
-.summary-rows {
-	margin-bottom: 18px;
-	border-top: 1px solid var(--slate-100);
-}
-.summary-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	padding: 12px 0;
-	border-bottom: 1px solid var(--slate-100);
-	font-size: 15px;
-}
-.summary-row span { color: var(--slate-600); }
-.summary-row strong { font-variant-numeric: tabular-nums; }
-.summary-paybar { margin: 4px 0 18px; }
-.card {
-	border: 1px solid var(--slate-200);
-	border-radius: 10px;
-	background: #fff;
-}
-.panel { padding: 22px; }
-.label {
-	margin-bottom: 8px;
-	color: var(--slate-600);
+.field-step:first-of-type { border-top: 0; padding-top: 4px; }
+.step-index {
+	padding-top: 4px;
+	font-family: var(--font-mono, monospace);
 	font-size: 13px;
 	font-weight: 700;
+	color: var(--faint);
 }
-.step-label {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin: 22px 0 10px;
-	color: var(--slate-950);
-	font-size: 15px;
-	font-weight: 800;
-}
-.step-num {
-	display: inline-flex;
-	width: 26px;
-	height: 26px;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	background: var(--brand);
-	color: var(--brand-button-text);
-	font-size: 13px;
-	font-weight: 800;
-	flex: none;
-}
-.form-heading { margin-bottom: 8px; }
-.form-heading h1 {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	margin: 0;
-	font-family: var(--font-display, inherit);
-	font-size: 28px;
-	line-height: 1.15;
-	font-weight: 800;
-}
-.form-heading h1 .icon { flex: none; font-size: 0.85em; }
-.form-heading p {
-	margin: 0;
-	color: var(--slate-600);
+.step-title {
+	display: block;
+	margin: 0 0 18px;
 	font-size: 16px;
-}
-.price-chip {
-	flex: none;
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	border-radius: 8px;
-	background: var(--brand-tint);
-	color: var(--brand);
-	padding: 8px 12px;
-	font-size: 20px;
 	font-weight: 800;
-	font-variant-numeric: tabular-nums;
-	white-space: nowrap;
+	color: var(--ink);
 }
-.price-chip .icon { font-size: 0.8em; }
-.price-chip span {
-	color: var(--slate-600);
-	font-size: 13px;
-	font-weight: 700;
-}
+
 .amount-field {
 	display: flex;
-	align-items: center;
-	gap: 4px;
-	height: 64px;
-	border: 1.5px solid var(--slate-300);
-	border-radius: 8px;
-	background: #fff;
-	padding: 0 14px;
+	align-items: baseline;
+	gap: 8px;
+	padding-bottom: 12px;
+	border-bottom: 2px solid var(--ink);
 }
-.amount-field:focus-within { border-color: var(--brand); }
+.amount-field:focus-within { border-bottom-color: var(--brand-button); }
 .amount-prefix {
-	color: var(--slate-500);
+	color: var(--muted);
+	font-family: var(--font-mono, monospace);
 	font-size: 24px;
-	font-weight: 800;
+	font-weight: 700;
 }
 .amount-field input {
 	flex: 1;
 	min-width: 0;
-	height: 100%;
 	border: 0;
 	background: transparent;
-	color: var(--slate-950);
+	color: var(--ink);
+	font-family: var(--font-mono, monospace);
+	font-size: clamp(28px, 4vw, 36px);
+	font-weight: 700;
 	padding: 0;
-	font-size: 28px;
-	font-weight: 800;
-	font-variant-numeric: tabular-nums;
 	outline: none;
 }
 .amount-field input::-webkit-outer-spin-button,
 .amount-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .amount-field input[type=number] { -moz-appearance: textfield; }
 .kg-preview {
-	margin: 12px 0 0;
-	border-radius: 8px;
-	background: var(--brand-subtle);
-	padding: 14px 16px;
-	color: var(--slate-950);
-	font-size: 17px;
-	line-height: 1.45;
+	margin: 14px 0 0;
+	color: var(--muted);
+	font-size: 14px;
 }
-.kg-preview strong {
-	font-variant-numeric: tabular-nums;
-}
+.kg-preview strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+
 .field-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 12px;
+	gap: 28px;
 }
-.field { margin-bottom: 4px; }
-.field input {
+.field-underline label {
+	display: block;
+	margin-bottom: 8px;
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+.field-underline input {
 	width: 100%;
-	height: 56px;
-	border: 1.5px solid var(--slate-300);
-	border-radius: 8px;
-	background: #fff;
-	color: var(--slate-950);
-	padding: 0 14px;
-	font-size: 18px;
+	border: 0;
+	border-bottom: 1.5px solid var(--line-strong);
+	background: transparent;
+	color: var(--ink);
+	padding: 4px 0 10px;
+	font-size: 16px;
 	outline: none;
 }
-.field input:focus { border-color: var(--brand); }
+.field-underline input:focus { border-bottom-color: var(--ink); }
+.field-underline input::placeholder { color: var(--faint); }
+
 .payment-list {
 	display: grid;
-	gap: 10px;
-	margin-bottom: 14px;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 1px;
+	background: var(--line);
+	border: 1px solid var(--line);
 }
 .payment {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 12px;
-	min-height: 56px;
-	border: 1.5px solid var(--slate-200);
-	border-radius: 8px;
+	justify-content: center;
+	gap: 8px;
 	background: #fff;
-	padding: 12px 14px;
-	font-size: 17px;
+	padding: 20px 8px;
+	color: var(--ink-soft);
+	font-size: 13px;
 	font-weight: 700;
+	text-align: center;
 	cursor: pointer;
 }
+.payment .icon { font-size: 22px; color: var(--muted); }
 .payment.is-selected,
 .payment:has(input:checked) {
-	border-color: var(--brand);
-	background: var(--brand-subtle);
+	background: var(--brand-button);
+	color: var(--brand-button-text);
 }
-.payment .icon { color: var(--slate-500); font-size: 20px; }
 .payment.is-selected .icon,
-.payment:has(input:checked) .icon { color: var(--brand); }
-/* From tablet width up there's room for the three payment options to sit
-   as one segmented row (tab-like) instead of stacked full-width rows --
-   below it they stay stacked, which is the better shape for a narrow
-   phone screen and three short labels. */
-@media (min-width: 560px) {
-	.payment-list { grid-template-columns: repeat(3, 1fr); }
-	.payment {
-		flex-direction: column;
-		justify-content: center;
-		text-align: center;
-		gap: 8px;
-		padding: 16px 10px;
-	}
-	.payment .icon { font-size: 24px; }
-}
-.payment:focus-within {
-	outline: 3px solid var(--brand);
-	outline-offset: 2px;
-}
-.radio {
-	width: 22px;
-	height: 22px;
-	border: 2px solid var(--slate-300);
-	border-radius: 50%;
-	background: #fff;
-	flex: none;
-}
-.payment.is-selected .radio,
-.payment:has(input:checked) .radio {
-	border-color: var(--brand);
-	box-shadow: inset 0 0 0 5px var(--brand);
-}
-/* Visually hidden but still focusable/clickable -- the actual <input
-   type="radio"> inside each .payment label; .radio above is its purely
-   decorative visual stand-in. */
+.payment:has(input:checked) .icon { color: var(--brand-button-text); }
+.payment:focus-within { outline: 2px solid var(--ink); outline-offset: -2px; }
 .sr-only {
 	position: absolute;
 	width: 1px;
@@ -404,271 +364,218 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	white-space: nowrap;
 	border: 0;
 }
-.form-error {
+
+.summary-price {
 	display: flex;
-	align-items: center;
+	align-items: baseline;
 	gap: 8px;
-	margin: 0 0 16px;
-	border-radius: 8px;
-	background: var(--danger-bg);
-	color: var(--danger-text);
-	padding: 12px 14px;
-	font-size: 14px;
+	margin-bottom: 28px;
+	font-family: var(--font-mono, monospace);
+	font-size: 26px;
 	font-weight: 700;
+	color: var(--ink);
 }
-.form-error .icon { flex: none; font-size: 18px; }
-.help {
-	margin: 0 0 16px;
-	color: var(--slate-600);
-	font-size: 14px;
-	line-height: 1.55;
-}
-.full-width { width: 100%; }
-.pay-bar {
-	margin-top: 8px;
-}
-.confirm-box {
-	margin-top: 18px;
-	border-top: 1px solid var(--slate-200);
-	padding-top: 18px;
-}
-.confirm-box-label {
+.summary-price .icon { font-size: 18px; color: var(--muted); }
+.summary-price span { color: var(--muted); font-size: 13px; font-weight: 600; }
+.summary-rows { margin-bottom: 24px; }
+.summary-row {
 	display: flex;
-	align-items: center;
-	gap: 6px;
-	margin-bottom: 8px;
-	color: var(--slate-600);
-	font-size: 13px;
-	font-weight: 700;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+	padding: 12px 0;
+	border-top: 1px solid var(--line);
+	font-size: 14px;
 }
-.code {
-	display: inline-block;
+.summary-row:last-child { border-bottom: 1px solid var(--line); }
+.summary-row span { color: var(--muted); }
+.summary-row strong { font-family: var(--font-mono, monospace); color: var(--ink); }
+.summary-paybar { margin-bottom: 20px; }
+
+.after-payment {
+	margin-top: 28px;
+	padding-top: 24px;
+	border-top: 1px solid var(--line);
+}
+.code-preview {
 	margin: 10px 0;
-	border: 2px solid var(--brand);
-	border-radius: 8px;
-	color: var(--brand);
-	background: #fff;
-	padding: 12px 18px;
-	font-size: 40px;
-	font-weight: 800;
-	letter-spacing: 0.14em;
-	font-variant-numeric: tabular-nums;
+	font-family: var(--font-mono, monospace);
+	font-size: 32px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	color: var(--ink);
 }
-/* The buy-gas page's "after payment" preview -- illustrative only, not a
-   real code (a real one only exists once a real ticket has actually been
-   paid for, see ticket_confirmation.templ, which reuses the base .code
-   style above unmodified). Dashed and muted rather than solid-brand so
-   it can't be mistaken for an actual redemption code at a glance. */
-.code-placeholder {
-	border-style: dashed;
-	border-color: var(--slate-300);
-	color: var(--slate-500);
-	background: var(--slate-100);
-}
-.receipts-grid {
-	display: grid;
-	grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.15fr);
-	gap: 18px;
-	align-items: start;
-}
-/* The lookup and verify screens (phone entry, OTP entry) -- single
-   centered card, no second column, since there's nothing to show
-   alongside a form for a session that doesn't exist yet. */
-.lookup-card {
-	max-width: 440px;
-	margin: 0 auto;
+/* The buy-gas summary's "after payment" preview is illustrative, not a
+   real code (a real one only exists once a real ticket has been paid
+   for -- see ticket_confirmation.templ, which uses bare .code-preview,
+   unmodified). Muted rather than full-strength ink so it can't be
+   mistaken for an actual redemption code at a glance. */
+.code-preview-placeholder { color: var(--faint); }
+
+/* ==========================================================================
+   Lookup / verify (receipts phone entry, OTP entry) and payment
+   confirmation -- all single-column, centered; there's nothing to put
+   alongside a form for a session/payment that doesn't exist yet.
+   ========================================================================== */
+.lookup-layout {
+	max-width: 420px;
+	margin: 24px auto 0;
 	text-align: center;
 }
-.lookup-card .field { text-align: left; }
+.lookup-layout .page-headline,
+.lookup-layout .lede { justify-content: center; }
+.lookup-layout form { margin-top: 32px; text-align: left; }
+.lookup-layout .button-primary { margin-top: 4px; }
+.resend-form { margin-top: 16px; text-align: center; }
 .lookup-icon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	width: 56px;
 	height: 56px;
-	margin: 0 auto 14px;
-	border-radius: 50%;
-	background: var(--brand-tint);
-	color: var(--brand);
+	margin: 0 auto 24px;
+	border: 1.5px solid var(--line-strong);
+	color: var(--ink);
 }
-.lookup-icon .icon { font-size: 26px; }
-.empty-state {
+.lookup-icon .icon { font-size: 24px; }
+.lookup-icon-success { border-color: var(--success); color: var(--success); }
+.lookup-layout .after-payment { text-align: left; }
+
+/* ==========================================================================
+   Receipts list + detail
+   ========================================================================== */
+.receipts-layout {
 	display: grid;
-	justify-items: center;
-	gap: 6px;
-	padding: 32px 16px;
-	color: var(--slate-500);
-	text-align: center;
+	grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+	gap: 64px;
+	align-items: start;
 }
-.empty-state .icon {
-	font-size: 32px;
-	margin-bottom: 4px;
-	color: var(--slate-300);
+.receipts-list-col { min-width: 0; }
+.receipt-detail-col {
+	padding-left: 40px;
+	border-left: 1px solid var(--line);
 }
-.empty-state strong {
-	color: var(--slate-950);
-	font-size: 16px;
-}
-.empty-state p {
-	margin: 0 0 8px;
-	font-size: 14px;
-	line-height: 1.5;
-}
-.page-title {
-	margin: 0 0 8px;
-	font-family: var(--font-display, inherit);
-	font-size: 28px;
-	line-height: 1.15;
-	font-weight: 800;
-}
-.receipt-list {
-	display: grid;
-	gap: 8px;
-	margin: 16px 0;
-}
-.receipt-item {
+.receipt-list { margin-top: 24px; }
+a.receipt-item {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 14px;
-	border-bottom: 1px solid var(--slate-100);
-	padding: 14px 6px;
+	padding: 16px 4px;
+	border-top: 1px solid var(--line);
 	text-decoration: none;
 	color: inherit;
-	border-radius: 8px;
 }
-.receipt-item:last-child { border-bottom: 0; }
-.receipt-item strong { display: block; font-size: 17px; }
-.receipt-item small { color: var(--slate-500); }
-.receipt-item .amount {
-	font-size: 17px;
-	font-weight: 800;
-	font-variant-numeric: tabular-nums;
-}
-.receipt-item-end {
-	display: grid;
-	justify-items: end;
-	gap: 4px;
-}
-.receipt-item-end .badge {
-	font-size: 10px;
+a.receipt-item:last-child { border-bottom: 1px solid var(--line); }
+.receipt-item strong { display: block; font-size: 16px; }
+.receipt-item .muted { font-size: 13px; }
+.receipt-item-end { display: grid; justify-items: end; gap: 6px; }
+.receipt-item-end strong { font-family: var(--font-mono, monospace); }
+.receipt-item-selected { background: var(--surface-muted); }
+
+.status-tag {
+	display: inline-flex;
+	align-items: center;
 	padding: 3px 8px;
+	border: 1px solid currentColor;
+	font-size: 10px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
 }
-.receipt-item-selected {
-	background: var(--brand-tint, var(--success-bg));
+.status-tag.badge-success { color: var(--success); }
+.status-tag.badge-pending { color: var(--warning); }
+.status-tag.badge-danger { color: var(--danger); }
+
+.empty-state {
+	display: grid;
+	justify-items: center;
+	gap: 6px;
+	margin-top: 24px;
+	padding: 48px 16px;
+	border: 1px dashed var(--line-strong);
+	color: var(--muted);
+	text-align: center;
 }
-.receipt-top {
+.empty-state .icon { margin-bottom: 6px; font-size: 28px; color: var(--faint); }
+.empty-state strong { color: var(--ink); font-size: 15px; }
+.empty-state p { margin: 0 0 6px; font-size: 13px; }
+
+.detail-top {
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 16px;
-	margin-bottom: 18px;
+	margin-bottom: 32px;
 }
-.badge {
-	display: inline-flex;
-	align-items: center;
-	border-radius: 6px;
-	padding: 6px 10px;
-	font-size: 12px;
-	font-weight: 800;
-	letter-spacing: 0.03em;
+.detail-top .muted { margin-top: 4px; font-size: 13px; }
+.big-figure {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	padding: 24px 0;
+	border-top: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+	margin-bottom: 24px;
 }
-.badge-success { background: #DCFCE7; color: var(--success-text); }
-.badge-pending { background: var(--amber-bg); color: var(--amber-text); }
-.badge-danger { background: var(--danger-bg); color: var(--danger-text); }
-.weight-hero {
-	border-radius: 10px;
-	background: var(--success-bg);
-	padding: 22px 16px;
-	text-align: center;
+.big-figure-label { color: var(--muted); font-size: 13px; }
+.big-figure-value {
+	margin-left: auto;
+	font-family: var(--font-mono, monospace);
+	font-size: clamp(36px, 5vw, 52px);
+	font-weight: 700;
+	color: var(--ink);
 }
-.weight-hero .label { color: var(--success-text); }
-.weight {
-	color: var(--success-text);
-	font-size: 56px;
-	line-height: 1;
-	font-weight: 800;
-	font-variant-numeric: tabular-nums;
-}
-.weight span {
-	display: inline-block;
-	margin-left: 4px;
-	font-size: 22px;
-}
-.rows {
-	margin-top: 12px;
-	border-top: 1px solid var(--slate-200);
-}
-.row {
+.detail-rows { margin-bottom: 8px; }
+.detail-row {
 	display: flex;
 	justify-content: space-between;
-	gap: 18px;
+	gap: 16px;
 	padding: 12px 0;
-	border-bottom: 1px solid var(--slate-100);
-}
-.row span:first-child { color: var(--slate-500); }
-.row span:last-child {
-	font-weight: 700;
-	text-align: right;
-}
-.state-grid {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 10px;
-	margin-top: 16px;
-}
-.state-card {
-	border: 1px solid var(--slate-200);
-	border-radius: 8px;
-	padding: 14px;
-	background: var(--off-white);
-}
-.state-card strong { display: block; margin: 8px 0 6px; }
-.state-card p {
-	margin: 0;
-	color: var(--slate-600);
+	border-bottom: 1px solid var(--line);
 	font-size: 14px;
 }
+.detail-row span:first-child { color: var(--muted); }
+.detail-row span:last-child { font-weight: 700; font-family: var(--font-mono, monospace); }
 .confirmed-strip {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	margin-top: 16px;
-	border-radius: 8px;
-	background: var(--success-bg);
-	color: var(--success-text);
-	padding: 12px 14px;
+	margin-top: 20px;
+	color: var(--success);
 	font-size: 14px;
 	font-weight: 700;
 }
-.receipt-actions {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 10px;
-	margin-top: 18px;
+.detail-actions {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	margin-top: 28px;
 }
-/* When there's only one action (a ticket that isn't confirmable yet has
-   no "Confirm received" form, just "Buy again") that one action should
-   fill the row instead of sitting in the first column with dead
-   whitespace next to it. */
-.receipt-actions:has(> :only-child) {
-	grid-template-columns: 1fr;
-}
-/* The "Confirm received" button is wrapped in its own <form> (it needs a
-   real POST + CSRF field, unlike "Buy again" which is a plain link) --
-   display: contents unwraps that form from layout so its button becomes
-   the direct grid item, filling its column exactly like a bare button
-   would, instead of the form's own default-sized block box doing so. */
-.receipt-actions form { display: contents; }
-.receipt-actions .button { width: 100%; }
-@media (max-width: 920px) {
-	.receipts-grid,
-	.state-grid { grid-template-columns: 1fr; }
-	.buy-layout { grid-template-columns: 1fr; }
-	.buy-summary-col { position: static; }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 960px) {
+	.buy-layout { grid-template-columns: 1fr; gap: 8px; }
+	.buy-summary-col {
+		position: static;
+		margin-top: 40px;
+		padding-left: 0;
+		padding-top: 32px;
+		border-left: 0;
+		border-top: 1px solid var(--line);
+	}
+	.receipts-layout { grid-template-columns: 1fr; gap: 8px; }
+	.receipt-detail-col {
+		margin-top: 40px;
+		padding-left: 0;
+		padding-top: 32px;
+		border-left: 0;
+		border-top: 1px solid var(--line);
+	}
 }
 @media (max-width: 720px) {
-	.pay-bar,
 	.summary-paybar {
 		position: fixed;
 		left: 0;
@@ -676,19 +583,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 		bottom: 0;
 		z-index: 20;
 		margin: 0;
-		padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+		padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
 		background: #fff;
-		border-top: 1px solid var(--slate-200);
-		box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+		border-top: 1px solid var(--line);
+		box-shadow: 0 -4px 16px rgba(10, 10, 10, 0.06);
 	}
-	.field-grid,
-	.receipt-actions { grid-template-columns: 1fr; }
-	.button { width: 100%; min-height: 58px; }
-	.panel { padding: 18px; }
-	.form-heading h1,
-	.page-title { font-size: 26px; }
-	.price-chip { font-size: 17px; padding: 7px 10px; }
-	.amount-field { height: 60px; }
-	.amount-field input { font-size: 24px; }
-	.weight { font-size: 48px; }
+	.page { padding: 28px 20px 40px; }
+	.site-header { margin-bottom: 32px; }
+	.field-grid { grid-template-columns: 1fr; gap: 20px; }
+	.button-primary { width: 100%; min-height: 56px; }
+}
+@media (max-width: 420px) {
+	.payment { padding: 16px 4px; font-size: 12px; }
+	.payment .icon { font-size: 19px; }
 }
