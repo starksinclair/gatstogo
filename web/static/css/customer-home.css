@@ -649,10 +649,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	.receipt-actions { grid-template-columns: 1fr; }
 	.button { width: 100%; min-height: 58px; }
 	.panel { padding: 18px; }
-	.status-strip {
-		border-radius: 12px;
-		padding: 12px 14px;
-	}
 	.form-heading h1,
 	.page-title { font-size: 26px; }
 	.price-chip { font-size: 17px; padding: 7px 10px; }
