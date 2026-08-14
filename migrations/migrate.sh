@@ -45,8 +45,18 @@ psql_exec -c "CREATE TABLE IF NOT EXISTS schema_migrations (
 for file in "$MIGRATIONS_DIR"/*.up.sql; do
   version=$(basename "$file")
 
-  already=$(psql_exec -X -A -t -v version="$version" -c \
-    "SELECT 1 FROM schema_migrations WHERE version = :'version';")
+  # :'version' substitution deliberately goes through stdin (a heredoc), not
+  # -c "...". psql's -c sends its argument to the server close to verbatim
+  # -- unlike a script fed via -f or stdin, it does NOT run psql's own
+  # variable-interpolation pass over the SQL text, so :'version' would reach
+  # Postgres literally and fail with a syntax error at ":". Confirmed by
+  # actually running this against a live Postgres (docker/podman compose)
+  # for the first time -- this codebase's -c "...:'version'..." form had
+  # never been exercised against a real psql before.
+  already=$(psql_exec -X -A -t -v version="$version" <<'SQL'
+SELECT 1 FROM schema_migrations WHERE version = :'version';
+SQL
+  )
   if [ "$already" = "1" ]; then
     echo "skip $version (already applied)"
     continue
@@ -58,8 +68,9 @@ for file in "$MIGRATIONS_DIR"/*.up.sql; do
     -v admin_password="$GATSTOGO_ADMIN_ROLE_PASSWORD" \
     -f "$file"
 
-  psql_exec -v version="$version" -c \
-    "INSERT INTO schema_migrations (version) VALUES (:'version');"
+  psql_exec -v version="$version" <<'SQL'
+INSERT INTO schema_migrations (version) VALUES (:'version');
+SQL
 done
 
 echo "migrations complete"
