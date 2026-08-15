@@ -421,7 +421,16 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .article-layout p { margin: 0 0 16px; color: var(--ink-soft); font-size: 15px; line-height: 1.7; }
 .article-layout ul { margin: 0 0 16px; padding-left: 22px; color: var(--ink-soft); font-size: 15px; line-height: 1.7; }
-.article-layout a { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
+/* :not(.button-primary) matters: without it, this rule's specificity
+   (one class + one element) beats .button-primary's (one class alone)
+   and wins by source order too, silently forcing a button-primary
+   link's text color from white to this same green -- invisible on
+   the button's own green background, exactly the bug that shipped on
+   the pricing page's "Get started" CTA (nested inside .article-layout
+   like every other link there) until a real screenshot caught it.
+   Excluding it here means any future button dropped into an article
+   body can't collide with this rule the same way again. */
+.article-layout a:not(.button-primary) { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
 
 .pricing-row {
 	display: flex;
