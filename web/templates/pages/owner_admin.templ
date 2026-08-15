@@ -8,7 +8,6 @@ type OwnerDashboardData struct {
 	PlantCity       string
 	PlantAddress    string
 	PlantPhone      string
-	PlantStatus     string
 	DomainStatus    string
 	TodayLabel      string
 	CurrentPrice    string
@@ -348,12 +347,14 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 		<div>
 			<div class="eyebrow">Plant owner console</div>
 			<h1>{ data.PlantName }</h1>
-			<div class="status-row">
-				<span class="badge badge-ok">{ data.TodayLabel }</span>
-				<span class="badge badge-muted">{ data.PlantCity }</span>
-				<span class="badge badge-muted mono">{ data.PlantSlug }</span>
-				<span class="badge badge-ok">{ data.PlantStatus }</span>
-				<span class="badge badge-muted">Domain { data.DomainStatus }</span>
+			<div class="meta-row">
+				<span>{ data.TodayLabel }</span>
+				<span class="sep"></span>
+				<span>{ data.PlantCity }</span>
+				<span class="sep"></span>
+				<span class="mono">{ data.PlantSlug }</span>
+				<span class="sep"></span>
+				<span>Domain { data.DomainStatus }</span>
 			</div>
 		</div>
 		<div class="toolbar">
@@ -633,11 +634,14 @@ templ adminConsoleContent(data AdminConsoleData) {
 		<div>
 			<div class="eyebrow">Platform admin console</div>
 			<h1>Plant network</h1>
-			<div class="status-row">
-				<span class="badge badge-ok">{ data.ActiveCount } active</span>
-				<span class="badge badge-warn">{ data.OnboardingCount } onboarding</span>
-				<span class="badge badge-danger">{ data.SuspendedCount } suspended</span>
-				<span class="badge badge-muted">{ data.ClosedCount } closed</span>
+			<div class="meta-row">
+				<span class="meta-ok">{ data.ActiveCount } active</span>
+				<span class="sep"></span>
+				<span class="meta-warn">{ data.OnboardingCount } onboarding</span>
+				<span class="sep"></span>
+				<span class="meta-danger">{ data.SuspendedCount } suspended</span>
+				<span class="sep"></span>
+				<span>{ data.ClosedCount } closed</span>
 			</div>
 		</div>
 		<div class="toolbar">

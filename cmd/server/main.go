@@ -506,7 +506,6 @@ func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.
 		PlantCity:    ptrString(plant.City, "City coming soon"),
 		PlantAddress: ptrString(plant.Address, "Plant address coming soon"),
 		PlantPhone:   ptrString(plant.Phone, "Phone number coming soon"),
-		PlantStatus:  humanize(plant.Status, "Status coming soon"),
 		DomainStatus: humanize(plant.DomainStatus, "No domain yet"),
 		TodayLabel:   time.Now().Format("2 Jan 2006"),
 		CurrentPrice: "Price coming soon",

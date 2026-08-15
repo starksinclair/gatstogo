@@ -214,12 +214,36 @@ h3 { font-size: 14px; }
 	outline: 2px solid var(--green);
 	outline-offset: 2px;
 }
-.status-row {
+/* Plain hairline-separated text, not bordered pill "cards" -- same
+   convention as customer-home.css's .brand-meta. PlantStatus itself
+   is deliberately not shown here: middleware.Tenant only resolves a
+   plant at all when status = 'active' (the same route group /owner
+   and /owner/dashboard sit in), so this page can never render for a
+   suspended/closed/provisioning plant -- an "ACTIVE" badge here would
+   be tautologically true every single time, the same class of
+   fabricated-signal problem an "Open now" claim on the buy-gas page
+   turned out to be earlier this session. Domain status is kept: it's
+   a genuinely independent, variable field (a plant can be active for
+   sales with its own custom domain still pending/broken/unset). */
+.meta-row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin-top: 12px;
+	align-items: center;
+	margin-top: 14px;
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 600;
 }
+.meta-row .sep {
+	display: inline-block;
+	width: 1px;
+	height: 12px;
+	margin: 0 12px;
+	background: var(--line);
+}
+.meta-row .meta-ok { color: var(--green); font-weight: 700; }
+.meta-row .meta-warn { color: var(--amber); font-weight: 700; }
+.meta-row .meta-danger { color: var(--red); font-weight: 700; }
 /* Status tags: outlined, not filled -- same convention as customer-
    home.css's .status-tag. Class names (.badge, .badge-ok/-warn/-danger/
    -muted) stay exactly as they are: cmd/server/main.go builds these as
