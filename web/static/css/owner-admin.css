@@ -409,21 +409,25 @@ td {
 	border-color: var(--ink);
 }
 .field textarea { min-height: 86px; resize: vertical; }
-/* Custom-themed <select> -- strips the browser's own native arrow
-   (appearance: none) and draws the same caret-down glyph the rest of
-   the app already uses (web/templates/components/icon_paths.go) as a
-   background-image instead, so the closed control matches every other
-   input rather than reading as unstyled default HTML. The open
-   dropdown list itself is still the browser's native popup -- no CSS
-   can reach inside that cross-browser without replacing <select>
-   entirely with a hand-built listbox (keyboard nav, ARIA roles, a
-   hidden input to keep posting the same form field, click-outside
-   handling, mobile touch behavior, ...), which is a lot of new
-   surface for what's currently two dropdowns in the whole app. This
-   gets the actual complaint (looks like plain, unstyled HTML) fixed
-   with no new JS and no behavior change to the real <select
-   name="..."> elements cmd/server/owner_write.go already reads via
-   r.FormValue(...). */
+/* <select> theming, two layers:
+   1. The native element itself -- strips the browser's own arrow
+      (appearance: none) and draws the same caret-down glyph the rest
+      of the app already uses (web/templates/components/icon_paths.go)
+      as a background-image, so it matches every other input instead
+      of reading as unstyled default HTML. This is the progressive-
+      enhancement FALLBACK: if JS never runs, this native, fully
+      keyboard/screen-reader-native control is what a visitor actually
+      gets, not a broken half-built widget.
+   2. Once JS has run (owner_admin.templ's opsShell script,
+      "Themed <select> replacement"), .select-shell.js-ready hides
+      this native element and shows a custom trigger button + listbox
+      instead (below) -- because no CSS reaches inside a <select>'s
+      *open* dropdown list cross-browser, only its closed box, and
+      that's the part that still looked like plain HTML even after
+      layer 1. The real <select name="..."> stays in the DOM the
+      entire time and is still exactly what gets submitted with the
+      form (cmd/server/owner_write.go's r.FormValue(...) never
+      changes) -- the custom listbox only ever writes back into it. */
 .field select {
 	appearance: none;
 	-webkit-appearance: none;
@@ -438,6 +442,68 @@ td {
 .field select:focus {
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%23101820' d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
 }
+
+.select-shell { position: relative; }
+.select-shell.js-ready .select-native {
+	position: absolute;
+	width: 0;
+	height: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+.select-trigger {
+	display: none;
+	width: 100%;
+	min-height: 42px;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
+	background: #FFFFFF;
+	padding: 10px 12px;
+	color: var(--ink);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.select-shell.js-ready .select-trigger { display: flex; }
+.select-trigger:hover { border-color: #B9C2BB; }
+.select-shell.open .select-trigger { border-color: var(--ink); }
+.select-trigger .icon {
+	flex: none;
+	font-size: 14px;
+	color: var(--muted);
+	transition: transform var(--duration-base, 180ms) var(--ease-standard, ease);
+}
+.select-shell.open .select-trigger .icon { transform: rotate(180deg); }
+
+.select-list {
+	position: absolute;
+	z-index: 20;
+	top: calc(100% + 4px);
+	left: 0;
+	right: 0;
+	max-height: 240px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 4px;
+	list-style: none;
+	background: #FFFFFF;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
+	box-shadow: var(--shadow-md, 0 16px 40px rgba(16, 24, 32, 0.08));
+}
+.select-list li {
+	padding: 9px 12px;
+	border-radius: var(--radius-sm, 6px);
+	color: var(--ink);
+	font-weight: 600;
+	cursor: pointer;
+}
+.select-list li:hover,
+.select-list li.highlighted { background: var(--soft); }
+.select-list li.selected { color: var(--green); font-weight: 800; }
 .action-strip {
 	display: flex;
 	gap: 10px;
