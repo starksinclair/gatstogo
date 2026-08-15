@@ -68,7 +68,7 @@ func landingContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</a> <a class=\"text-button\" href=\"#how-it-works\">See how it works</a></div></div></section><section class=\"mkt-section\" id=\"how-it-works\"><div class=\"wrap\"><div class=\"mkt-section-head\"><div class=\"section-eyebrow\">How it works</div><h2>From sign-up to your first sale</h2></div><div class=\"step-list\"><div class=\"step-item\"><div class=\"step-index mono\">01</div><h3>Create your plant</h3><p>Tell us your plant name and set a starting price. You get your own branded page for customers to buy from.</p></div><div class=\"step-item\"><div class=\"step-index mono\">02</div><h3>Share your link</h3><p>Customers pay online and get a 4-digit code by SMS -- no app to install, no account to create.</p></div><div class=\"step-item\"><div class=\"step-index mono\">03</div><h3>Staff redeem and fill</h3><p>Your cashiers and operators sign in at the terminal with a PIN, enter the code, and confirm the fill.</p></div><div class=\"step-item\"><div class=\"step-index mono\">04</div><h3>Track everything live</h3><p>Sales, cash, shifts, and staff activity, all in one dashboard -- no more end-of-day guesswork.</p></div></div></div></section><section class=\"mkt-section\"><div class=\"wrap\"><div class=\"mkt-section-head\"><div class=\"section-eyebrow\">What you get</div><h2>Everything a plant needs to run online</h2></div></div><div class=\"wrap\"><div class=\"feature-grid\"><div class=\"feature-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</a> <a class=\"text-button\" href=\"#how-it-works\">See how it works</a></div></div></section><div class=\"photo-band\" style=\"background-image: url('/static/images/landing-industrial.jpg')\" role=\"img\" aria-label=\"An LPG storage plant\"></div><section class=\"mkt-section\" id=\"how-it-works\"><div class=\"wrap\"><div class=\"mkt-section-head\"><div class=\"section-eyebrow\">How it works</div><h2>From sign-up to your first sale</h2></div><div class=\"step-list\"><div class=\"step-item\"><div class=\"step-index mono\">01</div><h3>Create your plant</h3><p>Tell us your plant name and set a starting price. You get your own branded page for customers to buy from.</p></div><div class=\"step-item\"><div class=\"step-index mono\">02</div><h3>Share your link</h3><p>Customers pay online and get a 4-digit code by SMS. No app to install, no account to create.</p></div><div class=\"step-item\"><div class=\"step-index mono\">03</div><h3>Staff redeem and fill</h3><p>Your cashiers and operators sign in at the terminal with a PIN, enter the code, and confirm the fill.</p></div><div class=\"step-item\"><div class=\"step-index mono\">04</div><h3>Track everything live</h3><p>Sales, cash, shifts, and staff activity, all in one dashboard. No more end-of-day guesswork.</p></div></div></div></section><section class=\"mkt-section\"><div class=\"wrap\"><div class=\"mkt-section-head\"><div class=\"section-eyebrow\">What you get</div><h2>Everything a plant needs to run online</h2></div></div><div class=\"wrap\"><div class=\"feature-grid\"><div class=\"feature-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -76,7 +76,7 @@ func landingContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h3>Live owner dashboard</h3><p>Real-time sales, cash position, shift history, and staff activity -- not a report you have to wait for.</p></div><div class=\"feature-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h3>Live owner dashboard</h3><p>Real-time sales, cash position, shift history, and staff activity, not a report you have to wait for.</p></div><div class=\"feature-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -100,7 +100,7 @@ func landingContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<h3>Receipts and lookup</h3><p>Customers can look up any past purchase by phone number and a one-time code -- no account required.</p></div></div></div></section><section class=\"cta-band\"><div class=\"wrap\"><h2>Ready to put your plant online?</h2><p>Tell us about your plant -- we'll review and get you set up.</p><a class=\"button-primary\" href=\"/get-started\">Get started")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<h3>Receipts and lookup</h3><p>Customers can look up any past purchase by phone number and a one-time code. No account required.</p></div></div></div></section><section class=\"cta-band\"><div class=\"wrap\"><h2>Ready to put your plant online?</h2><p>Tell us about your plant, and we'll review and get you set up.</p><a class=\"button-primary\" href=\"/get-started\">Get started")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

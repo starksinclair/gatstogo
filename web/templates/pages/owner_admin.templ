@@ -425,7 +425,7 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 					@nav
 					<div class="rail-note">
 						<strong>Real numbers only.</strong>
-						Everything on this dashboard reflects what's actually happened -- sections stay empty until there's something real to show.
+						Everything on this dashboard reflects what's actually happened. Sections stay empty until there's something real to show.
 					</div>
 					<form method="post" action={ templ.SafeURL(logoutAction) } class="rail-signout">
 						<input type="hidden" name="csrf_token" value={ csrfToken }/>
@@ -625,7 +625,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save count</button></div>
 					</form>
 				} else {
-					<p class="muted">No shift is open right now -- a cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>
+					<p class="muted">No shift is open right now. A cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>
 				}
 			</div>
 		</div>

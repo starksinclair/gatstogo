@@ -505,7 +505,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div class=\"rail-note\"><strong>Real numbers only.</strong> Everything on this dashboard reflects what's actually happened -- sections stay empty until there's something real to show.</div><form method=\"post\" action=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div class=\"rail-note\"><strong>Real numbers only.</strong> Everything on this dashboard reflects what's actually happened. Sections stay empty until there's something real to show.</div><form method=\"post\" action=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1586,7 +1586,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<p class=\"muted\">No shift is open right now -- a cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<p class=\"muted\">No shift is open right now. A cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

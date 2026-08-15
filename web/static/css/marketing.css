@@ -199,6 +199,17 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .hero-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
 
+/* ---- Full-bleed photo band -- a single deliberate image moment, not
+   a decorative thumbnail in a card. No text overlay: the photo makes
+   its own case for real, working infrastructure without competing
+   with copy for attention. ---- */
+.photo-band {
+	height: clamp(240px, 32vw, 440px);
+	background-size: cover;
+	background-position: center;
+	border-bottom: 1px solid var(--line);
+}
+
 /* ==========================================================================
    How it works -- numbered hairline-divided steps
    ========================================================================== */
@@ -269,11 +280,18 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .feature-item p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 44ch; }
 
 /* ==========================================================================
-   CTA band
+   CTA band -- a photo backdrop instead of a flat color for the page's
+   closing moment, dark enough (linear-gradient layered under the
+   image, in the same background-image declaration) that the white
+   text stays fully legible regardless of what's underneath it.
    ========================================================================== */
 .cta-band {
-	padding: 80px 0;
+	padding: 96px 0;
 	text-align: center;
+	background-image: linear-gradient(rgba(10, 10, 10, 0.72), rgba(10, 10, 10, 0.72)), url("/static/images/landing-flame.jpg");
+	background-size: cover;
+	background-position: center;
+	color: #FFFFFF;
 }
 .cta-band h2 {
 	margin: 0 0 12px;
@@ -281,7 +299,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	font-weight: 800;
 	font-size: clamp(26px, 3.4vw, 36px);
 }
-.cta-band p { margin: 0 0 32px; color: var(--muted); font-size: 16px; }
+.cta-band p { margin: 0 0 32px; color: rgba(255, 255, 255, 0.78); font-size: 16px; }
 
 /* ==========================================================================
    Footer

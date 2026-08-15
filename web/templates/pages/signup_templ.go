@@ -92,7 +92,7 @@ func signupContent(data SignupViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><h1>We've got your application</h1><p>Thanks for telling us about your plant. Our team reviews every new plant before it goes live -- we'll be in touch to activate your page and confirm your login details.</p><a class=\"button-primary\" href=\"/\">Back to homepage</a></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><h1>We've got your application</h1><p>Thanks for telling us about your plant. Our team reviews every new plant before it goes live. We'll be in touch to activate your page and confirm your login details.</p><a class=\"button-primary\" href=\"/\">Back to homepage</a></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -254,7 +254,7 @@ func signupContent(data SignupViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" placeholder=\"0803 000 0000\" required></div></div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"owner_password\">Password</label> <input id=\"owner_password\" type=\"password\" name=\"owner_password\" autocomplete=\"new-password\" required></div><div class=\"field-underline\"><label for=\"owner_password_confirm\">Confirm password</label> <input id=\"owner_password_confirm\" type=\"password\" name=\"owner_password_confirm\" autocomplete=\"new-password\" required></div></div><p class=\"field-hint\">This is what you'll use to log in to your plant's dashboard once it's approved -- your phone number and this password, at your own plant's login page.</p></div><button class=\"button-primary\" type=\"submit\">Submit application</button></form></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" placeholder=\"0803 000 0000\" required></div></div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"owner_password\">Password</label> <input id=\"owner_password\" type=\"password\" name=\"owner_password\" autocomplete=\"new-password\" required></div><div class=\"field-underline\"><label for=\"owner_password_confirm\">Confirm password</label> <input id=\"owner_password_confirm\" type=\"password\" name=\"owner_password_confirm\" autocomplete=\"new-password\" required></div></div><p class=\"field-hint\">This is what you'll use to log in to your plant's dashboard once it's approved: your phone number and this password, at your own plant's login page.</p></div><button class=\"button-primary\" type=\"submit\">Submit application</button></form></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

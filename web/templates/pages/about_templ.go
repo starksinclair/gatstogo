@@ -63,7 +63,7 @@ func aboutContent(contactEmail string) templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main class=\"article-layout\"><div class=\"section-eyebrow\">About</div><h1>Built for how LPG plants actually run</h1><p class=\"lede\">GatsToGo started from a simple observation: most LPG plants run on cash, memory, and a notebook. Sales, shifts, and cash reconciliation all happen by hand, at the end of a long day. We built GatsToGo to make that real-time instead -- a branded page for customers to buy gas online, a terminal for staff to redeem and fill orders, and a dashboard that shows an owner exactly what's happening, as it happens.</p><h2>Get in touch</h2><div class=\"contact-row\"><span>Email</span> <a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main class=\"article-layout\"><div class=\"section-eyebrow\">About</div><h1>Built for how LPG plants actually run</h1><p class=\"lede\">GatsToGo started from a simple observation: most LPG plants run on cash, memory, and a notebook. Sales, shifts, and cash reconciliation all happen by hand, at the end of a long day. We built GatsToGo to make that real-time instead: a branded page for customers to buy gas online, a terminal for staff to redeem and fill orders, and a dashboard that shows an owner exactly what's happening, as it happens.</p><h2>Get in touch</h2><div class=\"contact-row\"><span>Email</span> <a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -89,7 +89,7 @@ func aboutContent(contactEmail string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</a></div><div class=\"contact-row\"><span>New to GatsToGo</span> <a href=\"/get-started\">Get started</a></div><h2>Already a GatsToGo customer?</h2><p>Log in from your own plant's page -- the link your team was given when your plant was set up, followed by <span class=\"mono\">/owner/login</span>. If you can't find it, reach out to the email above.</p></main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</a></div><div class=\"contact-row\"><span>New to GatsToGo</span> <a href=\"/get-started\">Get started</a></div><h2>Already a GatsToGo customer?</h2><p>Log in from your own plant's page: the link your team was given when your plant was set up, followed by <span class=\"mono\">/owner/login</span>. If you can't find it, reach out to the email above.</p></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -166,7 +166,7 @@ func ticketConfirmationContent(theme customerHomeTheme, paid bool, code string, 
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><h1 class=\"page-headline\">Payment not confirmed yet</h1><p class=\"lede\">We have not received confirmation of your payment yet. If money left your account, this page will not update itself -- check <a href=\"/receipts\">My receipts</a> in a minute, or contact the plant if it still has not arrived.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><h1 class=\"page-headline\">Payment not confirmed yet</h1><p class=\"lede\">We have not received confirmation of your payment yet. If money left your account, this page will not update itself. Check <a href=\"/receipts\">My receipts</a> in a minute, or contact the plant if it still has not arrived.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

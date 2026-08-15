@@ -407,7 +407,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 								'<h1>Start terminal shift</h1>' +
 								'<p class="helper-text">Pick your name, enter your PIN, then count opening cash.</p>' +
 								(staff.length === 0 ? '<p class="helper-text">No staff are set up for this plant yet. Ask an owner to add staff from the owner dashboard.</p>' : '<div class="staff-grid">' + staff.map(employeeButton).join("") + '</div>') +
-								(selected ? '<p class="helper-text">Terminal mode: <strong>' + roleLabel(selected.role) + '</strong> — ' + (configForRole(selected.role) === "operator" ? "fill only" : configForRole(selected.role) === "cashier" ? "cash, tokens, fill" : "cash + fill") + '</p>' : '') +
+								(selected ? '<p class="helper-text">Terminal mode: <strong>' + roleLabel(selected.role) + '</strong> (' + (configForRole(selected.role) === "operator" ? "fill only" : configForRole(selected.role) === "cashier" ? "cash, tokens, fill" : "cash + fill") + ')</p>' : '') +
 								'<div class="term-field">' +
 									'<label class="field-label" for="opening-cash">Opening cash drawer</label>' +
 									'<input id="opening-cash" class="term-input mono" value="' + state.openingCash + '" placeholder="₦20,000" inputmode="numeric" data-action="opening-cash" ' + (locked ? "disabled" : "") + '/>' +

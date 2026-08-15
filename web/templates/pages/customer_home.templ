@@ -397,7 +397,7 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 									clearInterval(interval);
 									el.classList.add("is-expired");
 									el.textContent = "";
-									el.append("This code has expired -- request a new one.");
+									el.append("This code has expired. Request a new one.");
 									return;
 								}
 								render();
