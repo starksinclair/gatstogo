@@ -538,7 +538,7 @@ func ownerNav() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = navButton(false, "activity", "pulse", "Activity").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = navButton(false, "activity", "clock-counter-clockwise", "Activity").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -591,7 +591,7 @@ func adminNav() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = navButton(false, "activity", "pulse", "Activity").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = navButton(false, "activity", "clock-counter-clockwise", "Activity").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
