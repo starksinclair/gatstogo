@@ -39,12 +39,12 @@ func loadCurrentPrice(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID
 // schema's check-constraint values (transfer/terminal/ussd/cash), and
 // (b) the Paystack channel(s) to request for that option.
 //
-// "POS terminal" doesn't correspond to an online Paystack channel -- a POS
-// terminal is a physical card machine, a different product from the
-// Checkout/Initialize API this app calls. The closest available online
-// equivalent is a card charge, so that customer-facing option is
-// deliberately wired to Paystack's "card" channel while still storing the
-// schema's existing 'terminal' value; the label in the UI is unchanged.
+// A physical POS terminal isn't something an online Initialize Transaction
+// call can trigger, so the closest available equivalent is a card charge:
+// that customer-facing option is wired to Paystack's "card" channel while
+// still storing the schema's existing 'terminal' value. The UI label for
+// this option is "Card" (see channelLabel), matching what actually happens
+// rather than the schema's internal column value.
 func mapCustomerChannel(input string) (dbChannel string, paystackChannels []string, ok bool) {
 	switch input {
 	case "transfer":
@@ -55,6 +55,29 @@ func mapCustomerChannel(input string) (dbChannel string, paystackChannels []stri
 		return "ussd", []string{"ussd"}, true
 	default:
 		return "", nil, false
+	}
+}
+
+// channelLabel turns a tickets.channel DB value into the human label shown
+// to customers (receipt detail) and owners (admin ticket list). This is
+// deliberately not the generic humanize() helper: humanize's naive
+// underscore-strip-and-title-case would render 'terminal' as "Terminal"
+// (not what actually happens -- see mapCustomerChannel) and 'ussd' as
+// "Ussd" (not the acronym). Any value outside the schema's check
+// constraint falls back to humanize for forward-compatibility rather than
+// silently showing nothing.
+func channelLabel(dbChannel string) string {
+	switch dbChannel {
+	case "transfer":
+		return "Bank transfer"
+	case "terminal":
+		return "Card"
+	case "ussd":
+		return "USSD"
+	case "cash":
+		return "Cash"
+	default:
+		return humanize(dbChannel, "Payment channel")
 	}
 }
 

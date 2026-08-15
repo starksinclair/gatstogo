@@ -315,7 +315,7 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 						},
 						get channelLabel() {
 							if (this.channel === 'transfer') return 'Bank transfer';
-							if (this.channel === 'terminal') return 'POS terminal';
+							if (this.channel === 'terminal') return 'Card';
 							if (this.channel === 'ussd') return 'USSD';
 							return '';
 						},
@@ -542,7 +542,7 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 									<label class="payment">
 										<input type="radio" name="channel" value="terminal" class="sr-only" x-model="channel"/>
 										@components.Icon("credit-card")
-										<span>POS terminal</span>
+										<span>Card</span>
 									</label>
 									<label class="payment">
 										<input type="radio" name="channel" value="ussd" class="sr-only" x-model="channel"/>

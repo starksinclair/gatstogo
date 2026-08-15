@@ -151,7 +151,7 @@ func toReceiptDetail(rc *tickets.Receipt, sessionToken string) *pages.ReceiptDet
 		NetKg:         netKg,
 		Rate:          formatNaira(rc.RatePerKgKobo) + "/kg",
 		Amount:        formatNaira(rc.AmountKobo),
-		Channel:       humanize(rc.Channel, "Payment channel"),
+		Channel:       channelLabel(rc.Channel),
 		When:          rc.CreatedAt.Format("2 Jan, 15:04"),
 		ConfirmedAt:   confirmedAt,
 		CanConfirm:    rc.Status == "filled" && !confirmed,

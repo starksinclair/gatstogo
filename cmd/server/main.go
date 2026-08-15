@@ -590,7 +590,7 @@ func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Pl
 		}
 		row.Rate = formatNaira(rate) + "/kg"
 		row.Amount = formatNaira(amount)
-		row.Channel = humanize(row.Channel, "Payment channel")
+		row.Channel = channelLabel(row.Channel)
 		row.Status = strings.ToUpper(fallbackString(row.Status, "pending"))
 		row.When = created.Format("2 Jan, 15:04")
 		row.PaidAt = formatOptionalTime(paidAt, "Not paid yet")
