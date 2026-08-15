@@ -102,7 +102,7 @@ func buyGasSubmitHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 		if err := r.ParseForm(); err != nil {
@@ -199,7 +199,7 @@ func ticketCallbackHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 		reference := chi.URLParam(r, "reference")

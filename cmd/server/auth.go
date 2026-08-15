@@ -22,7 +22,7 @@ func ownerLoginPageHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 		csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
@@ -36,7 +36,7 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 		if err := r.ParseForm(); err != nil {

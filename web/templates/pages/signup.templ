@@ -1,0 +1,125 @@
+package pages
+
+import "gatstogo/web/templates/components"
+
+// SignupViewData backs GET/POST /get-started (cmd/server/marketing.go).
+// Password fields are deliberately never echoed back on a validation
+// error -- everything else is, so a mistyped price doesn't cost the
+// visitor re-typing their whole plant name and slug too.
+type SignupViewData struct {
+	CSRFToken string
+	ErrorMsg  string
+	Submitted bool
+
+	Name          string
+	Slug          string
+	City          string
+	Address       string
+	Phone         string
+	OwnerName     string
+	OwnerPhone    string
+	StartingPrice string
+}
+
+templ Signup(data SignupViewData) {
+	@marketingPageShell("Get started | GatsToGo", signupContent(data))
+}
+
+templ signupContent(data SignupViewData) {
+	<main>
+		if data.Submitted {
+			<div class="signup-submitted">
+				<div class="icon-badge">
+					@components.Icon("check-circle")
+				</div>
+				<h1>We've got your application</h1>
+				<p>Thanks for telling us about your plant. Our team reviews every new plant before it goes live -- we'll be in touch to activate your page and confirm your login details.</p>
+				<a class="button-primary" href="/">Back to homepage</a>
+			</div>
+		} else {
+			<div class="signup-layout">
+				<div class="section-eyebrow">Get started</div>
+				<h1>Tell us about your plant</h1>
+				<p class="lede">A few details to set up your branded page and owner login. We review every application before it goes live.</p>
+				if data.ErrorMsg != "" {
+					<div class="inline-alert">
+						@components.Icon("warning-circle")
+						{ data.ErrorMsg }
+					</div>
+				}
+				<form method="post" action="/get-started">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+
+					<div class="field-group">
+						<div class="field-group-heading">Plant details</div>
+						<div class="field-underline">
+							<label for="name">Plant name</label>
+							<input id="name" type="text" name="name" value={ data.Name } placeholder="Sunrise Gas Plant" required autofocus/>
+						</div>
+						<div class="field-underline">
+							<label for="slug">Web address</label>
+							<input id="slug" type="text" name="slug" value={ data.Slug } placeholder="sunrise" pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?" required/>
+							<p class="slug-preview">Customers will find you at <strong>{ slugOrPlaceholder(data.Slug) }</strong>.gatstogo.ng</p>
+						</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="city">City</label>
+								<input id="city" type="text" name="city" value={ data.City } placeholder="Owerri"/>
+							</div>
+							<div class="field-underline">
+								<label for="phone">Plant phone number</label>
+								<input id="phone" type="tel" name="phone" value={ data.Phone } placeholder="0803 000 0000"/>
+							</div>
+						</div>
+						<div class="field-underline">
+							<label for="address">Address</label>
+							<input id="address" type="text" name="address" value={ data.Address } placeholder="12 Wetheral Road"/>
+						</div>
+						<div class="field-underline">
+							<label for="starting_price">Starting price per kg (₦)</label>
+							<input id="starting_price" type="text" name="starting_price" value={ data.StartingPrice } placeholder="1200" inputmode="decimal" required/>
+							<p class="field-hint">You can change this any time from your dashboard once you're live.</p>
+						</div>
+					</div>
+
+					<div class="field-group">
+						<div class="field-group-heading">Owner login</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="owner_name">Your name</label>
+								<input id="owner_name" type="text" name="owner_name" value={ data.OwnerName } placeholder="Ada Nwosu" required/>
+							</div>
+							<div class="field-underline">
+								<label for="owner_phone">Your phone number</label>
+								<input id="owner_phone" type="tel" name="owner_phone" value={ data.OwnerPhone } placeholder="0803 000 0000" required/>
+							</div>
+						</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="owner_password">Password</label>
+								<input id="owner_password" type="password" name="owner_password" autocomplete="new-password" required/>
+							</div>
+							<div class="field-underline">
+								<label for="owner_password_confirm">Confirm password</label>
+								<input id="owner_password_confirm" type="password" name="owner_password_confirm" autocomplete="new-password" required/>
+							</div>
+						</div>
+						<p class="field-hint">This is what you'll use to log in to your plant's dashboard once it's approved -- your phone number and this password, at your own plant's login page.</p>
+					</div>
+
+					<button class="button-primary" type="submit">Submit application</button>
+				</form>
+			</div>
+		}
+	</main>
+}
+
+// slugOrPlaceholder shows a live-ish preview of the customer-facing web
+// address as the visitor types -- "yourslug" as a placeholder before
+// they've typed anything, so the field never reads as blank/broken.
+func slugOrPlaceholder(slug string) string {
+	if slug == "" {
+		return "yourslug"
+	}
+	return slug
+}

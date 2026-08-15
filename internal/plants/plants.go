@@ -71,6 +71,18 @@ type CreateParams struct {
 	OwnerPhone        string
 	OwnerPassword     string
 	StartingPriceKobo int64
+
+	// Status is the plant's initial lifecycle status. Empty means
+	// "active" -- the historical behavior, and still correct for the
+	// admin console's own onboarding panel (a platform admin creating a
+	// plant directly is already the review step). The public self-serve
+	// signup flow (cmd/server/marketing.go) passes "provisioning"
+	// explicitly instead: middleware.Tenant's own lookup already filters
+	// WHERE status = 'active', so an unreviewed plant's subdomain simply
+	// won't resolve until an admin approves it via the existing
+	// POST /admin/plants/{id}/status (SetStatus, below) -- no separate
+	// enforcement needed.
+	Status string
 }
 
 // Plant is what a caller needs back after creating one.
@@ -93,7 +105,13 @@ type Plant struct {
 // advance>" anyway. This is exactly the kind of pre-tenant, directory-
 // level write AdminDB exists for, the same reasoning as why
 // middleware.Tenant's own slug lookup runs on it.
-func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID uuid.UUID) (*Plant, error) {
+//
+// actorID is nilable: the admin console's onboarding panel passes the
+// authenticated admin's own id, but the public self-serve signup flow
+// (cmd/server/marketing.go) has no actor yet and passes nil -- the same
+// "no specific actor" convention audit.Log's other callers already use
+// (e.g. cmd/server/receipts.go's ticket.confirmed entry).
+func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID *uuid.UUID) (*Plant, error) {
 	name := strings.TrimSpace(p.Name)
 	slug := strings.ToLower(strings.TrimSpace(p.Slug))
 	ownerName := strings.TrimSpace(p.OwnerName)
@@ -107,6 +125,14 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 	}
 	if p.StartingPriceKobo <= 0 {
 		return nil, ErrInvalidPrice
+	}
+
+	status := strings.TrimSpace(p.Status)
+	if status == "" {
+		status = "active"
+	}
+	if !validStatuses[status] {
+		return nil, ErrInvalidStatus
 	}
 
 	primaryColor := validHexColorOr(p.PrimaryColor, defaultPrimaryColor)
@@ -138,10 +164,10 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 
 	var plantID uuid.UUID
 	err = tx.QueryRow(ctx, `
-		INSERT INTO plants (name, slug, city, address, phone, primary_color, button_color)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO plants (name, slug, city, address, phone, primary_color, button_color, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
-	`, name, slug, nullIfEmpty(p.City), nullIfEmpty(p.Address), nullIfEmpty(p.Phone), primaryColor, buttonColor).Scan(&plantID)
+	`, name, slug, nullIfEmpty(p.City), nullIfEmpty(p.Address), nullIfEmpty(p.Phone), primaryColor, buttonColor, status).Scan(&plantID)
 	if err != nil {
 		if isUniqueViolation(err) {
 			return nil, ErrSlugTaken
@@ -171,7 +197,7 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 	// prices) keeps its audit.Log call atomic with the business write it
 	// describes, and provisioning a new tenant with real login credentials
 	// is not the place to be the one exception to that.
-	if err := audit.Log(ctx, tx, &plantID, &actorID, "plant.created", slug, nil); err != nil {
+	if err := audit.Log(ctx, tx, &plantID, actorID, "plant.created", slug, nil); err != nil {
 		return nil, err
 	}
 

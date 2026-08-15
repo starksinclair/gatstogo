@@ -3,10 +3,12 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
 	"gatstogo/internal/domain"
+	"gatstogo/web/templates/pages"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,9 +23,15 @@ func Tenant(db *pgxpool.Pool) func(http.Handler) http.Handler {
 			host := r.Host // e.g. sunrise.gatstogo.ng or sunrise.localhost:8080
 			fmt.Print("Host: ", host, "\n")
 
-			slug := extractSubdomain(host)
+			slug := ExtractSubdomain(host)
 			if slug == "" || slug == "www" || slug == "admin" || slug == "api" {
-				http.Error(w, "Plant not found", http.StatusNotFound)
+				// "" and "www" are the marketing host -- cmd/server's
+				// rootOrTenant handler intercepts / and /home for those
+				// before this middleware ever runs, so reaching here with
+				// no slug means some other tenant-only route (e.g.
+				// /terminal, /owner/login) was hit directly on the bare
+				// domain. Same branded 404 as an unresolved subdomain.
+				renderNotFound(w, r)
 				return
 			}
 
@@ -43,7 +51,7 @@ func Tenant(db *pgxpool.Pool) func(http.Handler) http.Handler {
 			)
 
 			if err != nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
+				renderNotFound(w, r)
 				return
 			}
 
@@ -63,7 +71,25 @@ func GetPlant(ctx context.Context) *domain.Plant {
 	return plant
 }
 
-func extractSubdomain(host string) string {
+// renderNotFound writes the one branded 404 page (web/templates/pages/
+// not_found.templ) -- the single replacement for what used to be a bare
+// http.Error(w, "Plant not found", ...) scattered across this middleware
+// and several cmd/server handlers. Status is set before Render is called
+// since Render only ever fails on a write error at that point (the
+// header can't be changed after bytes have already gone out).
+func renderNotFound(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	if err := pages.NotFound().Render(r.Context(), w); err != nil {
+		log.Println("render not-found page:", err)
+	}
+}
+
+// ExtractSubdomain pulls the leftmost label off a request Host header
+// (e.g. "sunrise" from "sunrise.gatstogo.ng" or "sunrise.localhost:8080").
+// Exported so cmd/server's own routing can ask the same question Tenant
+// asks internally -- "is this a real tenant subdomain, or the bare/www
+// marketing host?" -- without duplicating the parsing logic.
+func ExtractSubdomain(host string) string {
 	// Remove port if present
 	if colonIndex := strings.Index(host, ":"); colonIndex != -1 {
 		host = host[:colonIndex]

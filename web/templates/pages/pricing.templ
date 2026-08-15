@@ -1,0 +1,44 @@
+package pages
+
+import "gatstogo/web/templates/components"
+
+// Pricing describes how GatsToGo is priced in prose rather than a fixed
+// plan table -- there's no billing/subscription system built anywhere in
+// this app yet (plants are onboarded manually, see internal/plants.Create),
+// so a table of invented tiers/numbers here would just be fiction. This
+// says that plainly rather than pretending otherwise.
+templ Pricing() {
+	@marketingPageShell("Pricing | GatsToGo", pricingContent())
+}
+
+templ pricingContent() {
+	<main class="article-layout">
+		<div class="section-eyebrow">Pricing</div>
+		<h1>Straightforward pricing, set up with you</h1>
+		<p class="lede">GatsToGo is early stage, working directly with a small number of plants. We haven't published a fixed plan table yet -- pricing is set up with you directly when your plant is onboarded, based on your size and how you take payments.</p>
+
+		<div class="pricing-row">
+			<span>Setting up your plant</span>
+			<span>Included, as part of onboarding</span>
+		</div>
+		<div class="pricing-row">
+			<span>Branded customer page + terminal</span>
+			<span>Included for every plant</span>
+		</div>
+		<div class="pricing-row">
+			<span>Online payments</span>
+			<span>Processed by Paystack -- their standard transaction fees apply</span>
+		</div>
+		<div class="pricing-row">
+			<span>Support</span>
+			<span>Direct line to our team while we're onboarding new plants</span>
+		</div>
+
+		<h2>Want the details for your plant?</h2>
+		<p>Tell us about your plant through Get Started and we'll walk you through pricing when we set you up.</p>
+		<a class="button-primary" href="/get-started">
+			Get started
+			@components.Icon("arrow-right")
+		</a>
+	</main>
+}

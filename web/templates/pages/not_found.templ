@@ -1,0 +1,37 @@
+package pages
+
+// NotFound is the one branded 404 used everywhere this app previously
+// returned a bare http.Error(w, "Plant not found", ...) text response --
+// an unresolved tenant subdomain (middleware.Tenant), a genuinely
+// unmatched route (chi's router.NotFound), and the several handlers that
+// used to write that same string directly. Deliberately tenant-agnostic
+// (no plant/theme passed in) and self-contained rather than nested inside
+// marketingPageShell -- an error page doesn't need a full nav/footer, the
+// same reasoning web/templates/pages/owner_login.templ's authShell
+// already applies.
+templ NotFound() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>Page not found | GatsToGo</title>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+			<link rel="stylesheet" href="/static/css/tokens.css"/>
+			<link rel="stylesheet" href="/static/css/marketing.css"/>
+		</head>
+		<body>
+			<div class="error-page">
+				<div class="brand-lockup">
+					<span class="brand-mark">G</span>
+					<strong>GATSTOGO</strong>
+				</div>
+				<div class="error-code mono">404</div>
+				<h1>We couldn't find that page</h1>
+				<p>The link may be mistyped, or the plant it pointed to is no longer active. If you're trying to reach a specific gas plant's page, check the link they gave you.</p>
+				<a class="button-primary" href="/">Go to homepage</a>
+			</div>
+		</body>
+	</html>
+}

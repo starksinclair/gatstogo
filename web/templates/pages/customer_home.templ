@@ -414,8 +414,30 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 		</head>
 		<body style={ customerCSSVars(theme) }>
 			@content
+			@siteFooter()
 		</body>
 	</html>
+}
+
+// siteFooter is deliberately minimal -- one hairline-topped row, not a
+// multi-column marketing footer (that belongs on the marketing site
+// itself, see marketing_shell.templ's marketingFooter). /terms and
+// /privacy are registered directly on the top-level router (see
+// rootOrTenant's doc comment in cmd/server/marketing.go), so these links
+// resolve correctly regardless of which tenant subdomain this page is
+// served from -- unlike "/", which is host-conditional, so the wordmark
+// links to /about (also host-unconditional) rather than a bare "/" that
+// would just loop back to this same plant's own homepage.
+templ siteFooter() {
+	<footer class="site-footer">
+		<div class="wrap site-footer-inner">
+			<a class="site-footer-brand" href="/about">Powered by GatsToGo</a>
+			<nav class="site-footer-links">
+				<a href="/terms">Terms</a>
+				<a href="/privacy">Privacy</a>
+			</nav>
+		</div>
+	</footer>
 }
 
 // customerBrand renders the plant's identity as a wordmark: the name set

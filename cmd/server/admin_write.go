@@ -60,7 +60,7 @@ func adminCreatePlantHandler(s *Server) http.HandlerFunc {
 			params.StartingPriceKobo = startingPriceKobo
 		}
 
-		_, err := plants.Create(r.Context(), s.AdminDB, params, actor.UserID)
+		_, err := plants.Create(r.Context(), s.AdminDB, params, &actor.UserID)
 		if err != nil {
 			log.Println("admin create plant:", err)
 			http.Redirect(w, r, "/admin?error="+adminPlantErrorCode(err)+"#onboarding", http.StatusSeeOther)

@@ -35,15 +35,57 @@ func TestCreateValidation(t *testing.T) {
 		{"slug starting with hyphen", func(p CreateParams) CreateParams { p.Slug = "-sunrise"; return p }, ErrInvalidSlug},
 		{"slug ending with hyphen", func(p CreateParams) CreateParams { p.Slug = "sunrise-"; return p }, ErrInvalidSlug},
 	}
+	actorID := uuid.New()
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			// Every case here is expected to fail validation before Create
 			// ever touches adminDB, so a nil pool is safe.
-			if _, err := Create(context.Background(), nil, c.mutate(valid), uuid.New()); err != c.wantErr {
+			if _, err := Create(context.Background(), nil, c.mutate(valid), &actorID); err != c.wantErr {
 				t.Errorf("Create(%+v): expected %v, got %v", c.mutate(valid), c.wantErr, err)
 			}
 		})
 	}
+}
+
+// TestCreateStatusValidation covers the two real callers of CreateParams.Status:
+// the admin console's onboarding panel, which never sets it (defaulting to
+// "active", the historical behavior, preserved byte-for-byte), and the
+// public self-serve signup flow (cmd/server/marketing.go), which always
+// sets "provisioning" explicitly and has no actor yet -- both still fail
+// validation (missing name) before ever touching adminDB, so a nil pool
+// and a nil actorID are safe here, same as TestCreateValidation above.
+func TestCreateStatusValidation(t *testing.T) {
+	base := CreateParams{
+		Slug: "sunrise", OwnerName: "Ada Nwosu",
+		OwnerPhone: "08030000000", OwnerPassword: "a-real-password", StartingPriceKobo: 150000,
+		// Name deliberately left blank so every case below still fails at
+		// the same ErrMissingField check, before adminDB.Begin.
+	}
+
+	t.Run("admin call site: no Status set, no actor omitted", func(t *testing.T) {
+		actorID := uuid.New()
+		if _, err := Create(context.Background(), nil, base, &actorID); err != ErrMissingField {
+			t.Errorf("expected ErrMissingField, got %v", err)
+		}
+	})
+
+	t.Run("self-serve call site: Status provisioning, nil actor", func(t *testing.T) {
+		p := base
+		p.Status = "provisioning"
+		if _, err := Create(context.Background(), nil, p, nil); err != ErrMissingField {
+			t.Errorf("expected ErrMissingField, got %v", err)
+		}
+	})
+
+	t.Run("invalid Status rejected", func(t *testing.T) {
+		p := base
+		p.Name = "Sunrise Gas Plant" // pass the earlier missing-field checks so Status is actually reached
+		p.Status = "deleted"
+		actorID := uuid.New()
+		if _, err := Create(context.Background(), nil, p, &actorID); err != ErrInvalidStatus {
+			t.Errorf("expected ErrInvalidStatus, got %v", err)
+		}
+	})
 }
 
 func TestSlugPatternAcceptsNormalizedUppercase(t *testing.T) {

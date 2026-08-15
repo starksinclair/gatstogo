@@ -187,6 +187,26 @@ func (s *Server) MountHandlers() {
 	s.Router.Get("/admin/login", adminLoginPageHandler(s))
 	s.Router.With(middleware.CSRF).Post("/admin/login", adminLoginSubmitHandler(s))
 
+	// GatsToGo's own public marketing site (cmd/server/marketing.go) --
+	// registered here rather than inside the tenant group below because
+	// it has to serve a bare or "www" host, which has no tenant to
+	// resolve at all. "/" and "/home" branch by host at request time
+	// (rootOrTenant); every other marketing path only ever makes sense on
+	// that host anyway, so they're unconditional.
+	s.Router.Get("/", rootOrTenant(s, customerHomeHandler(s)))
+	s.Router.Get("/home", rootOrTenant(s, customerHomeHandler(s)))
+	s.Router.Get("/pricing", pricingPageHandler(s))
+	s.Router.Get("/about", aboutPageHandler(s))
+	s.Router.Get("/terms", termsPageHandler(s))
+	s.Router.Get("/privacy", privacyPageHandler(s))
+	s.Router.Get("/get-started", signupPageHandler(s))
+	s.Router.With(middleware.CSRF).Post("/get-started", signupSubmitHandler(s))
+
+	// Same branded page as an unresolved tenant subdomain (renderNotFound,
+	// cmd/server/marketing.go) for any route chi's own router can't match
+	// at all -- previously net/http's plain-text default.
+	s.Router.NotFound(func(w http.ResponseWriter, r *http.Request) { renderNotFound(w, r) })
+
 	s.Router.Group(func(r chi.Router) {
 		r.Use(middleware.RequireAdminSession(s.Sessions))
 		// Mounted *after* RequireAdminSession so GetActor(ctx) is already
@@ -222,8 +242,11 @@ func (s *Server) MountHandlers() {
 		// using the restricted pool with the plant_id actually set.
 		r.Use(middleware.Tenant(s.AdminDB))
 
-		r.Get("/", customerHomeHandler(s))
-		r.Get("/home", customerHomeHandler(s))
+		// "/" and "/home" are registered at the top level instead (see
+		// rootOrTenant above) -- they need to branch by host before a
+		// tenant lookup even happens, which can't be expressed inside a
+		// route group that's already unconditionally running
+		// middleware.Tenant.
 		r.With(middleware.CSRF).Post("/tickets", buyGasSubmitHandler(s))
 		r.Get("/tickets/{reference}/callback", ticketCallbackHandler(s))
 
@@ -287,7 +310,7 @@ func (s *Server) MountHandlers() {
 		r.Get("/home/summary", func(w http.ResponseWriter, r *http.Request) {
 			plant := middleware.GetPlant(r.Context())
 			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
+				renderNotFound(w, r)
 				return
 			}
 			if err := components.PlantSummary(plant).Render(r.Context(), w); err != nil {
@@ -355,7 +378,7 @@ func ownerDashboardHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 
@@ -390,7 +413,7 @@ func customerHomeHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 

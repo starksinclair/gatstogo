@@ -166,7 +166,7 @@ func receiptsPageHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 
@@ -241,7 +241,7 @@ func receiptsLookupHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 		if err := r.ParseForm(); err != nil {
@@ -311,7 +311,7 @@ func receiptsVerifyHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		if plant == nil {
-			http.Error(w, "Plant not found", http.StatusNotFound)
+			renderNotFound(w, r)
 			return
 		}
 		if err := r.ParseForm(); err != nil {

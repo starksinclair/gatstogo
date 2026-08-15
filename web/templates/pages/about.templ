@@ -1,0 +1,31 @@
+package pages
+
+// About takes the real contact inbox (Server.NotificationEmail) rather
+// than hardcoding it here -- same address cmd/server/tickets.go already
+// uses as the base for Paystack's required customer-email field, kept
+// configurable via the one TICKET_NOTIFICATION_EMAIL env var rather than
+// duplicated as a literal in this template too.
+templ About(contactEmail string) {
+	@marketingPageShell("About | GatsToGo", aboutContent(contactEmail))
+}
+
+templ aboutContent(contactEmail string) {
+	<main class="article-layout">
+		<div class="section-eyebrow">About</div>
+		<h1>Built for how LPG plants actually run</h1>
+		<p class="lede">GatsToGo started from a simple observation: most LPG plants run on cash, memory, and a notebook. Sales, shifts, and cash reconciliation all happen by hand, at the end of a long day. We built GatsToGo to make that real-time instead -- a branded page for customers to buy gas online, a terminal for staff to redeem and fill orders, and a dashboard that shows an owner exactly what's happening, as it happens.</p>
+
+		<h2>Get in touch</h2>
+		<div class="contact-row">
+			<span>Email</span>
+			<a href={ templ.SafeURL("mailto:" + contactEmail) }>{ contactEmail }</a>
+		</div>
+		<div class="contact-row">
+			<span>New to GatsToGo</span>
+			<a href="/get-started">Get started</a>
+		</div>
+
+		<h2>Already a GatsToGo customer?</h2>
+		<p>Log in from your own plant's page -- the link your team was given when your plant was set up, followed by <span class="mono">/owner/login</span>. If you can't find it, reach out to the email above.</p>
+	</main>
+}
