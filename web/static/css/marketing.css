@@ -412,7 +412,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	line-height: 1.05;
 }
 .article-layout .lede { margin: 0 0 48px; color: var(--muted); font-size: 18px; max-width: 56ch; }
-.article-layout .updated { margin: -32px 0 48px; color: var(--faint); font-size: 13px; }
+.article-layout .updated { margin: 8px 0 48px; color: var(--faint); font-size: 13px; }
 .article-layout h2 {
 	margin: 48px 0 14px;
 	font-family: var(--font-display, Archivo, sans-serif);
