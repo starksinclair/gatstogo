@@ -11,6 +11,7 @@ templ authShell(title string, heading string, errorMsg string, action string, cs
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ title }</title>
+			<link rel="icon" type="image/png" href="/static/images/gatstogo.png"/>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
@@ -19,7 +20,7 @@ templ authShell(title string, heading string, errorMsg string, action string, cs
 		<body>
 			<div class="login-page">
 				<form class="panel panel-pad login-card" method="post" action={ templ.SafeURL(action) }>
-					<div class="login-brand"><span class="mark">G</span><span>GATSTOGO</span></div>
+					<div class="login-brand"><img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/><span>GATSTOGO</span></div>
 					<h1>{ heading }</h1>
 					if errorMsg != "" {
 						<div class="badge badge-danger login-error">{ errorMsg }</div>

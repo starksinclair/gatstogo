@@ -181,6 +181,7 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ title }</title>
+			<link rel="icon" type="image/png" href="/static/images/gatstogo.png"/>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
@@ -217,7 +218,7 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 		<body>
 			<div class="shell" data-tabs>
 				<aside class="rail">
-					<div class="brand"><span class="mark">G</span><span>GATSTOGO</span></div>
+					<div class="brand"><img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/><span>GATSTOGO</span></div>
 					<div class="rail-label">{ railLabel } workspace</div>
 					@nav
 					<div class="rail-note">

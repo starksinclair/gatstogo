@@ -151,26 +151,12 @@ h1 {
 }
 
 .brand-mark {
-	position: relative;
+	display: block;
 	width: 24px;
 	height: 24px;
-	display: grid;
-	place-items: center;
-	border: 1.5px solid var(--dark-text);
-	color: var(--dark-text);
-	font-family: var(--font-display, Archivo, sans-serif);
-	font-size: 11px;
-	font-weight: 800;
-}
-.brand-mark:before {
-	content: "";
-	position: absolute;
-	top: -1.5px;
-	left: -1.5px;
-	width: 7px;
-	height: 7px;
-	border-top: 1.5px solid var(--accent);
-	border-left: 1.5px solid var(--accent);
+	object-fit: cover;
+	border-radius: 0;
+	flex: none;
 }
 
 .brand-row strong {

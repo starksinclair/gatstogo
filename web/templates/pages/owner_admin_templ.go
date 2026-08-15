@@ -266,14 +266,14 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/owner-admin.css\"><script>\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-tabs]\").forEach(function (root) {\n\t\t\t\t\t\tfunction show(tab) {\n\t\t\t\t\t\t\troot.querySelectorAll(\"[data-tab]\").forEach(function (button) {\n\t\t\t\t\t\t\t\tbutton.classList.toggle(\"active\", button.dataset.tab === tab);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\troot.querySelectorAll(\"[data-tab-panel]\").forEach(function (panel) {\n\t\t\t\t\t\t\t\tpanel.classList.toggle(\"active\", panel.dataset.tabPanel === tab);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\tvar select = root.querySelector(\"[data-tab-select]\");\n\t\t\t\t\t\t\tif (select) select.value = tab;\n\t\t\t\t\t\t}\n\t\t\t\t\t\troot.querySelectorAll(\"[data-tab]\").forEach(function (button) {\n\t\t\t\t\t\t\tbutton.addEventListener(\"click\", function () { show(button.dataset.tab); });\n\t\t\t\t\t\t});\n\t\t\t\t\t\tvar select = root.querySelector(\"[data-tab-select]\");\n\t\t\t\t\t\tif (select) select.addEventListener(\"change\", function () { show(select.value); });\n\t\t\t\t\t\t// A write action (set price, add staff, ...) redirects back\n\t\t\t\t\t\t// to #<tab> so the owner lands back where they were, not on\n\t\t\t\t\t\t// Overview -- see cmd/server/owner_write.go.\n\t\t\t\t\t\tvar hashTab = location.hash.replace(\"#\", \"\");\n\t\t\t\t\t\tvar hashTarget = hashTab && root.querySelector('[data-tab-panel=\"' + hashTab + '\"]');\n\t\t\t\t\t\tvar initial = root.querySelector(\"[data-tab].active\");\n\t\t\t\t\t\tshow(hashTarget ? hashTab : (initial ? initial.dataset.tab : \"overview\"));\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t</script></head><body><div class=\"shell\" data-tabs><aside class=\"rail\"><div class=\"brand\"><span class=\"mark\">G</span><span>GATSTOGO</span></div><div class=\"rail-label\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/png\" href=\"/static/images/gatstogo.png\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/owner-admin.css\"><script>\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-tabs]\").forEach(function (root) {\n\t\t\t\t\t\tfunction show(tab) {\n\t\t\t\t\t\t\troot.querySelectorAll(\"[data-tab]\").forEach(function (button) {\n\t\t\t\t\t\t\t\tbutton.classList.toggle(\"active\", button.dataset.tab === tab);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\troot.querySelectorAll(\"[data-tab-panel]\").forEach(function (panel) {\n\t\t\t\t\t\t\t\tpanel.classList.toggle(\"active\", panel.dataset.tabPanel === tab);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\tvar select = root.querySelector(\"[data-tab-select]\");\n\t\t\t\t\t\t\tif (select) select.value = tab;\n\t\t\t\t\t\t}\n\t\t\t\t\t\troot.querySelectorAll(\"[data-tab]\").forEach(function (button) {\n\t\t\t\t\t\t\tbutton.addEventListener(\"click\", function () { show(button.dataset.tab); });\n\t\t\t\t\t\t});\n\t\t\t\t\t\tvar select = root.querySelector(\"[data-tab-select]\");\n\t\t\t\t\t\tif (select) select.addEventListener(\"change\", function () { show(select.value); });\n\t\t\t\t\t\t// A write action (set price, add staff, ...) redirects back\n\t\t\t\t\t\t// to #<tab> so the owner lands back where they were, not on\n\t\t\t\t\t\t// Overview -- see cmd/server/owner_write.go.\n\t\t\t\t\t\tvar hashTab = location.hash.replace(\"#\", \"\");\n\t\t\t\t\t\tvar hashTarget = hashTab && root.querySelector('[data-tab-panel=\"' + hashTab + '\"]');\n\t\t\t\t\t\tvar initial = root.querySelector(\"[data-tab].active\");\n\t\t\t\t\t\tshow(hashTarget ? hashTab : (initial ? initial.dataset.tab : \"overview\"));\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t</script></head><body><div class=\"shell\" data-tabs><aside class=\"rail\"><div class=\"brand\"><img class=\"mark\" src=\"/static/images/gatstogo.png\" alt=\"GatsToGo\"><span>GATSTOGO</span></div><div class=\"rail-label\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(railLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 221, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 222, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -294,7 +294,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		var templ_7745c5c3_Var6 templ.SafeURL
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(logoutAction))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 227, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 228, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -307,7 +307,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 228, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 229, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
@@ -369,7 +369,7 @@ func kpiLabel(icon string, label string) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 248, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 249, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -429,7 +429,7 @@ func navButton(active bool, tab string, icon string, label string) templ.Compone
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(tab)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 253, Col: 88}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 254, Col: 88}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 		if templ_7745c5c3_Err != nil {
@@ -446,7 +446,7 @@ func navButton(active bool, tab string, icon string, label string) templ.Compone
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 256, Col: 10}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 257, Col: 10}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -606,7 +606,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(data.PlantName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 299, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 300, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -619,7 +619,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(data.TodayLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 301, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 302, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -632,7 +632,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(data.PlantCity)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 302, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 303, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -645,7 +645,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(data.PlantSlug)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 303, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 304, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -658,7 +658,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(data.PlantStatus)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 304, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 305, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -671,7 +671,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(data.DomainStatus)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 305, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 306, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -701,7 +701,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(data.ErrorMessage)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 318, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 319, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -727,7 +727,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(data.MoneyToday)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 323, Col: 93}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 324, Col: 93}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -740,7 +740,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(data.SalesCount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 323, Col: 141}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 324, Col: 141}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -761,7 +761,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(data.GasSoldKg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 324, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 325, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -782,7 +782,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(data.CurrentPrice)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 325, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 326, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -803,7 +803,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(data.CashTotal)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 326, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 327, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -816,7 +816,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(data.ElectronicTotal)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 326, Col: 160}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 327, Col: 160}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -829,7 +829,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(data.PaidForKg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 332, Col: 88}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 333, Col: 88}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -842,7 +842,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(data.FilledKg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 333, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 334, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -855,7 +855,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(data.DiffKg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 334, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 335, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -868,7 +868,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(data.DiffAmount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 334, Col: 106}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 335, Col: 106}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -881,7 +881,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(data.PlantAddress)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 345, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 346, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
@@ -894,7 +894,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(data.PlantPhone)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 346, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 347, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 		if templ_7745c5c3_Err != nil {
@@ -907,7 +907,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(data.PlantSlug)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 347, Col: 88}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 348, Col: 88}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -920,7 +920,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var38 string
 		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(data.DomainStatus)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 348, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 349, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 		if templ_7745c5c3_Err != nil {
@@ -944,7 +944,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var39 string
 			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(row.Reference)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 			if templ_7745c5c3_Err != nil {
@@ -957,7 +957,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var40 string
 			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(row.Customer)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 			if templ_7745c5c3_Err != nil {
@@ -970,7 +970,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var41 string
 			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(row.Phone)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 103}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 103}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 			if templ_7745c5c3_Err != nil {
@@ -983,7 +983,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var42 string
 			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(row.Code)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 143}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 143}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 			if templ_7745c5c3_Err != nil {
@@ -996,7 +996,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var43 string
 			templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(row.Kg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 175}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 175}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 			if templ_7745c5c3_Err != nil {
@@ -1009,7 +1009,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var44 string
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(row.NetKg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 210}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 210}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {
@@ -1022,7 +1022,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var45 string
 			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(row.Amount)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 245}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 245}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
@@ -1035,7 +1035,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(row.Channel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 269}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 269}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
@@ -1070,7 +1070,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var49 string
 			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(row.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 332}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 332}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 			if templ_7745c5c3_Err != nil {
@@ -1083,7 +1083,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var50 string
 			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(row.When)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 366, Col: 360}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 367, Col: 360}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 			if templ_7745c5c3_Err != nil {
@@ -1101,7 +1101,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 				var templ_7745c5c3_Var51 templ.SafeURL
 				templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/tickets/" + row.Reference + "/void"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 369, Col: 92}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 370, Col: 92}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 				if templ_7745c5c3_Err != nil {
@@ -1114,7 +1114,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 				var templ_7745c5c3_Var52 string
 				templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 370, Col: 73}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 371, Col: 73}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var52)
 				if templ_7745c5c3_Err != nil {
@@ -1155,7 +1155,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var53 string
 			templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(data.RecentTickets[0].Code)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 389, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 390, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
 			if templ_7745c5c3_Err != nil {
@@ -1168,7 +1168,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var54 string
 			templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(data.RecentTickets[0].Kg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 390, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 391, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
 			if templ_7745c5c3_Err != nil {
@@ -1181,7 +1181,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var55 string
 			templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(data.RecentTickets[0].Rate)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 390, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 391, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 			if templ_7745c5c3_Err != nil {
@@ -1194,7 +1194,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var56 string
 			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(data.RecentTickets[0].Channel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 390, Col: 129}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 391, Col: 129}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 			if templ_7745c5c3_Err != nil {
@@ -1207,7 +1207,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var57 string
 			templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(data.RecentTickets[0].PaidAt)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 391, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 392, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var57))
 			if templ_7745c5c3_Err != nil {
@@ -1220,7 +1220,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var58 string
 			templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs(data.RecentTickets[0].FilledAt)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 391, Col: 104}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 392, Col: 104}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
 			if templ_7745c5c3_Err != nil {
@@ -1249,7 +1249,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var59 string
 			templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(row.When)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 408, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 409, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
 			if templ_7745c5c3_Err != nil {
@@ -1262,7 +1262,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var60 string
 			templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinStringErrs(row.Kind)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 408, Col: 47}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 409, Col: 47}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
 			if templ_7745c5c3_Err != nil {
@@ -1275,7 +1275,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var61 string
 			templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(row.Amount)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 408, Col: 82}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 409, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
 			if templ_7745c5c3_Err != nil {
@@ -1288,7 +1288,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var62 string
 			templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.JoinStringErrs(row.Counted)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 408, Col: 118}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 409, Col: 118}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var62))
 			if templ_7745c5c3_Err != nil {
@@ -1301,7 +1301,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var63 string
 			templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinStringErrs(row.Recorder)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 408, Col: 143}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 409, Col: 143}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var63))
 			if templ_7745c5c3_Err != nil {
@@ -1314,7 +1314,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var64 string
 			templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.JoinStringErrs(row.Ticket)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 408, Col: 179}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 409, Col: 179}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var64))
 			if templ_7745c5c3_Err != nil {
@@ -1327,7 +1327,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var65 string
 			templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.JoinStringErrs(row.Note)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 408, Col: 200}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 409, Col: 200}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var65))
 			if templ_7745c5c3_Err != nil {
@@ -1350,7 +1350,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var66 string
 			templ_7745c5c3_Var66, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 418, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 419, Col: 67}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var66)
 			if templ_7745c5c3_Err != nil {
@@ -1392,7 +1392,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var67 string
 			templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.JoinStringErrs(row.Staff)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var67))
 			if templ_7745c5c3_Err != nil {
@@ -1405,7 +1405,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var68 string
 			templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.JoinStringErrs(row.Device)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var68))
 			if templ_7745c5c3_Err != nil {
@@ -1418,7 +1418,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var69 string
 			templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.JoinStringErrs(row.Opened)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 84}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 84}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var69))
 			if templ_7745c5c3_Err != nil {
@@ -1431,7 +1431,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var70 string
 			templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.JoinStringErrs(row.Closed)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 107}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 107}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var70))
 			if templ_7745c5c3_Err != nil {
@@ -1444,7 +1444,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var71 string
 			templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.JoinStringErrs(row.Tickets)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 143}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 143}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var71))
 			if templ_7745c5c3_Err != nil {
@@ -1457,7 +1457,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var72 string
 			templ_7745c5c3_Var72, templ_7745c5c3_Err = templ.JoinStringErrs(row.TokensIssued)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 184}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 184}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var72))
 			if templ_7745c5c3_Err != nil {
@@ -1470,7 +1470,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var73 string
 			templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.JoinStringErrs(row.TokensReturned)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 209}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 209}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var73))
 			if templ_7745c5c3_Err != nil {
@@ -1483,7 +1483,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var74 string
 			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.JoinStringErrs(row.OpeningCash)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 249}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 249}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var74))
 			if templ_7745c5c3_Err != nil {
@@ -1496,7 +1496,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var75 string
 			templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.JoinStringErrs(row.ClosingCash)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 289}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 289}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var75))
 			if templ_7745c5c3_Err != nil {
@@ -1531,7 +1531,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var78 string
 			templ_7745c5c3_Var78, templ_7745c5c3_Err = templ.JoinStringErrs(row.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 352}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 352}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var78))
 			if templ_7745c5c3_Err != nil {
@@ -1544,7 +1544,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var79 string
 			templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.JoinStringErrs(row.Notes)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 449, Col: 381}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 450, Col: 381}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var79))
 			if templ_7745c5c3_Err != nil {
@@ -1573,7 +1573,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var80 string
 			templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.JoinStringErrs(row.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 468, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 469, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var80))
 			if templ_7745c5c3_Err != nil {
@@ -1586,7 +1586,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var81 string
 			templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.JoinStringErrs(row.Phone)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 468, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 469, Col: 75}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var81))
 			if templ_7745c5c3_Err != nil {
@@ -1599,7 +1599,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var82 string
 			templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.JoinStringErrs(row.Role)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 468, Col: 96}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 469, Col: 96}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var82))
 			if templ_7745c5c3_Err != nil {
@@ -1634,7 +1634,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var85 string
 			templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.JoinStringErrs(row.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 468, Col: 159}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 469, Col: 159}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var85))
 			if templ_7745c5c3_Err != nil {
@@ -1647,7 +1647,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var86 string
 			templ_7745c5c3_Var86, templ_7745c5c3_Err = templ.JoinStringErrs(row.SalesCount)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 468, Col: 205}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 469, Col: 205}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var86))
 			if templ_7745c5c3_Err != nil {
@@ -1660,7 +1660,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var87 string
 			templ_7745c5c3_Var87, templ_7745c5c3_Err = templ.JoinStringErrs(row.ShiftsCount)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 468, Col: 245}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 469, Col: 245}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var87))
 			if templ_7745c5c3_Err != nil {
@@ -1673,7 +1673,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var88 string
 			templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.JoinStringErrs(row.Joined)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 468, Col: 268}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 469, Col: 268}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var88))
 			if templ_7745c5c3_Err != nil {
@@ -1691,7 +1691,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 				var templ_7745c5c3_Var89 templ.SafeURL
 				templ_7745c5c3_Var89, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/owner/staff/" + row.ID + "/status"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 471, Col: 91}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 472, Col: 91}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var89))
 				if templ_7745c5c3_Err != nil {
@@ -1704,7 +1704,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 				var templ_7745c5c3_Var90 string
 				templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 472, Col: 73}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 473, Col: 73}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var90)
 				if templ_7745c5c3_Err != nil {
@@ -1742,7 +1742,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var91 string
 		templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 492, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 493, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var91)
 		if templ_7745c5c3_Err != nil {
@@ -1774,7 +1774,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var92 string
 			templ_7745c5c3_Var92, templ_7745c5c3_Err = templ.JoinStringErrs(row.EffectiveFrom)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 523, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 524, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var92))
 			if templ_7745c5c3_Err != nil {
@@ -1787,7 +1787,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var93 string
 			templ_7745c5c3_Var93, templ_7745c5c3_Err = templ.JoinStringErrs(row.Price)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 523, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 524, Col: 69}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var93))
 			if templ_7745c5c3_Err != nil {
@@ -1800,7 +1800,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var94 string
 			templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.JoinStringErrs(row.SetBy)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 523, Col: 91}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 524, Col: 91}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var94))
 			if templ_7745c5c3_Err != nil {
@@ -1813,7 +1813,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var95 string
 			templ_7745c5c3_Var95, templ_7745c5c3_Err = templ.JoinStringErrs(row.CreatedAt)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 523, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 524, Col: 117}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var95))
 			if templ_7745c5c3_Err != nil {
@@ -1831,7 +1831,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		var templ_7745c5c3_Var96 string
 		templ_7745c5c3_Var96, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 532, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 533, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var96)
 		if templ_7745c5c3_Err != nil {
@@ -1863,7 +1863,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var97 string
 			templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.JoinStringErrs(item.Action)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 551, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 552, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var97))
 			if templ_7745c5c3_Err != nil {
@@ -1876,7 +1876,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var98 string
 			templ_7745c5c3_Var98, templ_7745c5c3_Err = templ.JoinStringErrs(item.Subject)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 551, Col: 99}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 552, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var98))
 			if templ_7745c5c3_Err != nil {
@@ -1889,7 +1889,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			var templ_7745c5c3_Var99 string
 			templ_7745c5c3_Var99, templ_7745c5c3_Err = templ.JoinStringErrs(item.When)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 551, Col: 116}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 552, Col: 116}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var99))
 			if templ_7745c5c3_Err != nil {
@@ -1941,7 +1941,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		var templ_7745c5c3_Var101 templ.SafeURL
 		templ_7745c5c3_Var101, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/admin/plants/" + plantID + "/status"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 573, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 574, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var101))
 		if templ_7745c5c3_Err != nil {
@@ -1954,7 +1954,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		var templ_7745c5c3_Var102 string
 		templ_7745c5c3_Var102, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 574, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 575, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var102)
 		if templ_7745c5c3_Err != nil {
@@ -1967,7 +1967,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		var templ_7745c5c3_Var103 string
 		templ_7745c5c3_Var103, templ_7745c5c3_Err = templ.ResolveAttributeValue(newStatus)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 575, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 576, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var103)
 		if templ_7745c5c3_Err != nil {
@@ -1980,7 +1980,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		var templ_7745c5c3_Var104 string
 		templ_7745c5c3_Var104, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 576, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 577, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var104))
 		if templ_7745c5c3_Err != nil {
@@ -2022,7 +2022,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var106 string
 		templ_7745c5c3_Var106, templ_7745c5c3_Err = templ.JoinStringErrs(data.ActiveCount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 596, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 597, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var106))
 		if templ_7745c5c3_Err != nil {
@@ -2035,7 +2035,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var107 string
 		templ_7745c5c3_Var107, templ_7745c5c3_Err = templ.JoinStringErrs(data.OnboardingCount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 597, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 598, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var107))
 		if templ_7745c5c3_Err != nil {
@@ -2048,7 +2048,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var108 string
 		templ_7745c5c3_Var108, templ_7745c5c3_Err = templ.JoinStringErrs(data.SuspendedCount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 598, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 599, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var108))
 		if templ_7745c5c3_Err != nil {
@@ -2061,7 +2061,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var109 string
 		templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.JoinStringErrs(data.ClosedCount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 599, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 600, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var109))
 		if templ_7745c5c3_Err != nil {
@@ -2091,7 +2091,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var110 string
 			templ_7745c5c3_Var110, templ_7745c5c3_Err = templ.JoinStringErrs(data.ErrorMessage)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 612, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 613, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var110))
 			if templ_7745c5c3_Err != nil {
@@ -2117,7 +2117,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var111 string
 		templ_7745c5c3_Var111, templ_7745c5c3_Err = templ.JoinStringErrs(data.PlantCount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 617, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 618, Col: 89}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var111))
 		if templ_7745c5c3_Err != nil {
@@ -2138,7 +2138,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var112 string
 		templ_7745c5c3_Var112, templ_7745c5c3_Err = templ.JoinStringErrs(data.TotalTickets7d)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 618, Col: 106}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 619, Col: 106}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var112))
 		if templ_7745c5c3_Err != nil {
@@ -2159,7 +2159,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var113 string
 		templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.JoinStringErrs(data.TotalVolume30d)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 619, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 620, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var113))
 		if templ_7745c5c3_Err != nil {
@@ -2180,7 +2180,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var114 string
 		templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(data.DomainBroken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 620, Col: 105}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 621, Col: 105}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
 		if templ_7745c5c3_Err != nil {
@@ -2193,7 +2193,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var115 string
 		templ_7745c5c3_Var115, templ_7745c5c3_Err = templ.JoinStringErrs(data.DomainPending)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 620, Col: 156}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 621, Col: 156}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var115))
 		if templ_7745c5c3_Err != nil {
@@ -2217,7 +2217,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var116 string
 			templ_7745c5c3_Var116, templ_7745c5c3_Err = templ.JoinStringErrs(row.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 639, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 640, Col: 51}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var116))
 			if templ_7745c5c3_Err != nil {
@@ -2230,7 +2230,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var117 string
 			templ_7745c5c3_Var117, templ_7745c5c3_Err = templ.JoinStringErrs(row.Phone)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 639, Col: 93}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 640, Col: 93}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var117))
 			if templ_7745c5c3_Err != nil {
@@ -2243,7 +2243,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var118 string
 			templ_7745c5c3_Var118, templ_7745c5c3_Err = templ.JoinStringErrs(row.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 639, Col: 111}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 640, Col: 111}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var118))
 			if templ_7745c5c3_Err != nil {
@@ -2256,7 +2256,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var119 string
 			templ_7745c5c3_Var119, templ_7745c5c3_Err = templ.JoinStringErrs(row.Plants)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 639, Col: 129}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 640, Col: 129}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var119))
 			if templ_7745c5c3_Err != nil {
@@ -2285,7 +2285,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var120 string
 			templ_7745c5c3_Var120, templ_7745c5c3_Err = templ.JoinStringErrs(row.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var120))
 			if templ_7745c5c3_Err != nil {
@@ -2298,7 +2298,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var121 string
 			templ_7745c5c3_Var121, templ_7745c5c3_Err = templ.JoinStringErrs(row.Phone)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 75}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var121))
 			if templ_7745c5c3_Err != nil {
@@ -2311,7 +2311,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var122 string
 			templ_7745c5c3_Var122, templ_7745c5c3_Err = templ.JoinStringErrs(row.City)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 102}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 102}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var122))
 			if templ_7745c5c3_Err != nil {
@@ -2324,7 +2324,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var123 string
 			templ_7745c5c3_Var123, templ_7745c5c3_Err = templ.JoinStringErrs(row.Address)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 136}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 136}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var123))
 			if templ_7745c5c3_Err != nil {
@@ -2337,7 +2337,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var124 string
 			templ_7745c5c3_Var124, templ_7745c5c3_Err = templ.JoinStringErrs(row.Slug)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 176}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 176}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var124))
 			if templ_7745c5c3_Err != nil {
@@ -2372,7 +2372,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var127 string
 			templ_7745c5c3_Var127, templ_7745c5c3_Err = templ.JoinStringErrs(row.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 239}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 239}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var127))
 			if templ_7745c5c3_Err != nil {
@@ -2385,7 +2385,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var128 string
 			templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.JoinStringErrs(row.Domain)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 269}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 269}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var128))
 			if templ_7745c5c3_Err != nil {
@@ -2420,7 +2420,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var131 string
 			templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.JoinStringErrs(row.DomainStatus)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 337}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 337}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var131))
 			if templ_7745c5c3_Err != nil {
@@ -2433,7 +2433,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var132 string
 			templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.JoinStringErrs(row.StaffCount)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 389}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 389}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var132))
 			if templ_7745c5c3_Err != nil {
@@ -2446,7 +2446,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var133 string
 			templ_7745c5c3_Var133, templ_7745c5c3_Err = templ.JoinStringErrs(row.PriceCount)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 428}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 428}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var133))
 			if templ_7745c5c3_Err != nil {
@@ -2459,7 +2459,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var134 string
 			templ_7745c5c3_Var134, templ_7745c5c3_Err = templ.JoinStringErrs(row.OpenShifts)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 467}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 467}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var134))
 			if templ_7745c5c3_Err != nil {
@@ -2472,7 +2472,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var135 string
 			templ_7745c5c3_Var135, templ_7745c5c3_Err = templ.JoinStringErrs(row.Txns7d)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 502}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 502}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var135))
 			if templ_7745c5c3_Err != nil {
@@ -2485,7 +2485,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var136 string
 			templ_7745c5c3_Var136, templ_7745c5c3_Err = templ.JoinStringErrs(row.Volume30d)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 540}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 540}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var136))
 			if templ_7745c5c3_Err != nil {
@@ -2498,7 +2498,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var137 string
 			templ_7745c5c3_Var137, templ_7745c5c3_Err = templ.JoinStringErrs(row.LastTxn)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 656, Col: 564}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 657, Col: 564}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var137))
 			if templ_7745c5c3_Err != nil {
@@ -2545,7 +2545,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		var templ_7745c5c3_Var138 string
 		templ_7745c5c3_Var138, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 679, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 680, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var138)
 		if templ_7745c5c3_Err != nil {
@@ -2577,7 +2577,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var139 string
 			templ_7745c5c3_Var139, templ_7745c5c3_Err = templ.JoinStringErrs(row.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 720, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 721, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var139))
 			if templ_7745c5c3_Err != nil {
@@ -2590,7 +2590,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var140 string
 			templ_7745c5c3_Var140, templ_7745c5c3_Err = templ.JoinStringErrs(row.Slug)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 720, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 721, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var140))
 			if templ_7745c5c3_Err != nil {
@@ -2603,7 +2603,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var141 string
 			templ_7745c5c3_Var141, templ_7745c5c3_Err = templ.JoinStringErrs(row.Domain)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 720, Col: 83}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 721, Col: 83}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var141))
 			if templ_7745c5c3_Err != nil {
@@ -2638,7 +2638,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var144 string
 			templ_7745c5c3_Var144, templ_7745c5c3_Err = templ.JoinStringErrs(row.DomainStatus)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 720, Col: 155}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 721, Col: 155}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var144))
 			if templ_7745c5c3_Err != nil {
@@ -2651,7 +2651,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var145 string
 			templ_7745c5c3_Var145, templ_7745c5c3_Err = templ.JoinStringErrs(row.CreatedAt)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 720, Col: 188}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 721, Col: 188}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var145))
 			if templ_7745c5c3_Err != nil {
@@ -2664,7 +2664,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var146 string
 			templ_7745c5c3_Var146, templ_7745c5c3_Err = templ.JoinStringErrs(row.UpdatedAt)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 720, Col: 214}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 721, Col: 214}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var146))
 			if templ_7745c5c3_Err != nil {
@@ -2693,7 +2693,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var147 string
 			templ_7745c5c3_Var147, templ_7745c5c3_Err = templ.JoinStringErrs(slug)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 733, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 734, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var147))
 			if templ_7745c5c3_Err != nil {
@@ -2722,7 +2722,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var148 string
 			templ_7745c5c3_Var148, templ_7745c5c3_Err = templ.JoinStringErrs(item.Action)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 747, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 748, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var148))
 			if templ_7745c5c3_Err != nil {
@@ -2735,7 +2735,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var149 string
 			templ_7745c5c3_Var149, templ_7745c5c3_Err = templ.JoinStringErrs(item.Subject)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 747, Col: 98}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 748, Col: 98}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var149))
 			if templ_7745c5c3_Err != nil {
@@ -2748,7 +2748,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var150 string
 			templ_7745c5c3_Var150, templ_7745c5c3_Err = templ.JoinStringErrs(item.When)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 747, Col: 115}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 748, Col: 115}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var150))
 			if templ_7745c5c3_Err != nil {
@@ -2777,7 +2777,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var151 string
 			templ_7745c5c3_Var151, templ_7745c5c3_Err = templ.JoinStringErrs(row.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 762, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 763, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var151))
 			if templ_7745c5c3_Err != nil {
@@ -2790,7 +2790,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var152 string
 			templ_7745c5c3_Var152, templ_7745c5c3_Err = templ.JoinStringErrs(row.Role)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 762, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 763, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var152))
 			if templ_7745c5c3_Err != nil {
@@ -2803,7 +2803,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var153 string
 			templ_7745c5c3_Var153, templ_7745c5c3_Err = templ.JoinStringErrs(row.Records)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 762, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 763, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var153))
 			if templ_7745c5c3_Err != nil {
@@ -2816,7 +2816,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var154 string
 			templ_7745c5c3_Var154, templ_7745c5c3_Err = templ.JoinStringErrs(row.Health)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 762, Col: 146}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 763, Col: 146}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var154))
 			if templ_7745c5c3_Err != nil {
@@ -2829,7 +2829,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var155 string
 			templ_7745c5c3_Var155, templ_7745c5c3_Err = templ.JoinStringErrs(row.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 762, Col: 181}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 763, Col: 181}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var155))
 			if templ_7745c5c3_Err != nil {

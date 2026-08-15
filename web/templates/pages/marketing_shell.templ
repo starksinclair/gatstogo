@@ -24,6 +24,7 @@ templ marketingPageShell(title string, content templ.Component) {
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ title }</title>
+			<link rel="icon" type="image/png" href="/static/images/gatstogo.png"/>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
@@ -41,7 +42,7 @@ templ marketingHeader() {
 	<header class="mkt-header">
 		<div class="mkt-header-inner">
 			<a class="brand-lockup" href="/">
-				<span class="brand-mark">G</span>
+				<img class="brand-mark" src="/static/images/gatstogo.png" alt="GatsToGo"/>
 				<strong>GATSTOGO</strong>
 			</a>
 			<nav class="mkt-nav">
@@ -64,7 +65,7 @@ templ marketingFooter() {
 		<div class="wrap">
 			<div class="mkt-footer-top">
 				<div class="brand-lockup">
-					<span class="brand-mark">G</span>
+					<img class="brand-mark" src="/static/images/gatstogo.png" alt="GatsToGo"/>
 					<strong>GATSTOGO</strong>
 				</div>
 				<p class="mkt-footer-tagline">Sales, staff, and receipts for LPG plants, in one place -- a branded page for customers to buy gas, a terminal for staff to redeem and fill, and a live dashboard for owners.</p>

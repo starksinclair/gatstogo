@@ -24,6 +24,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ terminalPlantName(plant) } staff terminal</title>
+			<link rel="icon" type="image/png" href="/static/images/gatstogo.png"/>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
@@ -427,7 +428,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 
 					function renderMain() {
 						return '<header class="terminal-top">' +
-							'<div class="brand-row"><span class="brand-mark">G</span><strong>GATSTOGO</strong><span class="plant-name">' + init.plantName + '</span></div>' +
+							'<div class="brand-row"><img class="brand-mark" src="/static/images/gatstogo.png" alt="GatsToGo"><strong>GATSTOGO</strong><span class="plant-name">' + init.plantName + '</span></div>' +
 							'<div class="shift-strip">' +
 								'<div class="stat"><span>Staff</span><strong>' + state.name + '</strong></div>' +
 								'<div class="stat"><span>Fills</span><strong class="mono">' + state.fills + '</strong></div>' +

@@ -59,7 +59,7 @@ func marketingPageShell(title string, content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/marketing.css\"></head><body>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/png\" href=\"/static/images/gatstogo.png\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/marketing.css\"></head><body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -104,7 +104,7 @@ func marketingHeader() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<header class=\"mkt-header\"><div class=\"mkt-header-inner\"><a class=\"brand-lockup\" href=\"/\"><span class=\"brand-mark\">G</span> <strong>GATSTOGO</strong></a><nav class=\"mkt-nav\"><a href=\"/#how-it-works\">How it works</a> <a href=\"/pricing\">Pricing</a> <a href=\"/about\">About</a></nav><div class=\"mkt-header-actions\"><a class=\"button-primary\" href=\"/get-started\">Get started")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<header class=\"mkt-header\"><div class=\"mkt-header-inner\"><a class=\"brand-lockup\" href=\"/\"><img class=\"brand-mark\" src=\"/static/images/gatstogo.png\" alt=\"GatsToGo\"> <strong>GATSTOGO</strong></a><nav class=\"mkt-nav\"><a href=\"/#how-it-works\">How it works</a> <a href=\"/pricing\">Pricing</a> <a href=\"/about\">About</a></nav><div class=\"mkt-header-actions\"><a class=\"button-primary\" href=\"/get-started\">Get started")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -141,14 +141,14 @@ func marketingFooter() templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<footer class=\"mkt-footer\"><div class=\"wrap\"><div class=\"mkt-footer-top\"><div class=\"brand-lockup\"><span class=\"brand-mark\">G</span> <strong>GATSTOGO</strong></div><p class=\"mkt-footer-tagline\">Sales, staff, and receipts for LPG plants, in one place -- a branded page for customers to buy gas, a terminal for staff to redeem and fill, and a live dashboard for owners.</p></div><div class=\"mkt-footer-cols\"><div><div class=\"mkt-footer-heading\">Product</div><a href=\"/#how-it-works\">How it works</a> <a href=\"/pricing\">Pricing</a> <a href=\"/get-started\">Get started</a></div><div><div class=\"mkt-footer-heading\">Company</div><a href=\"/about\">About</a></div><div><div class=\"mkt-footer-heading\">Legal</div><a href=\"/terms\">Terms of Service</a> <a href=\"/privacy\">Privacy Policy</a></div></div><div class=\"mkt-footer-bottom\"><span>© ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<footer class=\"mkt-footer\"><div class=\"wrap\"><div class=\"mkt-footer-top\"><div class=\"brand-lockup\"><img class=\"brand-mark\" src=\"/static/images/gatstogo.png\" alt=\"GatsToGo\"> <strong>GATSTOGO</strong></div><p class=\"mkt-footer-tagline\">Sales, staff, and receipts for LPG plants, in one place -- a branded page for customers to buy gas, a terminal for staff to redeem and fill, and a live dashboard for owners.</p></div><div class=\"mkt-footer-cols\"><div><div class=\"mkt-footer-heading\">Product</div><a href=\"/#how-it-works\">How it works</a> <a href=\"/pricing\">Pricing</a> <a href=\"/get-started\">Get started</a></div><div><div class=\"mkt-footer-heading\">Company</div><a href=\"/about\">About</a></div><div><div class=\"mkt-footer-heading\">Legal</div><a href=\"/terms\">Terms of Service</a> <a href=\"/privacy\">Privacy Policy</a></div></div><div class=\"mkt-footer-bottom\"><span>© ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(currentYear())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/marketing_shell.templ`, Line: 90, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/marketing_shell.templ`, Line: 91, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {

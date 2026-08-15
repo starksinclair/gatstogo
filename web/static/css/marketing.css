@@ -65,26 +65,12 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	color: var(--ink);
 }
 .brand-mark {
-	position: relative;
+	display: block;
 	width: 26px;
 	height: 26px;
-	display: grid;
-	place-items: center;
-	border: 1.5px solid var(--ink);
-	color: var(--ink);
-	font-family: var(--font-display, Archivo, sans-serif);
-	font-size: 12px;
-	font-weight: 800;
-}
-.brand-mark:before {
-	content: "";
-	position: absolute;
-	top: -1.5px;
-	left: -1.5px;
-	width: 8px;
-	height: 8px;
-	border-top: 1.5px solid var(--brand);
-	border-left: 1.5px solid var(--brand);
+	object-fit: cover;
+	border-radius: 0;
+	flex: none;
 }
 .brand-lockup strong {
 	font-family: var(--font-display, Archivo, sans-serif);
@@ -442,6 +428,12 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	border-bottom: 1px solid var(--line);
 }
 .pricing-row:first-child { border-top: 1px solid var(--line); }
+/* min-width: 0 overrides the flex-item default of min-width: auto --
+   without it, a long unbroken line (e.g. the Paystack fees row) refuses
+   to shrink below its own content width and forces the whole row --
+   and with it, the whole page -- wider than the viewport instead of
+   wrapping onto a second line. */
+.pricing-row span { min-width: 0; }
 .pricing-row span:first-child { font-weight: 700; }
 .pricing-row span:last-child { color: var(--muted); font-size: 14px; text-align: right; }
 
@@ -453,6 +445,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	border-bottom: 1px solid var(--line);
 }
 .contact-row:first-child { border-top: 1px solid var(--line); }
+.contact-row span, .contact-row a { min-width: 0; }
 .contact-row span:first-child { color: var(--muted); font-size: 14px; }
 .contact-row a { font-weight: 700; text-decoration: none; }
 .contact-row a:hover { text-decoration: underline; }
