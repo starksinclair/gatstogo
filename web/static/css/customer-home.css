@@ -168,6 +168,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	padding: 14px 16px;
 	background: var(--danger-bg);
 	border-left: 3px solid var(--danger);
+	border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
 	color: var(--danger);
 	font-size: 14px;
 	font-weight: 700;
@@ -212,7 +213,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .section-eyebrow .icon { font-size: 14px; }
 
-/* ---- Buttons -- sharp corners throughout, no radius. Two kinds: a
+/* ---- Buttons -- a small, restrained radius (tokens.css's
+   --radius-sm), consistent with every other surface. Two kinds: a
    solid brand-colored primary action, and a plain underlined text
    button for everything secondary (no bordered "secondary button" box --
    one filled action per screen is enough weight). ---- */
@@ -224,6 +226,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	gap: 8px;
 	min-height: 54px;
 	border: 0;
+	border-radius: var(--radius-sm, 6px);
 	background: var(--brand-button);
 	color: var(--brand-button-text);
 	padding: 0 24px;
@@ -361,6 +364,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	gap: 1px;
 	background: var(--line);
 	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
+	overflow: hidden;
 }
 .payment {
 	display: flex;
@@ -456,6 +461,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	align-items: center;
 	gap: 6px;
 	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
 	background: transparent;
 	color: var(--ink-soft);
 	padding: 8px 14px;
@@ -490,6 +496,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	height: 56px;
 	margin: 0 auto 24px;
 	border: 1.5px solid var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
 	color: var(--ink);
 }
 .lookup-icon .icon { font-size: 24px; }
@@ -533,6 +540,7 @@ a.receipt-item:last-child { border-bottom: 1px solid var(--line); }
 	align-items: center;
 	padding: 3px 8px;
 	border: 1px solid currentColor;
+	border-radius: var(--radius-sm, 6px);
 	font-size: 10px;
 	font-weight: 800;
 	text-transform: uppercase;
@@ -549,6 +557,7 @@ a.receipt-item:last-child { border-bottom: 1px solid var(--line); }
 	margin-top: 24px;
 	padding: 48px 16px;
 	border: 1px dashed var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
 	color: var(--muted);
 	text-align: center;
 }

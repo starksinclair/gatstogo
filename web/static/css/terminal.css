@@ -6,9 +6,12 @@
    and, more loosely, the owner/admin console (owner-admin.css): zero
    bordered/shadowed "card" containers, hairline (1px) rules for
    structure, uppercase tracked-letter-spacing eyebrow labels, IBM Plex
-   Mono for every numeral, sharp corners (no border-radius anywhere), and
-   color reserved for exactly a few functional signals -- the primary
-   action button, the active tab/tile/key, and semantic status text.
+   Mono for every numeral, a small consistent corner radius (tokens.css's
+   --radius-sm/-full, same as every other surface -- hairline dividers
+   and layout structure stay unrounded, radius is for discrete controls
+   only), and color reserved for exactly a few functional signals -- the
+   primary action button, the active tab/tile/key, and semantic status
+   text.
 
    One deliberate departure from the customer pages: this is a real
    point-of-sale-style device operated by staff on a shop floor, so touch
@@ -308,6 +311,7 @@ h1 {
 	min-height: 60px;
 	margin-top: 4px;
 	border: 1px solid var(--brand);
+	border-radius: var(--radius-sm, 6px);
 	background: var(--brand);
 	color: #FFFFFF;
 	font-size: 15px;
@@ -330,6 +334,7 @@ h1 {
 	width: 100%;
 	min-height: 52px;
 	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
 	background: transparent;
 	color: var(--ink);
 	font-size: 14px;
@@ -354,6 +359,7 @@ h1 {
 	gap: 10px;
 	min-height: 96px;
 	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
 	background: var(--surface);
 	padding: 14px;
 	text-align: left;
@@ -368,6 +374,7 @@ h1 {
 	width: 26px;
 	height: 26px;
 	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
 	font-size: 11px;
 	font-weight: 700;
 	color: var(--muted);
@@ -391,6 +398,7 @@ h1 {
 	width: 13px;
 	height: 13px;
 	border: 1.5px solid var(--line-strong);
+	border-radius: var(--radius-full, 999px);
 	background: transparent;
 }
 .pin-dots span.filled { border-color: var(--ink); background: var(--ink); }
@@ -405,6 +413,8 @@ h1 {
 	gap: 1px;
 	background: var(--line);
 	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
+	overflow: hidden;
 }
 .keypad.small { max-width: 320px; }
 
@@ -438,6 +448,8 @@ h1 {
 	margin: 4px 0 28px;
 	background: var(--line-strong);
 	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
+	overflow: hidden;
 }
 .code-boxes span {
 	display: grid;
@@ -462,6 +474,7 @@ h1 {
 	margin: 0 0 20px;
 	padding: 13px 16px;
 	border-left: 3px solid var(--warning);
+	border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
 	background: var(--warning-bg);
 	color: var(--warning);
 	font-size: 14px;
@@ -539,6 +552,7 @@ h1 {
 .cylinder-grid button {
 	min-height: 60px;
 	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
 	background: var(--surface);
 	color: var(--ink);
 	font-family: var(--font-mono, monospace);

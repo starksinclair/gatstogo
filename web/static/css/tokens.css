@@ -8,17 +8,20 @@
    different names and four slightly different hex values. This is the
    single source of truth those should draw from instead.
 
-   Deliberately additive on introduction: nothing consumes these custom
-   properties yet, so adding the <link> alone changes no rendered pixel.
-   Each surface's own CSS migrates onto these tokens incrementally, in
-   separate, individually-verified commits -- see AUDIT.md's verification
-   discipline for why that matters more here than it might elsewhere.
+   Each surface's own CSS draws its actual colors/typography from its
+   own :root (a deliberately independent, non-tenant palette per
+   surface -- see each stylesheet's own header comment) -- what's
+   unified here is the underlying scale those choices are built from
+   (spacing, radius, motion), not the palette itself.
 
-   Per-surface personality is intentional and preserved, not something
-   this file tries to erase: customer-facing pages stay soft/rounded,
-   the owner/admin/terminal operational surfaces stay sharp/square. What's
-   unified is the underlying palette and scale those choices are built
-   from, not the choices themselves.
+   Corner radius: all four surfaces (customer pages, owner/admin,
+   terminal, marketing) use the same small, restrained --radius-sm/-md/
+   -full below consistently -- not a per-surface sharp-vs-soft split.
+   That split existed earlier in this app's life (customer pages
+   started "soft," owner/admin/terminal started zero-radius "sharp");
+   both were normalized onto this one shared, gentle radius after
+   direct user feedback that all-sharp corners read as too "techy" for
+   a business selling gas, not software.
    ========================================================================== */
 
 :root {
@@ -99,9 +102,12 @@
 	--space-12: 48px;
 	--space-16: 64px;
 
-	/* ---- Radius -- deliberately small and restrained even where used;
-	   the sharp/square ops surfaces set --radius-base: 0 as their own
-	   local override rather than this file forcing roundness on them. ---- */
+	/* ---- Radius -- small and restrained, used consistently across
+	   every surface (buttons, tags, form fields, small icon squares).
+	   Hairline dividers and hairline-bordered layout structure (the
+	   zero-"card" system every surface's own CSS documents) stay
+	   unrounded -- radius is for discrete controls, not structural
+	   lines. ---- */
 	--radius-sm: 6px;
 	--radius-md: 8px;
 	--radius-lg: 12px;

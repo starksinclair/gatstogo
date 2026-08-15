@@ -196,14 +196,62 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 							root.querySelectorAll("[data-tab-panel]").forEach(function (panel) {
 								panel.classList.toggle("active", panel.dataset.tabPanel === tab);
 							});
-							var select = root.querySelector("[data-tab-select]");
-							if (select) select.value = tab;
 						}
-						root.querySelectorAll("[data-tab]").forEach(function (button) {
-							button.addEventListener("click", function () { show(button.dataset.tab); });
+
+						// Mobile off-canvas drawer -- the exact same .rail markup
+						// used on desktop, just toggled via a fixed-position
+						// transform below the 1020px breakpoint (see owner-
+						// admin.css). Replaces what used to be a <select>
+						// dropdown standing in for the whole sidebar on mobile.
+						//
+						// body.rail-locked's own overflow:hidden (owner-admin.css)
+						// isn't enough on its own on real mobile browsers -- iOS
+						// Safari in particular still lets the page scroll behind a
+						// fixed element despite overflow:hidden on <body>. The
+						// robust fix is to also pin <body> itself with
+						// position:fixed and a negative top offset equal to the
+						// current scroll position while the drawer is open, then
+						// undo that and restore the exact scroll position on
+						// close -- the standard technique for this, not a novel
+						// one. Without it, a page scrolled down before opening the
+						// drawer leaves the (still torso still scrollable)
+						// background moving underneath a supposedly-fixed drawer,
+						// which is exactly the "sidebar drifts away while
+						// scrolling" bug this replaces.
+						var lockedScrollY = 0;
+						function openDrawer() {
+							lockedScrollY = window.scrollY;
+							document.body.classList.add("rail-locked");
+							document.body.style.top = (-lockedScrollY) + "px";
+							root.classList.add("rail-open");
+						}
+						function closeDrawer() {
+							root.classList.remove("rail-open");
+							document.body.classList.remove("rail-locked");
+							document.body.style.top = "";
+							window.scrollTo(0, lockedScrollY);
+						}
+						root.querySelectorAll("[data-rail-toggle]").forEach(function (button) {
+							button.addEventListener("click", function () {
+								root.classList.contains("rail-open") ? closeDrawer() : openDrawer();
+							});
 						});
-						var select = root.querySelector("[data-tab-select]");
-						if (select) select.addEventListener("change", function () { show(select.value); });
+						var backdrop = root.querySelector("[data-rail-backdrop]");
+						if (backdrop) backdrop.addEventListener("click", closeDrawer);
+						document.addEventListener("keydown", function (event) {
+							if (event.key === "Escape") closeDrawer();
+						});
+
+						root.querySelectorAll("[data-tab]").forEach(function (button) {
+							button.addEventListener("click", function () {
+								show(button.dataset.tab);
+								// A nav click on mobile is navigation, not just a
+								// state change -- close the drawer the same way
+								// tapping a link in any mobile nav drawer would.
+								closeDrawer();
+							});
+						});
+
 						// A write action (set price, add staff, ...) redirects back
 						// to #<tab> so the owner lands back where they were, not on
 						// Overview -- see cmd/server/owner_write.go.
@@ -217,13 +265,26 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 		</head>
 		<body>
 			<div class="shell" data-tabs>
+				<div class="mobile-topbar">
+					<button class="rail-toggle" type="button" data-rail-toggle aria-label="Open menu">
+						@components.Icon("list")
+					</button>
+					<div class="brand"><img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/><span>{ railLabel } workspace</span></div>
+				</div>
+				<div class="rail-backdrop" data-rail-backdrop></div>
 				<aside class="rail">
-					<div class="brand"><img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/><span>GATSTOGO</span></div>
+					<div class="brand">
+						<img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/>
+						<span>GATSTOGO</span>
+						<button class="rail-close" type="button" data-rail-toggle aria-label="Close menu">
+							@components.Icon("x")
+						</button>
+					</div>
 					<div class="rail-label">{ railLabel } workspace</div>
 					@nav
 					<div class="rail-note">
-						<strong>Work from the truth.</strong>
-						Every panel is shaped around the tables already in the database. Empty areas show placeholders until real records arrive.
+						<strong>Real numbers only.</strong>
+						Everything on this dashboard reflects what's actually happened -- sections stay empty until there's something real to show.
 					</div>
 					<form method="post" action={ templ.SafeURL(logoutAction) } class="rail-signout">
 						<input type="hidden" name="csrf_token" value={ csrfToken }/>
@@ -276,24 +337,13 @@ templ adminNav() {
 		@navButton(true, "overview", "squares-four", "Overview")
 		@navButton(false, "plants", "factory", "Plants")
 		@navButton(false, "onboarding", "plus", "Onboarding")
-		@navButton(false, "domains", "list-checks", "Domains and slugs")
+		@navButton(false, "domains", "list-checks", "Domains and web addresses")
 		@navButton(false, "activity", "pulse", "Activity")
 		@navButton(false, "system", "gear", "System")
 	</nav>
 }
 
 templ ownerDashboardContent(data OwnerDashboardData) {
-	<div class="mobile-tabs">
-		<select data-tab-select aria-label="Owner dashboard section">
-			<option value="overview">Overview</option>
-			<option value="sales">Sales and receipts</option>
-			<option value="cash">Cash drawer</option>
-			<option value="shifts">Shifts</option>
-			<option value="staff">Staff</option>
-			<option value="prices">Prices</option>
-			<option value="activity">Activity</option>
-		</select>
-	</div>
 	<div class="topline">
 		<div>
 			<div class="eyebrow">Plant owner console</div>
@@ -320,32 +370,32 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 		</div>
 	}
 	<section class="tab-panel active" data-tab-panel="overview">
-		<div class="kpi-grid">
-			<div class="kpi-card">@kpiLabel("wallet", "Money today")<div class="kpi">{ data.MoneyToday }</div><div class="kpi-small">{ data.SalesCount } sales recorded</div></div>
-			<div class="kpi-card">@kpiLabel("gas-pump", "Gas sold")<div class="kpi">{ data.GasSoldKg }</div><div class="kpi-small">Paid ticket size</div></div>
-			<div class="kpi-card">@kpiLabel("receipt", "Current price")<div class="kpi">{ data.CurrentPrice }</div><div class="kpi-small">Snapshot used for new tickets</div></div>
-			<div class="kpi-card">@kpiLabel("bank", "Cash / electronic")<div class="kpi">{ data.CashTotal }</div><div class="kpi-small">Electronic { data.ElectronicTotal }</div></div>
+		<div class="kpi-row">
+			<div class="kpi-item">@kpiLabel("wallet", "Money today")<div class="kpi">{ data.MoneyToday }</div><div class="kpi-small">{ data.SalesCount } sales recorded</div></div>
+			<div class="kpi-item">@kpiLabel("gas-pump", "Gas sold")<div class="kpi">{ data.GasSoldKg }</div><div class="kpi-small">Paid ticket size</div></div>
+			<div class="kpi-item">@kpiLabel("receipt", "Current price")<div class="kpi">{ data.CurrentPrice }</div><div class="kpi-small">Snapshot used for new tickets</div></div>
+			<div class="kpi-item">@kpiLabel("bank", "Cash / electronic")<div class="kpi">{ data.CashTotal }</div><div class="kpi-small">Electronic { data.ElectronicTotal }</div></div>
 		</div>
 		<div class="dashboard-grid">
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Reconciliation board</h2><span class="badge badge-warn">Weight proof</span></div>
+			<div>
+				<div class="section-title"><h2>Reconciliation board</h2></div>
 				<div class="stat-line">
 					<div><div class="kpi-label">Gas paid for</div><strong class="mono">{ data.PaidForKg }</strong></div>
 					<div><div class="kpi-label">Gas filled</div><strong class="mono">{ data.FilledKg }</strong></div>
 					<div><div class="kpi-label">Difference</div><strong class="mono">{ data.DiffKg } · { data.DiffAmount }</strong></div>
 				</div>
 				<div class="meter">
-					<div class="section-title"><h3>Daily control check</h3><span class="muted">Placeholder target</span></div>
+					<div class="section-title"><h3>Daily control check</h3><span class="muted">Example only</span></div>
 					<div class="meter-track"><div class="meter-fill"></div></div>
 					<div class="muted">When live tank data is added, this line can compare expected gas against actual dispensing.</div>
 				</div>
 			</div>
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Plant profile</h2><span class="badge badge-muted">Tenant</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Plant profile</h2></div>
 				<div class="split-list">
 					<div class="info-row"><span>Address</span><strong>{ data.PlantAddress }</strong></div>
 					<div class="info-row"><span>Phone</span><strong>{ data.PlantPhone }</strong></div>
-					<div class="info-row"><span>Public slug</span><strong class="mono">{ data.PlantSlug }</strong></div>
+					<div class="info-row"><span>Web address</span><strong class="mono">{ data.PlantSlug }</strong></div>
 					<div class="info-row"><span>Domain status</span><strong>{ data.DomainStatus }</strong></div>
 				</div>
 			</div>
@@ -354,13 +404,13 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 	<section class="tab-panel" data-tab-panel="sales">
 		<div class="dashboard-grid">
 			<div>
-				<div class="section-title"><h2>Sales and receipts</h2><span class="badge badge-ok">tickets</span></div>
+				<div class="section-title"><h2>Sales and receipts</h2></div>
 				<div class="table-wrap">
 					<table>
 						<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th>Paid kg</th><th>Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead>
 						<tbody>
 							if len(data.RecentTickets) == 0 {
-								<tr><td colspan="10"><div class="empty">No sales yet. Placeholder: a paid customer ticket will show reference, code, phone, weight, payment channel, and status here.</div></td></tr>
+								<tr><td colspan="10"><div class="empty">No sales yet. A paid customer ticket will show its reference, code, weight, payment method, and status here.</div></td></tr>
 							}
 							for _, row := range data.RecentTickets {
 								<tr>
@@ -379,8 +429,8 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					</table>
 				</div>
 			</div>
-			<div class="receipt-card">
-				<div class="section-title"><h2>Receipt preview</h2><span class="badge badge-muted">SMS proof</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Receipt preview</h2></div>
 				if len(data.RecentTickets) == 0 {
 					<div class="empty">
 						@components.Icon("receipt")
@@ -397,13 +447,13 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 	<section class="tab-panel" data-tab-panel="cash">
 		<div class="dashboard-grid">
 			<div>
-				<div class="section-title"><h2>Cash drawer</h2><span class="badge badge-ok">cash_movements</span></div>
+				<div class="section-title"><h2>Cash drawer</h2></div>
 				<div class="table-wrap">
 					<table>
 						<thead><tr><th>When</th><th>Kind</th><th class="num">Amount</th><th class="num">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead>
 						<tbody>
 							if len(data.CashMovements) == 0 {
-								<tr><td colspan="7"><div class="empty">No cash entries yet. Placeholder: opening float, cash sale, payout, count, and closing records appear here.</div></td></tr>
+								<tr><td colspan="7"><div class="empty">No cash entries yet. Opening float, cash sales, payouts, counts, and closing records will appear here.</div></td></tr>
 							}
 							for _, row := range data.CashMovements {
 								<tr><td>{ row.When }</td><td>{ row.Kind }</td><td class="num">{ row.Amount }</td><td class="num">{ row.Counted }</td><td>{ row.Recorder }</td><td class="mono">{ row.Ticket }</td><td>{ row.Note }</td></tr>
@@ -412,8 +462,8 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					</table>
 				</div>
 			</div>
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Record cash count</h2><span class="badge badge-ok">live</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Record cash count</h2></div>
 				if data.HasOpenShift {
 					<form method="post" action="/owner/cash-movements">
 						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
@@ -438,13 +488,13 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 		</div>
 	</section>
 	<section class="tab-panel" data-tab-panel="shifts">
-		<div class="section-title"><h2>Shift register</h2><span class="badge badge-ok">shifts</span></div>
+		<div class="section-title"><h2>Shift register</h2></div>
 		<div class="table-wrap">
 			<table>
 				<thead><tr><th>Staff</th><th>Device</th><th>Opened</th><th>Closed</th><th class="num">Tickets</th><th class="num">Tokens</th><th class="num">Opening</th><th class="num">Closing</th><th>Status</th><th>Notes</th></tr></thead>
 				<tbody>
 					if len(data.Shifts) == 0 {
-						<tr><td colspan="10"><div class="empty">No shifts yet. Placeholder: when a cashier opens a shift, cash float, token count, sales, and closing cash appear here.</div></td></tr>
+						<tr><td colspan="10"><div class="empty">No shifts yet. Once a cashier opens a shift, cash float, token count, sales, and closing cash will appear here.</div></td></tr>
 					}
 					for _, row := range data.Shifts {
 						<tr><td>{ row.Staff }</td><td class="mono">{ row.Device }</td><td>{ row.Opened }</td><td>{ row.Closed }</td><td class="num">{ row.Tickets }</td><td class="num">{ row.TokensIssued } / { row.TokensReturned }</td><td class="num">{ row.OpeningCash }</td><td class="num">{ row.ClosingCash }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Notes }</td></tr>
@@ -456,13 +506,13 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 	<section class="tab-panel" data-tab-panel="staff">
 		<div class="dashboard-grid">
 			<div>
-				<div class="section-title"><h2>Staff access</h2><span class="badge badge-ok">users</span></div>
+				<div class="section-title"><h2>Staff access</h2></div>
 				<div class="table-wrap">
 					<table style="min-width:680px">
 						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th><th></th></tr></thead>
 						<tbody>
 							if len(data.Staff) == 0 {
-								<tr><td colspan="8"><div class="empty">No staff yet. Placeholder: owners, managers, cashiers, and operators will appear here.</div></td></tr>
+								<tr><td colspan="8"><div class="empty">No staff yet. Owners, managers, cashiers, and operators will appear here.</div></td></tr>
 							}
 							for _, row := range data.Staff {
 								<tr>
@@ -487,8 +537,8 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					</table>
 				</div>
 			</div>
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Add staff</h2><span class="badge badge-ok">live</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Add staff</h2></div>
 				<form method="post" action="/owner/staff">
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<div class="form-grid">
@@ -512,13 +562,13 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 	<section class="tab-panel" data-tab-panel="prices">
 		<div class="dashboard-grid">
 			<div>
-				<div class="section-title"><h2>Price history</h2><span class="badge badge-ok">prices</span></div>
+				<div class="section-title"><h2>Price history</h2></div>
 				<div class="table-wrap">
 					<table style="min-width:560px">
 						<thead><tr><th>Effective from</th><th class="num">Price</th><th>Set by</th><th>Created</th></tr></thead>
 						<tbody>
 							if len(data.PriceHistory) == 0 {
-								<tr><td colspan="4"><div class="empty">No price history yet. Placeholder: every price change is kept here instead of overwritten.</div></td></tr>
+								<tr><td colspan="4"><div class="empty">No price history yet. Every price change is kept here instead of overwritten.</div></td></tr>
 							}
 							for _, row := range data.PriceHistory {
 								<tr><td>{ row.EffectiveFrom }</td><td class="num">{ row.Price }</td><td>{ row.SetBy }</td><td>{ row.CreatedAt }</td></tr>
@@ -527,8 +577,8 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					</table>
 				</div>
 			</div>
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Set new rate</h2><span class="badge badge-ok">live</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Set new rate</h2></div>
 				<form method="post" action="/owner/prices">
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<div class="form-grid">
@@ -542,19 +592,19 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 	</section>
 	<section class="tab-panel" data-tab-panel="activity">
 		<div class="dashboard-grid">
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Activity trail</h2><span class="badge badge-ok">activity_log</span></div>
+			<div>
+				<div class="section-title"><h2>Activity trail</h2></div>
 				<div class="timeline">
 					if len(data.Activity) == 0 {
-						<div class="empty">No activity yet. Placeholder: ticket created, price changed, shift opened, and staff actions will appear here.</div>
+						<div class="empty">No activity yet. Ticket, price, shift, and staff changes will appear here.</div>
 					}
 					for _, item := range data.Activity {
 						<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Subject } · { item.When }</span></div>
 					}
 				</div>
 			</div>
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Audit guide</h2><span class="badge badge-muted">Placeholder</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Audit guide</h2></div>
 				<div class="split-list">
 					<div class="info-row"><span>Tickets</span><strong>Check customer proof and voids first.</strong></div>
 					<div class="info-row"><span>Cash</span><strong>Match movements against shift close.</strong></div>
@@ -579,16 +629,6 @@ templ plantStatusForm(plantID string, newStatus string, label string, csrfToken 
 }
 
 templ adminConsoleContent(data AdminConsoleData) {
-	<div class="mobile-tabs">
-		<select data-tab-select aria-label="Admin console section">
-			<option value="overview">Overview</option>
-			<option value="plants">Plants</option>
-			<option value="onboarding">Onboarding</option>
-			<option value="domains">Domains and slugs</option>
-			<option value="activity">Activity</option>
-			<option value="system">System</option>
-		</select>
-	</div>
 	<div class="topline">
 		<div>
 			<div class="eyebrow">Platform admin console</div>
@@ -614,27 +654,27 @@ templ adminConsoleContent(data AdminConsoleData) {
 		</div>
 	}
 	<section class="tab-panel active" data-tab-panel="overview">
-		<div class="kpi-grid">
-			<div class="kpi-card">@kpiLabel("factory", "Plants")<div class="kpi">{ data.PlantCount }</div><div class="kpi-small">All tenants</div></div>
-			<div class="kpi-card">@kpiLabel("list-checks", "Transactions 7d")<div class="kpi">{ data.TotalTickets7d }</div><div class="kpi-small">Across all plants</div></div>
-			<div class="kpi-card">@kpiLabel("gas-pump", "Volume 30d")<div class="kpi">{ data.TotalVolume30d }</div><div class="kpi-small">Paid ticket weight</div></div>
-			<div class="kpi-card">@kpiLabel("warning-circle", "Domain issues")<div class="kpi">{ data.DomainBroken }</div><div class="kpi-small">{ data.DomainPending } pending checks</div></div>
+		<div class="kpi-row">
+			<div class="kpi-item">@kpiLabel("factory", "Plants")<div class="kpi">{ data.PlantCount }</div><div class="kpi-small">All plants on GatsToGo</div></div>
+			<div class="kpi-item">@kpiLabel("list-checks", "Transactions 7d")<div class="kpi">{ data.TotalTickets7d }</div><div class="kpi-small">Across all plants</div></div>
+			<div class="kpi-item">@kpiLabel("gas-pump", "Volume 30d")<div class="kpi">{ data.TotalVolume30d }</div><div class="kpi-small">Paid ticket weight</div></div>
+			<div class="kpi-item">@kpiLabel("warning-circle", "Domain issues")<div class="kpi">{ data.DomainBroken }</div><div class="kpi-small">{ data.DomainPending } pending checks</div></div>
 		</div>
 		<div class="dashboard-grid">
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Launch queue</h2><span class="badge badge-warn">Provisioning</span></div>
+			<div>
+				<div class="section-title"><h2>Launch queue</h2></div>
 				<div class="split-list">
-					<div class="info-row"><span>Plant record</span><strong>Name, slug, location, status, colors, and domain.</strong></div>
+					<div class="info-row"><span>Plant record</span><strong>Name, web address, location, status, colors, and domain.</strong></div>
 					<div class="info-row"><span>Owner access</span><strong>Create the first owner user and verify phone.</strong></div>
 					<div class="info-row"><span>Opening price</span><strong>Add a price row before the customer page goes live.</strong></div>
 					<div class="info-row"><span>First sale</span><strong>Watch ticket, cash, shift, and activity records arrive.</strong></div>
 				</div>
 			</div>
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Platform staff</h2><span class="badge badge-ok">users</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Platform staff</h2></div>
 				<div class="timeline">
 					if len(data.PlatformStaff) == 0 {
-						<div class="empty">No platform admin users found. Placeholder: admin operators will appear here.</div>
+						<div class="empty">No platform admin users found yet.</div>
 					}
 					for _, row := range data.PlatformStaff {
 						<div class="timeline-item"><strong>{ row.Name }</strong><span class="muted">{ row.Phone } · { row.Status } · { row.Plants } plant links</span></div>
@@ -644,13 +684,13 @@ templ adminConsoleContent(data AdminConsoleData) {
 		</div>
 	</section>
 	<section class="tab-panel" data-tab-panel="plants">
-		<div class="section-title"><h2>Plants</h2><span class="badge badge-ok">plants + tickets + staff</span></div>
+		<div class="section-title"><h2>Plants</h2></div>
 		<div class="table-wrap">
 			<table>
-				<thead><tr><th>Plant</th><th>Location</th><th>Slug</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th><th></th></tr></thead>
+				<thead><tr><th>Plant</th><th>Location</th><th>Web address</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th><th></th></tr></thead>
 				<tbody>
 					if len(data.Plants) == 0 {
-						<tr><td colspan="12"><div class="empty">No plants yet. Placeholder: tenant records with domain, staff, price, shift, and transaction health will appear here.</div></td></tr>
+						<tr><td colspan="12"><div class="empty">No plants yet. Plant records with domain, staff, price, shift, and transaction health will appear here.</div></td></tr>
 					}
 					for _, row := range data.Plants {
 						<tr>
@@ -674,13 +714,13 @@ templ adminConsoleContent(data AdminConsoleData) {
 	</section>
 	<section class="tab-panel" data-tab-panel="onboarding">
 		<div class="dashboard-grid">
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Create plant</h2><span class="badge badge-ok">live</span></div>
+			<div>
+				<div class="section-title"><h2>Create plant</h2></div>
 				<form method="post" action="/admin/plants">
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<div class="form-grid">
 						<div class="field"><label>Plant name</label><input type="text" name="name" placeholder="Sunrise Gas Plant" required/></div>
-						<div class="field"><label>Slug</label><input type="text" name="slug" placeholder="sunrise" pattern="[a-z0-9-]+" required/></div>
+						<div class="field"><label>Web address</label><input type="text" name="slug" placeholder="sunrise" pattern="[a-z0-9-]+" required/></div>
 						<div class="field"><label>City</label><input type="text" name="city" placeholder="Owerri"/></div>
 						<div class="field"><label>Phone</label><input type="tel" name="phone" placeholder="0803 000 0000"/></div>
 						<div class="field" style="grid-column: 1 / -1;"><label>Address</label><input type="text" name="address" placeholder="Plant address"/></div>
@@ -694,10 +734,10 @@ templ adminConsoleContent(data AdminConsoleData) {
 					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Provision plant</button></div>
 				</form>
 			</div>
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Provisioning checklist</h2><span class="badge badge-ok">automated</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Provisioning checklist</h2></div>
 				<div class="split-list">
-					<div class="info-row"><span>1</span><strong>Reserve slug and create tenant row.</strong></div>
+					<div class="info-row"><span>1</span><strong>Reserve the web address and create the plant record.</strong></div>
 					<div class="info-row"><span>2</span><strong>Add owner user and temporary password.</strong></div>
 					<div class="info-row"><span>3</span><strong>Set starting price per kg.</strong></div>
 					<div class="info-row"><span>4</span><strong>Test customer site, receipt page, and staff terminal.</strong></div>
@@ -709,10 +749,10 @@ templ adminConsoleContent(data AdminConsoleData) {
 	<section class="tab-panel" data-tab-panel="domains">
 		<div class="dashboard-grid">
 			<div>
-				<div class="section-title"><h2>Domain health</h2><span class="badge badge-ok">plants</span></div>
+				<div class="section-title"><h2>Domain health</h2></div>
 				<div class="table-wrap">
 					<table style="min-width:720px">
-						<thead><tr><th>Plant</th><th>Slug</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead>
+						<thead><tr><th>Plant</th><th>Web address</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead>
 						<tbody>
 							if len(data.Plants) == 0 {
 								<tr><td colspan="6"><div class="empty">No domains to check yet.</div></td></tr>
@@ -724,25 +764,25 @@ templ adminConsoleContent(data AdminConsoleData) {
 					</table>
 				</div>
 			</div>
-			<div class="panel panel-pad">
-				<div class="section-title"><h2>Reserved slugs</h2><span class="badge badge-ok">reserved_slugs</span></div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Reserved web addresses</h2></div>
 				<div class="timeline">
 					if len(data.ReservedSlugs) == 0 {
-						<div class="empty">No reserved slugs found. Placeholder: admin, api, support, and other protected words appear here.</div>
+						<div class="empty">No reserved words found yet. Protected web addresses like admin, api, and support appear here.</div>
 					}
 					for _, slug := range data.ReservedSlugs {
-						<div class="timeline-item"><strong class="mono">{ slug }</strong><span class="muted">Protected subdomain</span></div>
+						<div class="timeline-item"><strong class="mono">{ slug }</strong><span class="muted">Protected web address</span></div>
 					}
 				</div>
 			</div>
 		</div>
 	</section>
 	<section class="tab-panel" data-tab-panel="activity">
-		<div class="panel panel-pad">
-			<div class="section-title"><h2>Platform activity</h2><span class="badge badge-ok">activity_log</span></div>
+		<div style="max-width: 640px;">
+			<div class="section-title"><h2>Platform activity</h2></div>
 			<div class="timeline">
 				if len(data.RecentActivity) == 0 {
-					<div class="empty">No platform activity yet. Placeholder: provisioning, suspension, price, and domain actions will appear here.</div>
+					<div class="empty">No platform activity yet. Plant setup, suspension, price, and domain changes will appear here.</div>
 				}
 				for _, item := range data.RecentActivity {
 					<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Subject } · { item.When }</span></div>
@@ -751,13 +791,13 @@ templ adminConsoleContent(data AdminConsoleData) {
 		</div>
 	</section>
 	<section class="tab-panel" data-tab-panel="system">
-		<div class="section-title"><h2>Database map</h2><span class="badge badge-ok">current schema</span></div>
+		<div class="section-title"><h2>System overview</h2></div>
 		<div class="table-wrap">
 			<table>
-				<thead><tr><th>Table</th><th>What it controls</th><th class="num">Records</th><th>Health</th><th>Notes</th></tr></thead>
+				<thead><tr><th>Data area</th><th>What it controls</th><th class="num">Entries</th><th>Health</th><th>Notes</th></tr></thead>
 				<tbody>
 					if len(data.SystemTables) == 0 {
-						<tr><td colspan="5"><div class="empty">No table stats available. Placeholder: schema coverage appears here.</div></td></tr>
+						<tr><td colspan="5"><div class="empty">No table stats available yet.</div></td></tr>
 					}
 					for _, row := range data.SystemTables {
 						<tr><td class="mono">{ row.Name }</td><td>{ row.Role }</td><td class="num">{ row.Records }</td><td><span class="badge badge-ok">{ row.Health }</span></td><td>{ row.Description }</td></tr>

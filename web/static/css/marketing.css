@@ -4,8 +4,9 @@
    Same system as customer-home.css and the redesigned terminal.css: zero
    bordered/shadowed "card" containers, hairline (1px) rules for
    structure, uppercase tracked-letter-spacing eyebrow labels, IBM Plex
-   Mono for numerals, sharp corners (no border-radius), color reserved for
-   the primary action button and a few functional accents. This is
+   Mono for numerals, a small consistent corner radius (tokens.css's
+   --radius-sm, same as every other surface), color reserved for the
+   primary action button and a few functional accents. This is
    GatsToGo's own fixed brand identity (not tenant-themed like
    customer-home.css), so the palette is a plain :root rather than
    per-plant CSS custom properties set inline.
@@ -89,6 +90,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	gap: 8px;
 	min-height: 52px;
 	border: 0;
+	border-radius: var(--radius-sm, 6px);
 	background: var(--brand);
 	color: #FFFFFF;
 	padding: 0 26px;
@@ -134,6 +136,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	padding: 14px 16px;
 	background: var(--danger-bg);
 	border-left: 3px solid var(--danger);
+	border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
 	color: var(--danger);
 	font-size: 14px;
 	font-weight: 700;
@@ -385,6 +388,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	height: 56px;
 	margin: 0 auto 24px;
 	border: 1.5px solid var(--success);
+	border-radius: var(--radius-sm, 6px);
 	color: var(--success);
 }
 .signup-submitted .icon-badge .icon { font-size: 24px; }

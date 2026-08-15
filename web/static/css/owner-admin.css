@@ -1,18 +1,48 @@
+/* ==========================================================================
+   GatsToGo owner dashboard + admin console (shared: opsShell)
+   ==========================================================================
+   Redesigned to match the same flat/hairline/restrained-color system
+   proven on the customer pages and the staff terminal this session: zero
+   bordered/shadowed "card" containers, hairline (1px) rules for
+   structure, outlined (not filled) status tags, IBM Plex Mono for
+   numerals, a small consistent corner radius (tokens.css's --radius-sm/
+   -md/-full, same as every other surface). The dark rail sidebar keeps
+   its own identity deliberately -- tokens.css calls it out as one of
+   the two intentionally-dark surfaces in the app, and the user
+   explicitly liked the desktop sidebar as it already was; nothing about
+   its desktop layout changed here, only its logo, corners, and the new
+   mobile behavior below.
+
+   Business language, not developer language: every section title used
+   to carry a small badge naming the literal database table it read
+   from ("activity_log", "cash_movements", "reserved_slugs", ...) --
+   left over from this app's own build-out, meaningless to the gas-
+   plant owner or even GatsToGo's own admin staff actually looking at
+   this. Removed outright rather than reworded; the section heading
+   already says what the section is. "Slug" (developer routing jargon)
+   became "web address" throughout, matching the same term already
+   used on the marketing site's own signup form.
+
+   Mobile: previously a <select> dropdown replaced the whole sidebar
+   below 1020px. Replaced with a real off-canvas drawer -- the exact
+   same .rail markup slides in from the left over a dimmed backdrop,
+   toggled by a hamburger button in a new sticky mobile top bar. Desktop
+   (>1020px) .rail styling is untouched; the drawer behavior only exists
+   inside the max-width: 1020px media query.
+   ========================================================================== */
 :root {
 	--ink: #101820;
 	--rail: #151A1F;
 	--rail-2: #20272E;
-	--panel: #FFFFFF;
 	--page: #F3F5F2;
 	--line: #D8DED6;
 	--muted: #627069;
 	--soft: #EEF2EC;
 	--green: #006B4D;
 	--mint: #10B981;
-	--amber: #F59E0B;
-	--red: #DC2626;
-	--blue: #2563EB;
-	--shadow: 0 16px 40px rgba(16, 24, 32, 0.08);
+	--amber: #92580A;
+	--red: #B3261E;
+	--red-bg: #FBEEED;
 }
 * { box-sizing: border-box; }
 [x-cloak], .tab-panel { display: none; }
@@ -37,6 +67,7 @@ a { color: inherit; text-decoration: none; }
 	position: sticky;
 	top: 0;
 	height: 100vh;
+	overflow-y: auto;
 	background: var(--rail);
 	color: #F8FAFC;
 	padding: 20px 16px;
@@ -77,6 +108,7 @@ a { color: inherit; text-decoration: none; }
 .nav-button {
 	width: 100%;
 	border: 1px solid transparent;
+	border-radius: var(--radius-sm, 6px);
 	background: transparent;
 	color: #C9D2DA;
 	text-align: left;
@@ -97,6 +129,7 @@ a { color: inherit; text-decoration: none; }
 	content: "";
 	width: 8px;
 	height: 8px;
+	border-radius: var(--radius-full, 999px);
 	background: var(--mint);
 }
 /* Icon + label as one flex unit, so .nav-button's own
@@ -123,14 +156,14 @@ a { color: inherit; text-decoration: none; }
 .rail-signout { margin: 0; }
 .main {
 	min-width: 0;
-	padding: 26px;
+	padding: 32px;
 }
 .topline {
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
 	gap: 18px;
-	margin-bottom: 18px;
+	margin-bottom: 28px;
 }
 .eyebrow {
 	color: var(--green);
@@ -145,11 +178,11 @@ h1, h2, h3 {
 	letter-spacing: 0;
 	margin: 0;
 }
-h1 { font-size: clamp(26px, 4vw, 42px); line-height: 0.98; }
-h2 { font-size: 18px; }
-h3 { font-size: 15px; }
+h1 { font-size: clamp(26px, 4vw, 40px); line-height: 0.98; }
+h2 { font-size: 17px; font-weight: 800; }
+h3 { font-size: 14px; }
 .muted { color: var(--muted); }
-.mono { font-family: var(--font-mono, "IBM Plex Mono", monospace); }
+.mono { font-family: var(--font-mono, "IBM Plex Mono", monospace); font-variant-numeric: tabular-nums; }
 .toolbar {
 	display: flex;
 	flex-wrap: wrap;
@@ -161,21 +194,24 @@ h3 { font-size: 15px; }
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	min-height: 42px;
+	min-height: 40px;
 	border: 1px solid var(--line);
-	background: #FFFFFF;
+	border-radius: var(--radius-sm, 6px);
+	background: transparent;
 	color: var(--ink);
 	padding: 0 14px;
-	font-weight: 800;
+	font-weight: 700;
 }
+.btn:hover { border-color: #B9C2BB; }
 .btn .icon { flex: none; }
 .btn.primary {
 	border-color: var(--green);
 	background: var(--green);
 	color: #FFFFFF;
 }
-.btn:focus-visible, .nav-button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-	outline: 3px solid rgba(16, 185, 129, 0.42);
+.btn.primary:hover { background: #00543D; }
+.btn:focus-visible, .nav-button:focus-visible, .rail-toggle:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+	outline: 2px solid var(--green);
 	outline-offset: 2px;
 }
 .status-row {
@@ -184,13 +220,19 @@ h3 { font-size: 15px; }
 	gap: 8px;
 	margin-top: 12px;
 }
+/* Status tags: outlined, not filled -- same convention as customer-
+   home.css's .status-tag. Class names (.badge, .badge-ok/-warn/-danger/
+   -muted) stay exactly as they are: cmd/server/main.go builds these as
+   literal strings server-side (badgeForStatus and friends), so renaming
+   them here would mean touching Go code for a pure styling change. */
 .badge {
 	display: inline-flex;
 	align-items: center;
 	min-height: 24px;
 	padding: 0 9px;
-	border: 1px solid var(--line);
-	background: var(--soft);
+	border: 1px solid currentColor;
+	border-radius: var(--radius-sm, 6px);
+	background: transparent;
 	color: var(--muted);
 	font-size: 11px;
 	font-weight: 800;
@@ -198,46 +240,39 @@ h3 { font-size: 15px; }
 	text-transform: uppercase;
 	white-space: nowrap;
 }
-.badge-ok { background: #DCFCE7; color: #166534; border-color: #86EFAC; }
-.badge-warn { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
-.badge-danger { background: #FEF2F2; color: #B91C1C; border-color: #FCA5A5; }
-.badge-muted { background: #F1F5F9; color: #475569; border-color: #CBD5E1; }
+.badge-ok { color: var(--green); }
+.badge-warn { color: var(--amber); }
+.badge-danger { color: var(--red); }
+.badge-muted { color: var(--muted); }
 .owner-error {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	margin: 0 0 16px;
-	border: 1px solid #FCA5A5;
-	background: #FEF2F2;
-	color: #B91C1C;
-	padding: 12px 14px;
+	margin: 0 0 20px;
+	border-left: 3px solid var(--red);
+	background: var(--red-bg);
+	color: var(--red);
+	padding: 13px 16px;
 	font-weight: 700;
 }
 .owner-error .icon { flex: none; font-size: 18px; }
-.panel {
-	border: 1px solid var(--line);
-	background: var(--panel);
-	box-shadow: var(--shadow);
-}
-.panel-pad { padding: 18px; }
-.kpi-grid {
+
+/* ---- KPI row: hairline-divided stats, no individual boxed cards ---- */
+.kpi-row {
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: 12px;
-	margin-bottom: 16px;
+	margin-bottom: 36px;
 }
-.kpi-card {
-	border: 1px solid var(--line);
-	background: #FFFFFF;
-	padding: 16px;
-	min-height: 124px;
-	display: grid;
-	align-content: space-between;
+.kpi-item {
+	padding: 0 24px;
+	border-left: 1px solid var(--line);
 }
+.kpi-item:first-child { padding-left: 0; border-left: 0; }
 .kpi-label {
 	display: flex;
 	align-items: center;
 	gap: 6px;
+	margin-bottom: 10px;
 	color: var(--muted);
 	font-size: 11px;
 	font-weight: 800;
@@ -247,29 +282,35 @@ h3 { font-size: 15px; }
 .kpi-label .icon { flex: none; font-size: 14px; }
 .kpi {
 	font-family: var(--font-mono, "IBM Plex Mono", monospace);
-	font-size: clamp(23px, 3vw, 34px);
-	font-weight: 800;
+	font-size: clamp(22px, 2.6vw, 32px);
+	font-weight: 700;
 	line-height: 1;
 	overflow-wrap: anywhere;
 }
-.kpi-small { color: var(--muted); font-size: 12px; }
+.kpi-small { margin-top: 8px; color: var(--muted); font-size: 12px; }
+
+/* ---- Two-column tab layout: wide primary content + a hairline-
+   divided aside (form or supplementary list) -- the same convention
+   terminal.css's .term-layout/.term-aside and marketing.css's
+   .mkt-footer-cols already use. ---- */
 .dashboard-grid {
 	display: grid;
-	grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
-	gap: 16px;
+	grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+	gap: 48px;
 	align-items: start;
+}
+.dash-aside {
+	padding-left: 32px;
+	border-left: 1px solid var(--line);
 }
 .section-title {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-	margin-bottom: 12px;
+	margin-bottom: 16px;
 }
-.split-list {
-	display: grid;
-	gap: 0;
-}
+.split-list { display: grid; gap: 0; }
 .info-row {
 	display: grid;
 	grid-template-columns: minmax(120px, 0.45fr) minmax(0, 1fr);
@@ -279,11 +320,9 @@ h3 { font-size: 15px; }
 }
 .info-row:first-child { border-top: 0; padding-top: 0; }
 .info-row span:first-child { color: var(--muted); font-weight: 700; }
-.table-wrap {
-	border: 1px solid var(--line);
-	background: #FFFFFF;
-	overflow-x: auto;
-}
+
+/* ---- Tables: hairlines only, no wrapping bordered box ---- */
+.table-wrap { overflow-x: auto; }
 table {
 	width: 100%;
 	min-width: 780px;
@@ -310,21 +349,21 @@ td {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	border: 1px dashed #BAC5BD;
-	background: #F9FBF8;
 	color: var(--muted);
-	padding: 16px;
+	padding: 20px 0;
 }
 .empty .icon { flex: none; font-size: 20px; }
+
+/* ---- Forms: bordered inputs stay (a dense field grid genuinely needs
+   clear field boundaries, unlike the narrative single-column forms
+   elsewhere in the app that use underline style) -- just no shadows,
+   no boxed wrapper around the form itself. ---- */
 .form-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 12px;
+	gap: 14px;
 }
-.field {
-	display: grid;
-	gap: 6px;
-}
+.field { display: grid; gap: 6px; }
 .field label {
 	color: var(--muted);
 	font-size: 12px;
@@ -334,105 +373,144 @@ td {
 }
 .field input, .field select, .field textarea {
 	width: 100%;
-	min-height: 44px;
+	min-height: 42px;
 	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
 	background: #FFFFFF;
 	padding: 10px 12px;
 	color: var(--ink);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+	outline: none;
+	border-color: var(--ink);
 }
 .field textarea { min-height: 86px; resize: vertical; }
 .action-strip {
 	display: flex;
 	gap: 10px;
 	flex-wrap: wrap;
-	margin-top: 14px;
-}
-.receipt-card {
-	border: 1px solid var(--line);
-	background: #FFFFFF;
-	padding: 16px;
-	display: grid;
-	gap: 12px;
+	margin-top: 16px;
 }
 .receipt-code {
 	font-family: var(--font-mono, "IBM Plex Mono", monospace);
-	font-size: 48px;
-	font-weight: 800;
+	font-size: 44px;
+	font-weight: 700;
 	line-height: 1;
-	letter-spacing: 0.04em;
+	letter-spacing: 0.03em;
 }
-.timeline {
-	display: grid;
-	gap: 10px;
-}
-.timeline-item {
-	border-left: 3px solid var(--line);
-	padding-left: 12px;
-}
+.timeline { display: grid; gap: 14px; }
+.timeline-item { border-left: 1px solid var(--line); padding-left: 12px; }
 .timeline-item strong { display: block; }
 .stat-line {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	border: 1px solid var(--line);
-	background: #FFFFFF;
-	margin-bottom: 16px;
+	margin-bottom: 24px;
 }
-.stat-line > div {
-	padding: 14px;
-	border-left: 1px solid var(--line);
-}
-.stat-line > div:first-child { border-left: 0; }
-.meter {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: 8px;
-}
-.meter-track {
-	height: 10px;
-	background: var(--soft);
-	border: 1px solid var(--line);
-}
-.meter-fill {
-	height: 100%;
-	background: var(--green);
-	width: 68%;
-}
-.mobile-tabs {
+.stat-line > div { padding: 0 20px; border-left: 1px solid var(--line); }
+.stat-line > div:first-child { padding-left: 0; border-left: 0; }
+.meter { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.meter-track { height: 8px; border-radius: var(--radius-full, 999px); background: var(--soft); overflow: hidden; }
+.meter-fill { height: 100%; background: var(--green); width: 68%; }
+
+/* ==========================================================================
+   Mobile: sticky top bar + off-canvas drawer (replaces the old <select>
+   dropdown). Desktop .rail above is completely untouched by anything
+   below this point -- the fixed/transform drawer behavior only applies
+   inside this media query.
+   ========================================================================== */
+.mobile-topbar {
 	display: none;
-	margin-bottom: 14px;
+	position: sticky;
+	top: 0;
+	z-index: 30;
+	align-items: center;
+	gap: 12px;
+	min-height: 56px;
+	padding: 0 16px;
+	background: var(--rail);
+	color: #F8FAFC;
 }
-.mobile-tabs select {
-	width: 100%;
-	min-height: 48px;
-	border: 1px solid var(--line);
-	background: #FFFFFF;
-	padding: 0 12px;
-	font-weight: 800;
+.mobile-topbar .brand { border-bottom: 0; padding: 0; flex: 1; min-width: 0; }
+.mobile-topbar .brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 36px;
+	height: 36px;
+	border: 1px solid #303941;
+	border-radius: var(--radius-sm, 6px);
+	background: transparent;
+	color: #F8FAFC;
 }
+.rail-toggle:hover { border-color: #4A5560; }
+.rail-toggle .icon { font-size: 18px; }
+.rail-close { display: none; }
+.rail-backdrop {
+	display: none;
+	position: fixed;
+	inset: 0;
+	background: rgba(10, 14, 18, 0.55);
+	z-index: 39;
+}
+
 @media (max-width: 1020px) {
 	.shell { grid-template-columns: 1fr; }
+	.mobile-topbar { display: flex; }
 	.rail {
-		position: static;
-		height: auto;
-		padding: 12px;
+		position: fixed;
+		top: 0;
+		left: 0;
+		height: 100vh;
+		width: min(280px, 84vw);
+		transform: translateX(-100%);
+		transition: transform 220ms ease;
+		z-index: 40;
 	}
-	.rail-nav { display: none; }
-	.rail-note { display: none; }
-	.mobile-tabs { display: block; }
-	.main { padding: 18px; }
-	.kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-	.dashboard-grid { grid-template-columns: 1fr; }
+	.rail .brand { padding-right: 36px; position: relative; }
+	.rail-close {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		position: absolute;
+		top: 0;
+		right: 4px;
+		width: 32px;
+		height: 32px;
+		border: 1px solid #303941;
+		border-radius: var(--radius-sm, 6px);
+		background: transparent;
+		color: #F8FAFC;
+	}
+	.shell.rail-open .rail { transform: translateX(0); }
+	.shell.rail-open .rail-backdrop { display: block; }
+	/* position: fixed (not just overflow: hidden, which iOS Safari
+	   ignores for background scroll behind a fixed element) -- width
+	   keeps the now-fixed body from collapsing to content width, top is
+	   set inline per-open by the drawer JS to the negative scroll
+	   offset it captured, so the page doesn't visually jump when this
+	   locks. See opsShell's openDrawer/closeDrawer in owner_admin.templ. */
+	body.rail-locked { position: fixed; overflow: hidden; width: 100%; }
+	.main { padding: 20px; }
+	.kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 24px; }
+	.kpi-item:nth-child(3) { border-left: 0; padding-left: 0; }
+	.dashboard-grid { grid-template-columns: 1fr; gap: 32px; }
+	.dash-aside { padding-left: 0; padding-top: 28px; border-left: 0; border-top: 1px solid var(--line); }
 }
 @media (max-width: 640px) {
-	.main { padding: 14px; }
+	.main { padding: 16px; }
 	.topline { display: block; }
 	.toolbar { justify-content: stretch; margin-top: 14px; }
 	.btn { width: 100%; }
-	.kpi-grid, .form-grid, .stat-line { grid-template-columns: 1fr; }
-	.stat-line > div { border-left: 0; border-top: 1px solid var(--line); }
-	.stat-line > div:first-child { border-top: 0; }
+	.form-grid, .stat-line { grid-template-columns: 1fr; }
+	.stat-line > div { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+	.stat-line > div:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+	.kpi-row { grid-template-columns: 1fr; row-gap: 20px; }
+	.kpi-item { border-left: 0; padding-left: 0; padding-top: 20px; border-top: 1px solid var(--line); }
+	.kpi-item:first-child { border-top: 0; padding-top: 0; }
 	.info-row { grid-template-columns: 1fr; gap: 4px; }
-	.receipt-code { font-size: 38px; }
+	.receipt-code { font-size: 36px; }
 }
 
 /* ---- Auth (owner + admin login) ---- */
@@ -450,6 +528,9 @@ td {
 	padding: 28px 26px;
 	display: grid;
 	gap: 16px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-md, 8px);
+	background: #FFFFFF;
 }
 .login-brand {
 	display: flex;
