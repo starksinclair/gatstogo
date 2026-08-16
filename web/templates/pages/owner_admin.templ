@@ -739,6 +739,7 @@ templ ownerNav() {
 		@navButton(false, "staff", "users", "Staff")
 		@navButton(false, "prices", "gas-pump", "Prices")
 		@navButton(false, "activity", "clock-counter-clockwise", "Activity")
+		@navButton(false, "account", "lock", "Account")
 	</nav>
 }
 
@@ -865,14 +866,6 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					<div class="info-row"><span>Secondary color</span><strong class="mono">{ data.PlantSecondaryColor }</strong></div>
 					<div class="info-row"><span>Button text color</span><strong class="mono">{ data.PlantButtonTextColor }</strong></div>
 				</div>
-				<div class="section-title" style="margin-top:28px;"><h2>Account security</h2></div>
-				<form method="post" action="/owner/password" data-splash="Updating password">
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-					<div class="field"><label>Current password</label><input type="password" name="current_password" autocomplete="current-password" required/></div>
-					<div class="field" style="margin-top:10px;"><label>New password</label><input type="password" name="new_password" autocomplete="new-password" required/></div>
-					<div class="field" style="margin-top:10px;"><label>Confirm new password</label><input type="password" name="new_password_confirm" autocomplete="new-password" required/></div>
-					<div class="action-strip" style="margin-top:12px;"><button class="btn primary" type="submit">Update password</button></div>
-				</form>
 			</div>
 		</div>
 	</section>
@@ -1108,6 +1101,17 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				</div>
 			</div>
 		</div>
+	</section>
+	<section class="tab-panel" data-tab-panel="account">
+		<div class="section-title"><h2>Account security</h2></div>
+		<p class="muted">Change the password you use to sign in to this dashboard.</p>
+		<form method="post" action="/owner/password" data-splash="Updating password" style="max-width:420px;">
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			<div class="field"><label>Current password</label><input type="password" name="current_password" autocomplete="current-password" required/></div>
+			<div class="field" style="margin-top:10px;"><label>New password</label><input type="password" name="new_password" autocomplete="new-password" required/></div>
+			<div class="field" style="margin-top:10px;"><label>Confirm new password</label><input type="password" name="new_password_confirm" autocomplete="new-password" required/></div>
+			<div class="action-strip" style="margin-top:16px; justify-content:flex-start;"><button class="btn primary" type="submit">Update password</button></div>
+		</form>
 	</section>
 }
 

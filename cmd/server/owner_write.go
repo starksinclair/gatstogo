@@ -239,7 +239,7 @@ func ownerChangePasswordHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		if err := r.ParseForm(); err != nil {
-			http.Redirect(w, r, "/owner?error=password-form#overview", http.StatusSeeOther)
+			http.Redirect(w, r, "/owner?error=password-form#account", http.StatusSeeOther)
 			return
 		}
 		currentPassword := r.FormValue("current_password")
@@ -247,11 +247,11 @@ func ownerChangePasswordHandler(s *Server) http.HandlerFunc {
 		confirm := r.FormValue("new_password_confirm")
 
 		if currentPassword == "" || newPassword == "" || confirm == "" {
-			http.Redirect(w, r, "/owner?error=password-missing#overview", http.StatusSeeOther)
+			http.Redirect(w, r, "/owner?error=password-missing#account", http.StatusSeeOther)
 			return
 		}
 		if newPassword != confirm {
-			http.Redirect(w, r, "/owner?error=password-mismatch#overview", http.StatusSeeOther)
+			http.Redirect(w, r, "/owner?error=password-mismatch#account", http.StatusSeeOther)
 			return
 		}
 
@@ -279,13 +279,13 @@ func ownerChangePasswordHandler(s *Server) http.HandlerFunc {
 		})
 		if err != nil {
 			if errors.Is(err, errCurrentPasswordWrong) {
-				http.Redirect(w, r, "/owner?error=password-current#overview", http.StatusSeeOther)
+				http.Redirect(w, r, "/owner?error=password-current#account", http.StatusSeeOther)
 				return
 			}
 			log.Println("owner change password:", err)
-			http.Redirect(w, r, "/owner?error=password-form#overview", http.StatusSeeOther)
+			http.Redirect(w, r, "/owner?error=password-form#account", http.StatusSeeOther)
 			return
 		}
-		http.Redirect(w, r, "/owner#overview", http.StatusSeeOther)
+		http.Redirect(w, r, "/owner#account", http.StatusSeeOther)
 	}
 }
