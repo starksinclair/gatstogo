@@ -645,7 +645,7 @@ td {
 }
 .stat-line > div { padding: 0 20px; border-left: 1px solid var(--line); }
 .stat-line > div:first-child { padding-left: 0; border-left: 0; }
-.meter { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.meter { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .meter-track { height: 8px; border-radius: var(--radius-full, 999px); background: var(--soft); overflow: hidden; }
 .meter-fill { height: 100%; background: var(--green); width: 68%; }
 
@@ -668,10 +668,23 @@ td {
    there.
    ========================================================================== */
 :root { --topbar-h: 60px; }
+/* position: fixed, not sticky -- .shell is a grid container, and a
+   sticky child of a grid can silently stop sticking on scroll in a
+   way that's inconsistent across browsers (confirmed live: it just
+   scrolled away with the rest of the page instead of staying put,
+   leaving a blank gap where it should have been). Every other
+   pinned-to-viewport piece in this file (.rail once open, .rail-
+   backdrop, .confirm-overlay) already uses fixed successfully, so
+   this switches to the same, already-proven mechanism instead of
+   fighting sticky's edge cases. Being fixed takes it out of normal
+   flow, which is why .main picks up matching top padding below --
+   .rail/.rail-backdrop already account for it via top: var(--topbar-h).*/
 .mobile-topbar {
 	display: none;
-	position: sticky;
+	position: fixed;
 	top: 0;
+	left: 0;
+	right: 0;
 	z-index: 45;
 	align-items: center;
 	gap: 12px;
@@ -722,7 +735,17 @@ td {
 }
 
 @media (max-width: 1020px) {
-	.shell { grid-template-columns: 1fr; }
+	/* minmax(0, 1fr), not a bare 1fr -- a grid track's implicit minimum
+	   is auto (its content's min-content size), not 0. A bare 1fr here
+	   let .main's widest child (a table with an explicit min-width,
+	   confirmed live at up to 1300px -- see the Plants table) force
+	   this whole column wider than the viewport instead of shrinking
+	   to it, blowing the entire page out sideways rather than
+	   containing the overflow inside that one table's own .table-wrap
+	   (which already has overflow-x: auto for exactly this). Every
+	   other bare 1fr in this media-query block had the same latent
+	   bug; all fixed the same way below. */
+	.shell { grid-template-columns: minmax(0, 1fr); }
 	.mobile-topbar { display: flex; }
 	.rail {
 		position: fixed;
@@ -744,24 +767,28 @@ td {
 	   offset it captured, so the page doesn't visually jump when this
 	   locks. See opsShell's openDrawer/closeDrawer in owner_admin.templ. */
 	body.rail-locked { position: fixed; overflow: hidden; width: 100%; }
-	.main { padding: 20px; }
+	/* .mobile-topbar is fixed (out of normal flow), so .main needs its
+	   own top padding to clear it -- nothing would otherwise reserve
+	   that space the way it did back when the topbar was a normal
+	   (sticky) grid row. */
+	.main { padding: calc(var(--topbar-h) + 20px) 20px 20px; }
 	.kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 24px; }
 	.kpi-item:nth-child(3) { border-left: 0; padding-left: 0; }
-	.dashboard-grid { grid-template-columns: 1fr; gap: 32px; }
+	.dashboard-grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
 	.dash-aside { padding-left: 0; padding-top: 28px; border-left: 0; border-top: 1px solid var(--line); }
 }
 @media (max-width: 640px) {
-	.main { padding: 16px; }
+	.main { padding: calc(var(--topbar-h) + 16px) 16px 16px; }
 	.topline { display: block; }
 	.toolbar { justify-content: stretch; margin-top: 14px; }
 	.btn { width: 100%; }
-	.form-grid, .stat-line { grid-template-columns: 1fr; }
+	.form-grid, .stat-line { grid-template-columns: minmax(0, 1fr); }
 	.stat-line > div { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
 	.stat-line > div:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
-	.kpi-row { grid-template-columns: 1fr; row-gap: 20px; }
+	.kpi-row { grid-template-columns: minmax(0, 1fr); row-gap: 20px; }
 	.kpi-item { border-left: 0; padding-left: 0; padding-top: 20px; border-top: 1px solid var(--line); }
 	.kpi-item:first-child { border-top: 0; padding-top: 0; }
-	.info-row { grid-template-columns: 1fr; gap: 4px; }
+	.info-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 	.receipt-code { font-size: 36px; }
 	/* Keep Cancel/Confirm side by side (flex: 1 each) rather than the
 	   general .btn { width: 100% } rule above stacking them full-width. */
