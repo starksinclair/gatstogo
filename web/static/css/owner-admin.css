@@ -247,6 +247,22 @@ h3 { font-size: 14px; }
    turned out to be earlier this session. Domain status is kept: it's
    a genuinely independent, variable field (a plant can be active for
    sales with its own custom domain still pending/broken/unset). */
+/* Plant detail page's "back to the list" affordance
+   (adminPlantDetailContent, web/templates/pages/admin_plant_detail.templ)
+   -- plain text, no icon: this app already avoids decorative icons where
+   a short word does the job, and there's no verified arrow-left glyph in
+   components/icon_paths.go's existing Phosphor set to add one for. */
+.back-link {
+	display: inline-block;
+	margin-bottom: 10px;
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 700;
+	text-decoration: none;
+}
+.back-link:hover { color: var(--ink); }
+.plant-name-link { color: inherit; text-decoration: none; }
+.plant-name-link:hover { color: var(--green); text-decoration: underline; }
 .meta-row {
 	display: flex;
 	flex-wrap: wrap;

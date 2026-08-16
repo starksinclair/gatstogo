@@ -702,6 +702,41 @@ templ adminNav() {
 	</nav>
 }
 
+// navLink mirrors navButton's exact markup and CSS classes, but as a real
+// <a href="/admin#tab"> instead of a JS-driven data-tab button. adminNav's
+// buttons only work because opsShell's own script finds a matching
+// [data-tab-panel] on the SAME page they live on (adminConsoleContent) --
+// a page outside that tab shell entirely, like adminPlantDetailContent
+// (web/templates/pages/admin_plant_detail.templ), has no tab panels at
+// all, so a data-tab button there would be a silent dead click. A real
+// link instead does a real navigation back to /admin, landing on the
+// right tab via opsShell's existing location.hash handling -- the same
+// mechanism every write-handler redirect (e.g. /admin#plants) already
+// relies on.
+templ navLink(tab string, icon string, label string) {
+	<a class="nav-button" href={ templ.SafeURL("/admin#" + tab) }>
+		<span class="nav-button-label">
+			@components.Icon(icon)
+			{ label }
+		</span>
+	</a>
+}
+
+// adminNavLinks is adminNav's tab list, link-flavored -- see navLink's own
+// doc comment for why these two lists exist separately rather than one
+// sharing logic, and adminPlantDetailContent for the one page that uses
+// this instead of adminNav.
+templ adminNavLinks() {
+	<nav class="rail-nav" aria-label="Admin sections">
+		@navLink("overview", "squares-four", "Overview")
+		@navLink("plants", "factory", "Plants")
+		@navLink("onboarding", "plus", "Onboarding")
+		@navLink("domains", "list-checks", "Domains and web addresses")
+		@navLink("activity", "clock-counter-clockwise", "Activity")
+		@navLink("system", "gear", "System")
+	</nav>
+}
+
 templ ownerDashboardContent(data OwnerDashboardData) {
 	<div class="topline">
 		<div>
@@ -1102,8 +1137,9 @@ templ adminConsoleContent(data AdminConsoleData) {
 					}
 					for _, row := range data.Plants {
 						<tr>
-							<td><strong>{ row.Name }</strong><div class="muted mono">{ row.Phone }</div></td><td>{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono" title={ row.Slug }>{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td>
+							<td><strong><a class="plant-name-link" href={ templ.SafeURL("/admin/plants/" + row.ID) }>{ row.Name }</a></strong><div class="muted mono">{ row.Phone }</div></td><td>{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono" title={ row.Slug }>{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td>
 							<td class="action-strip">
+								<a class="btn" href={ templ.SafeURL("/admin/plants/" + row.ID) }>View</a>
 								switch row.RawStatus {
 									case "active":
 										@plantStatusForm(row.ID, "suspended", "Suspend", data.CSRFToken, statusConfirm{

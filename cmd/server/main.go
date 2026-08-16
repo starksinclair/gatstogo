@@ -234,6 +234,7 @@ func (s *Server) MountHandlers() {
 
 		r.Post("/admin/logout", adminLogoutHandler(s))
 		r.Post("/admin/plants", adminCreatePlantHandler(s))
+		r.Get("/admin/plants/{id}", adminPlantDetailHandler(s))
 		r.Post("/admin/plants/{id}/status", adminPlantStatusHandler(s))
 	})
 

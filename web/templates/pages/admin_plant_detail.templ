@@ -1,0 +1,157 @@
+package pages
+
+// AdminPlantDetailData backs GET /admin/plants/{id} -- a dedicated page
+// for reviewing one plant's full record, not just the summary row the
+// Plants table (adminConsoleContent) shows. This is specifically the only
+// place an admin can see the business/regulatory/settlement fields
+// collected at onboarding (internal/plants.CreateParams) before deciding
+// whether to Activate a self-serve /get-started submission -- without it,
+// Activate was a blind click.
+type AdminPlantDetailData struct {
+	ID      string
+	Name    string
+	Slug    string
+	City    string
+	Address string
+	Phone   string
+
+	RawStatus    string
+	Status       string
+	BadgeCSS     string
+	Domain       string
+	DomainStatus string
+	DomainBadge  string
+
+	State             string
+	LegalBusinessName string
+	CACNumber         string
+	NMDPRALicense     string
+
+	BankName        string
+	BankAccount     string // masked, same treatment as the owner dashboard's own Plant profile panel
+	BankAccountName string
+	SubaccountCode  string
+
+	OwnerName  string
+	OwnerPhone string
+	OwnerEmail string
+
+	StaffCount int64
+	PriceCount int64
+	OpenShifts int64
+	Txns7d     int64
+	Volume30d  string
+	FirstTxn   string
+	LastTxn    string
+	CreatedAt  string
+	UpdatedAt  string
+
+	Activity []OwnerActivityRow
+
+	CSRFToken string
+}
+
+templ AdminPlantDetail(data AdminPlantDetailData) {
+	@opsShell(data.Name+" | Admin console", "Admin", adminNavLinks(), adminPlantDetailContent(data), "/admin/logout", data.CSRFToken)
+}
+
+templ adminPlantDetailContent(data AdminPlantDetailData) {
+	<div class="topline">
+		<div>
+			<a class="back-link" href="/admin#plants">← All plants</a>
+			<div class="eyebrow">Platform admin console</div>
+			<h1>{ data.Name }</h1>
+			<div class="meta-row">
+				<span class={ "badge " + data.BadgeCSS }>{ data.Status }</span>
+				<span class="sep"></span>
+				<span class="mono">{ data.Slug }</span>
+				<span class="sep"></span>
+				<span>Created { data.CreatedAt }</span>
+			</div>
+		</div>
+		<div class="toolbar action-strip">
+			switch data.RawStatus {
+				case "active":
+					@plantStatusForm(data.ID, "suspended", "Suspend", data.CSRFToken, statusConfirm{
+						Title: "Suspend " + data.Name + "?",
+						Desc:  "Its customer page, staff terminal, and owner login all go offline immediately. You can reactivate it any time.",
+						Tone:  "warning",
+					})
+				case "suspended":
+					@plantStatusForm(data.ID, "active", "Reactivate", data.CSRFToken, statusConfirm{
+						Title: "Reactivate " + data.Name + "?",
+						Desc:  "Its customer page, staff terminal, and owner login all come back online immediately.",
+						Tone:  "ok",
+					})
+					@plantStatusForm(data.ID, "closed", "Close", data.CSRFToken, statusConfirm{
+						Title: "Close " + data.Name + "?",
+						Desc:  "Like suspending, this takes everything offline immediately. Unlike suspending, there's no reactivate button for a closed plant in this console.",
+						Tone:  "danger",
+					})
+				case "provisioning":
+					@plantStatusForm(data.ID, "active", "Activate", data.CSRFToken, statusConfirm{
+						Title: "Activate " + data.Name + "?",
+						Desc:  "Its customer page, staff terminal, and owner login all go live immediately. Review the business and payout details below first.",
+						Tone:  "ok",
+					})
+			}
+		</div>
+	</div>
+	<div class="dashboard-grid">
+		<div>
+			<div class="section-title"><h2>Business details</h2></div>
+			<div class="split-list">
+				<div class="info-row"><span>Legal business name</span><strong>{ data.LegalBusinessName }</strong></div>
+				<div class="info-row"><span>CAC number</span><strong class="mono">{ data.CACNumber }</strong></div>
+				<div class="info-row"><span>NMDPRA license</span><strong class="mono">{ data.NMDPRALicense }</strong></div>
+				<div class="info-row"><span>State</span><strong>{ data.State }</strong></div>
+			</div>
+			<div class="section-title" style="margin-top:28px;"><h2>Payout details</h2></div>
+			<div class="split-list">
+				<div class="info-row"><span>Bank</span><strong>{ data.BankName }</strong></div>
+				<div class="info-row"><span>Account number</span><strong class="mono">{ data.BankAccount }</strong></div>
+				<div class="info-row"><span>Account name</span><strong>{ data.BankAccountName }</strong></div>
+				<div class="info-row"><span>Paystack subaccount</span><strong class="mono">{ data.SubaccountCode }</strong></div>
+			</div>
+			<div class="section-title" style="margin-top:28px;"><h2>Activity</h2></div>
+			<div class="timeline">
+				if len(data.Activity) == 0 {
+					@emptyState("activity", "No activity recorded for this plant yet.")
+				}
+				for _, row := range data.Activity {
+					<div class="timeline-item"><strong>{ row.Action }</strong><span class="muted">{ row.Detail }</span></div>
+				}
+			</div>
+		</div>
+		<div class="dash-aside">
+			<div class="section-title"><h2>Plant record</h2></div>
+			<div class="split-list">
+				<div class="info-row"><span>Address</span><strong>{ data.Address }</strong></div>
+				<div class="info-row"><span>Phone</span><strong>{ data.Phone }</strong></div>
+				<div class="info-row"><span>Domain status</span><strong><span class={ "badge " + data.DomainBadge }>{ data.DomainStatus }</span></strong></div>
+				<div class="info-row"><span>Custom domain</span><strong>{ data.Domain }</strong></div>
+				<div class="info-row"><span>Updated</span><strong>{ data.UpdatedAt }</strong></div>
+			</div>
+			<div class="section-title" style="margin-top:28px;"><h2>Owner access</h2></div>
+			<div class="split-list">
+				<div class="info-row"><span>Name</span><strong>{ data.OwnerName }</strong></div>
+				<div class="info-row"><span>Phone</span><strong class="mono">{ data.OwnerPhone }</strong></div>
+				<div class="info-row"><span>Email</span><strong>{ data.OwnerEmail }</strong></div>
+			</div>
+			<div class="section-title" style="margin-top:28px;"><h2>Sales health</h2></div>
+			<div class="stat-line">
+				<div><div class="kpi-label">Staff</div><strong class="mono">{ data.StaffCount }</strong></div>
+				<div><div class="kpi-label">Prices set</div><strong class="mono">{ data.PriceCount }</strong></div>
+				<div><div class="kpi-label">Open shifts</div><strong class="mono">{ data.OpenShifts }</strong></div>
+			</div>
+			<div class="stat-line">
+				<div><div class="kpi-label">Txns 7d</div><strong class="mono">{ data.Txns7d }</strong></div>
+				<div><div class="kpi-label">Volume 30d</div><strong class="mono">{ data.Volume30d }</strong></div>
+			</div>
+			<div class="stat-line">
+				<div><div class="kpi-label">First txn</div><strong class="mono">{ data.FirstTxn }</strong></div>
+				<div><div class="kpi-label">Last txn</div><strong class="mono">{ data.LastTxn }</strong></div>
+			</div>
+		</div>
+	</div>
+}
