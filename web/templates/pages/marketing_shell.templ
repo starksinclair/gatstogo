@@ -29,6 +29,106 @@ templ marketingPageShell(title string, content templ.Component) {
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
 			<link rel="stylesheet" href="/static/css/marketing.css"/>
+			<script>
+				// Themed <select> replacement -- see themedSelect
+				// (owner_admin.templ) for the shared markup this wires up
+				// and why (CSS alone can restyle a <select>'s closed box
+				// but never its open dropdown list cross-browser).
+				// Progressive enhancement: the real <select name="...">
+				// stays in the DOM and is still exactly what gets
+				// submitted with the form; marketing.css only hides it (in
+				// favor of the custom trigger+listbox) once a shell has
+				// the js-ready class this loop adds, so a page where this
+				// script fails to run still has a fully working, if
+				// plainer, native dropdown instead of nothing. Exact same
+				// wiring as opsShell's own copy (owner_admin.templ) --
+				// duplicated rather than shared, since the admin console
+				// and the public marketing site don't otherwise share a
+				// script file to put this in.
+				document.addEventListener("DOMContentLoaded", function () {
+					document.querySelectorAll("[data-select]").forEach(function (shell) {
+						var nativeSelect = shell.querySelector(".select-native");
+						var trigger = shell.querySelector(".select-trigger");
+						var valueLabel = shell.querySelector(".select-value");
+						var list = shell.querySelector(".select-list");
+						var items = Array.prototype.slice.call(list ? list.querySelectorAll('[role="option"]') : []);
+						if (!nativeSelect || !trigger || !list || !items.length) return;
+
+						var highlighted = 0;
+
+						function syncFromNative() {
+							items.forEach(function (li, i) {
+								var isSelected = li.dataset.value === nativeSelect.value;
+								li.setAttribute("aria-selected", isSelected ? "true" : "false");
+								li.classList.toggle("selected", isSelected);
+								if (isSelected) {
+									valueLabel.textContent = li.textContent;
+									highlighted = i;
+								}
+							});
+						}
+						function highlightItem(index) {
+							items.forEach(function (li, i) { li.classList.toggle("highlighted", i === index); });
+							if (items[index].scrollIntoView) items[index].scrollIntoView({ block: "nearest" });
+						}
+						function openList() {
+							document.querySelectorAll(".select-shell.open").forEach(function (openShell) {
+								if (openShell !== shell) closeList(openShell);
+							});
+							shell.classList.add("open");
+							trigger.setAttribute("aria-expanded", "true");
+							list.hidden = false;
+							highlightItem(highlighted);
+						}
+						function closeList(target) {
+							target = target || shell;
+							target.classList.remove("open");
+							target.querySelector(".select-trigger").setAttribute("aria-expanded", "false");
+							target.querySelector(".select-list").hidden = true;
+						}
+						function selectItem(index) {
+							var li = items[index];
+							if (!li) return;
+							nativeSelect.value = li.dataset.value;
+							nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+							syncFromNative();
+							closeList();
+							trigger.focus();
+						}
+
+						trigger.addEventListener("click", function () {
+							shell.classList.contains("open") ? closeList() : openList();
+						});
+						trigger.addEventListener("keydown", function (event) {
+							if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+								event.preventDefault();
+								if (!shell.classList.contains("open")) { openList(); return; }
+								var dir = event.key === "ArrowDown" ? 1 : -1;
+								highlighted = (highlighted + dir + items.length) % items.length;
+								highlightItem(highlighted);
+							} else if (event.key === "Enter" || event.key === " ") {
+								event.preventDefault();
+								shell.classList.contains("open") ? selectItem(highlighted) : openList();
+							} else if (event.key === "Escape" && shell.classList.contains("open")) {
+								event.preventDefault();
+								closeList();
+							}
+						});
+						items.forEach(function (li, i) {
+							li.addEventListener("click", function () { selectItem(i); });
+							li.addEventListener("mouseenter", function () { highlighted = i; highlightItem(i); });
+						});
+						document.addEventListener("click", function (event) {
+							if (shell.classList.contains("open") && !shell.contains(event.target)) closeList();
+						});
+
+						syncFromNative();
+						nativeSelect.setAttribute("tabindex", "-1");
+						nativeSelect.setAttribute("aria-hidden", "true");
+						shell.classList.add("js-ready");
+					});
+				});
+			</script>
 		</head>
 		<body>
 			@marketingHeader()

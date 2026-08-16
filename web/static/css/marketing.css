@@ -410,6 +410,76 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	background-size: 14px 14px;
 }
 .field-underline select:focus { outline: none; border-bottom-color: var(--ink); }
+/* Layer 2: once marketingPageShell's own script (marketing_shell.templ,
+   "Themed <select> replacement") has run, hide the native element above
+   in favor of a custom trigger + listbox -- the same component and
+   markup the admin console uses (owner-admin.css's own .select-shell/
+   .select-trigger/.select-list, themedSelect in owner_admin.templ),
+   restyled here to match this page's underline field language instead of
+   that page's boxed one. A page where the script fails to run still has
+   the fully working, if plainer, native <select> above instead of
+   nothing. */
+.select-shell { position: relative; }
+.select-shell.js-ready .select-native {
+	position: absolute;
+	width: 0;
+	height: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+.select-trigger {
+	display: none;
+	width: 100%;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	border: 0;
+	border-bottom: 1.5px solid var(--line-strong);
+	background: transparent;
+	padding: 8px 22px 8px 2px;
+	color: var(--ink);
+	font: inherit;
+	font-size: 16px;
+	font-weight: 600;
+	text-align: left;
+	cursor: pointer;
+}
+.select-shell.js-ready .select-trigger { display: flex; }
+.select-trigger:hover { border-bottom-color: var(--ink); }
+.select-shell.open .select-trigger { border-bottom-color: var(--ink); }
+.select-trigger .icon {
+	flex: none;
+	font-size: 14px;
+	color: var(--muted);
+	transition: transform 180ms ease;
+}
+.select-shell.open .select-trigger .icon { transform: rotate(180deg); }
+.select-list {
+	position: absolute;
+	z-index: 20;
+	top: calc(100% + 4px);
+	left: 0;
+	right: 0;
+	max-height: 240px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 4px;
+	list-style: none;
+	background: var(--bg);
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	box-shadow: 0 16px 40px rgba(10, 10, 10, 0.08);
+}
+.select-list li {
+	padding: 9px 12px;
+	border-radius: 6px;
+	color: var(--ink);
+	font-weight: 600;
+	cursor: pointer;
+}
+.select-list li:hover,
+.select-list li.highlighted { background: var(--surface-muted); }
+.select-list li.selected { color: var(--brand); font-weight: 800; }
 .field-hint { margin: 6px 0 0; color: var(--faint); font-size: 12px; }
 /* Live account-name readout (web/templates/pages/account_resolve.templ) --
    see owner-admin.css's own .account-readout for the full rationale;
@@ -564,7 +634,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 @media (max-width: 900px) {
 	.step-list { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 32px; }
 	.step-item:nth-child(3) { border-left: 0; padding-left: 0; }
-	.feature-grid { grid-template-columns: 1fr; }
+	.feature-grid { grid-template-columns: minmax(0, 1fr); }
 	.mkt-footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -574,9 +644,17 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	.mkt-nav { display: none; }
 	.hero { padding: 56px 0 64px; }
 	.mkt-section { padding: 56px 0; }
-	.step-list { grid-template-columns: 1fr; row-gap: 28px; }
+	/* minmax(0, 1fr), not a bare 1fr -- a bare track's implicit minimum
+	   is its content's min-content size, not 0, so a wide child (the
+	   signup form's own .field-grid rows in particular, once the new
+	   Business/Payout/Owner sections gave it several) can force the
+	   whole grid, and the whole page, wider than the viewport instead of
+	   actually collapsing to one column. Exact same bug/fix as
+	   owner-admin.css's own mobile grid audit earlier this build --
+	   marketing.css just hadn't had the same pass run against it yet. */
+	.step-list { grid-template-columns: minmax(0, 1fr); row-gap: 28px; }
 	.step-item { border-left: 0 !important; padding-left: 0 !important; }
-	.field-grid { grid-template-columns: 1fr; }
+	.field-grid { grid-template-columns: minmax(0, 1fr); }
 	.pricing-row, .contact-row { flex-direction: column; gap: 4px; }
 	.pricing-row span:last-child { text-align: left; }
 	.error-page { padding: 56px 20px; }

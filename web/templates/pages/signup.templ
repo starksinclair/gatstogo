@@ -2,7 +2,6 @@ package pages
 
 import (
 	"gatstogo/internal/payments"
-	"gatstogo/internal/plants"
 	"gatstogo/web/templates/components"
 )
 
@@ -113,13 +112,8 @@ templ signupContent(data SignupViewData) {
 						</div>
 						<div class="field-grid">
 							<div class="field-underline">
-								<label for="state">State</label>
-								<select id="state" name="state" required>
-									<option value="" disabled selected?={ data.State == "" }>Select state</option>
-									for _, st := range plants.NigerianStates {
-										<option value={ st } selected?={ st == data.State }>{ st }</option>
-									}
-								</select>
+								<label>State</label>
+								@themedSelect("state", stateSelectOptions(), data.State)
 							</div>
 							<div class="field-underline">
 								<label for="nmdpra_license_number">NMDPRA license number</label>
@@ -133,13 +127,8 @@ templ signupContent(data SignupViewData) {
 						<p class="field-hint">Customer payments settle straight to this account. GatsToGo keeps a 1.5% fee automatically, no manual payout ever needed.</p>
 						<div class="field-grid">
 							<div class="field-underline">
-								<label for="bank_code">Bank</label>
-								<select id="bank_code" name="bank_code" required>
-									<option value="" disabled selected?={ data.BankCode == "" }>Select bank</option>
-									for _, b := range data.Banks {
-										<option value={ b.Code } selected?={ b.Code == data.BankCode }>{ b.Name }</option>
-									}
-								</select>
+								<label>Bank</label>
+								@themedSelect("bank_code", bankSelectOptions(data.Banks), data.BankCode)
 							</div>
 							<div class="field-underline">
 								<label for="bank_account_number">Account number</label>
