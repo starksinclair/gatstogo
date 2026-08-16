@@ -130,6 +130,7 @@ templ adminPlantDetailContent(data AdminPlantDetailData) {
 				<div class="info-row"><span>Phone</span><strong>{ data.Phone }</strong></div>
 				<div class="info-row"><span>Domain status</span><strong><span class={ "badge " + data.DomainBadge }>{ data.DomainStatus }</span></strong></div>
 				<div class="info-row"><span>Custom domain</span><strong>{ data.Domain }</strong></div>
+				<div class="info-row"><span>First transaction</span><strong>{ data.FirstTxn }</strong></div>
 				<div class="info-row"><span>Updated</span><strong>{ data.UpdatedAt }</strong></div>
 			</div>
 			<div class="section-title" style="margin-top:28px;"><h2>Owner access</h2></div>
@@ -147,10 +148,13 @@ templ adminPlantDetailContent(data AdminPlantDetailData) {
 			<div class="stat-line">
 				<div><div class="kpi-label">Txns 7d</div><strong class="mono">{ data.Txns7d }</strong></div>
 				<div><div class="kpi-label">Volume 30d</div><strong class="mono">{ data.Volume30d }</strong></div>
-			</div>
-			<div class="stat-line">
-				<div><div class="kpi-label">First txn</div><strong class="mono">{ data.FirstTxn }</strong></div>
-				<div><div class="kpi-label">Last txn</div><strong class="mono">{ data.LastTxn }</strong></div>
+				// Last txn deliberately isn't .mono here: unlike the counts
+				// and kg figures either side of it, its value is a full
+				// date/time or the "No transaction yet" fallback -- both too
+				// long to force onto one line in a three-column grid this
+				// narrow. Matches the Plants table's own row.LastTxn cell
+				// (adminConsoleContent), which was never .mono either.
+				<div><div class="kpi-label">Last txn</div><strong>{ data.LastTxn }</strong></div>
 			</div>
 		</div>
 	</div>
