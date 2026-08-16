@@ -36,6 +36,28 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					var staff = init.staff || [];
 					var pricePerKgNaira = init.pricePerKgKobo / 100;
 
+					// This whole screen is built by concatenating strings into HTML
+					// and assigning it via .innerHTML (see render()/root.innerHTML
+					// near the bottom of this script) rather than through templ's
+					// own auto-escaping -- so anything interpolated into one of
+					// those strings that didn't originate as a hardcoded literal in
+					// this file must be escaped by hand here, or it's a stored XSS.
+					// init.plantName (plant owner-set, and reachable via the public
+					// /get-started signup form before any admin review) and every
+					// staff member's own name (m.name/state.name, owner-set) both
+					// go through this before ever reaching an HTML string -- this
+					// page has no login wall at all (GET /terminal is public), so
+					// an unescaped name here would execute in the browser of
+					// literally any visitor who loads it, not just staff.
+					function escapeHtml(value) {
+						return String(value == null ? "" : value)
+							.replace(/&/g, "&amp;")
+							.replace(/</g, "&lt;")
+							.replace(/>/g, "&gt;")
+							.replace(/"/g, "&quot;")
+							.replace(/'/g, "&#39;");
+					}
+
 					// state.* below is UI-local; every fact about what actually
 					// happened (a fill confirmed, cash recorded, a shift open)
 					// comes back from the server on each fetch() response and
@@ -430,17 +452,17 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 								'<div class="keypad small">' + keypad("pin") + '</div>' +
 							'</aside>' +
 						'</main>' +
-						'<div class="term-meta">' + init.plantName + '<span class="sep"></span>' + init.todayLabel + '<span class="sep"></span>Selling at ' + naira(init.pricePerKgKobo) + '/kg today</div>';
+						'<div class="term-meta">' + escapeHtml(init.plantName) + '<span class="sep"></span>' + init.todayLabel + '<span class="sep"></span>Selling at ' + naira(init.pricePerKgKobo) + '/kg today</div>';
 					}
 					function employeeButton(m) {
-						return '<button class="staff-tile ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span class="initial">' + icon(roleIcon(m.role)) + '</span><strong>' + m.name + '</strong><em>' + roleLabel(m.role) + '</em>' + (m.shiftOpenSince ? '<span class="shift-open-note">Open since ' + m.shiftOpenSince + '</span>' : '') + '</button>';
+						return '<button class="staff-tile ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span class="initial">' + icon(roleIcon(m.role)) + '</span><strong>' + escapeHtml(m.name) + '</strong><em>' + roleLabel(m.role) + '</em>' + (m.shiftOpenSince ? '<span class="shift-open-note">Open since ' + escapeHtml(m.shiftOpenSince) + '</span>' : '') + '</button>';
 					}
 
 					function renderMain() {
 						return '<header class="terminal-top">' +
-							'<div class="brand-row"><img class="brand-mark" src="/static/images/gatstogo.png" alt="GatsToGo"><strong>GATSTOGO</strong><span class="plant-name">' + init.plantName + '</span></div>' +
+							'<div class="brand-row"><img class="brand-mark" src="/static/images/gatstogo.png" alt="GatsToGo"><strong>GATSTOGO</strong><span class="plant-name">' + escapeHtml(init.plantName) + '</span></div>' +
 							'<div class="shift-strip">' +
-								'<div class="stat"><span>Staff</span><strong>' + state.name + '</strong></div>' +
+								'<div class="stat"><span>Staff</span><strong>' + escapeHtml(state.name) + '</strong></div>' +
 								'<div class="stat"><span>Fills</span><strong class="mono">' + state.fills + '</strong></div>' +
 								'<div class="stat"><span>Dispensed</span><strong class="mono">' + kg(state.gramsDispensed) + '</strong></div>' +
 								'<button type="button" data-action="end-screen">' + icon("sign-out") + 'End shift</button>' +
