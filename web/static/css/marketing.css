@@ -485,26 +485,37 @@ button:focus-visible, a:focus-visible, input:focus-visible {
    404
    ========================================================================== */
 .error-page {
-	max-width: 480px;
+	max-width: 720px;
 	margin: 0 auto;
-	padding: 120px 28px;
+	padding: 96px 28px;
 	text-align: center;
 }
 .error-page .brand-lockup { justify-content: center; margin-bottom: 48px; }
-.error-code {
-	margin-bottom: 16px;
-	color: var(--faint);
-	font-size: 15px;
-	font-weight: 700;
-	letter-spacing: 0.08em;
+/* The animation's intrinsic frame is 700x400 (7:4) -- aspect-ratio keeps
+   that proportion at any width instead of a fixed pixel height, so it
+   scales fluidly from a phone up to this page's own 720px cap without
+   ever cropping or leaving letterboxed bars. Sized close to the page's
+   full width (not the narrower ~420px the heading/paragraph read at)
+   because a "big and wide" animation reads better a little wider than
+   the prose column next to it. */
+.error-lottie {
+	display: block;
+	width: 100%;
+	max-width: 620px;
+	aspect-ratio: 700 / 400;
+	margin: 0 auto 24px;
 }
+/* The heading/paragraph stay at the old, narrower reading width even
+   though .error-page itself grew to fit the wider animation above --
+   a 660px-wide line of prose is harder to read than a ~480px one. */
 .error-page h1 {
-	margin: 0 0 14px;
+	max-width: 480px;
+	margin: 0 auto 14px;
 	font-family: var(--font-display, Archivo, sans-serif);
 	font-weight: 800;
 	font-size: 28px;
 }
-.error-page p { margin: 0 0 32px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.error-page p { max-width: 480px; margin: 0 auto 32px; color: var(--muted); font-size: 15px; line-height: 1.6; }
 
 /* ==========================================================================
    Responsive
@@ -527,4 +538,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	.field-grid { grid-template-columns: 1fr; }
 	.pricing-row, .contact-row { flex-direction: column; gap: 4px; }
 	.pricing-row span:last-child { text-align: left; }
+	.error-page { padding: 56px 20px; }
+	.error-page .brand-lockup { margin-bottom: 32px; }
+	.error-lottie { max-width: 100%; margin-bottom: 16px; }
 }

@@ -21,6 +21,7 @@ templ NotFound() {
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
 			<link rel="stylesheet" href="/static/css/marketing.css"/>
+			<script src="https://cdn.jsdelivr.net/npm/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js" defer></script>
 		</head>
 		<body>
 			<div class="error-page">
@@ -28,7 +29,7 @@ templ NotFound() {
 					<img class="brand-mark" src="/static/images/gatstogo.png" alt="GatsToGo"/>
 					<strong>GATSTOGO</strong>
 				</div>
-				<div class="error-code mono">404</div>
+				<lottie-player class="error-lottie" src="/static/lottie/404.json" autoplay loop aria-hidden="true"></lottie-player>
 				<h1>We couldn't find that page</h1>
 				<p>The link may be mistyped, or the plant it pointed to is no longer active. If you're trying to reach a specific gas plant's page, check the link they gave you.</p>
 				<a class="button-primary" href="/">Go to homepage</a>
