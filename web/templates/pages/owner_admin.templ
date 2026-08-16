@@ -248,6 +248,7 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
 			<link rel="stylesheet" href="/static/css/owner-admin.css"/>
+			<script src="https://cdn.jsdelivr.net/npm/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js" defer></script>
 			<script>
 				document.addEventListener("DOMContentLoaded", function () {
 					document.querySelectorAll("[data-tabs]").forEach(function (root) {
@@ -565,6 +566,20 @@ templ kpiLabel(icon string, label string) {
 	</div>
 }
 
+// emptyState is the "nothing here yet" content shown in place of a table
+// or timeline once its data list is empty -- a small looping
+// illustration (one of web/static/lottie/*.json, picked per section to
+// actually match what the section is about) above the existing copy.
+// lottie is just the file's base name ("sales", "shifts", ...), never a
+// full path or user input, so building the src by concatenation here is
+// safe.
+templ emptyState(lottie string, message string) {
+	<div class="empty">
+		<lottie-player class="empty-lottie" src={ "/static/lottie/" + lottie + ".json" } autoplay loop></lottie-player>
+		{ message }
+	</div>
+}
+
 templ navButton(active bool, tab string, icon string, label string) {
 	<button class={ "nav-button", templ.KV("active", active) } type="button" data-tab={ tab }>
 		<span class="nav-button-label">
@@ -666,7 +681,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th class="num">Paid kg</th><th class="num">Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead>
 						<tbody>
 							if len(data.RecentTickets) == 0 {
-								<tr><td colspan="10"><div class="empty">No sales yet. A paid customer ticket will show its reference, code, weight, payment method, and status here.</div></td></tr>
+								<tr><td colspan="10">@emptyState("sales", "No sales yet. A paid customer ticket will show its reference, code, weight, payment method, and status here.")</td></tr>
 							}
 							for _, row := range data.RecentTickets {
 								<tr>
@@ -695,10 +710,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			<div class="dash-aside">
 				<div class="section-title"><h2>Receipt preview</h2></div>
 				if len(data.RecentTickets) == 0 {
-					<div class="empty">
-						@components.Icon("receipt")
-						No sales yet. The latest paid ticket's code will appear here.
-					</div>
+					@emptyState("sales", "No sales yet. The latest paid ticket's code will appear here.")
 				} else {
 					<div class="receipt-code">{ data.RecentTickets[0].Code }</div>
 					<div><strong>{ data.RecentTickets[0].Kg }</strong> paid at { data.RecentTickets[0].Rate } by { data.RecentTickets[0].Channel }.</div>
@@ -716,7 +728,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						<thead><tr><th>When</th><th>Kind</th><th class="num">Amount</th><th class="num">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead>
 						<tbody>
 							if len(data.CashMovements) == 0 {
-								<tr><td colspan="7"><div class="empty">No cash entries yet. Opening float, cash sales, payouts, counts, and closing records will appear here.</div></td></tr>
+								<tr><td colspan="7">@emptyState("cash", "No cash entries yet. Opening float, cash sales, payouts, counts, and closing records will appear here.")</td></tr>
 							}
 							for _, row := range data.CashMovements {
 								<tr><td>{ row.When }</td><td>{ row.Kind }</td><td class="num">{ row.Amount }</td><td class="num">{ row.Counted }</td><td>{ row.Recorder }</td><td class="mono">{ row.Ticket }</td><td>{ row.Note }</td></tr>
@@ -757,7 +769,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<thead><tr><th>Staff</th><th>Device</th><th>Opened</th><th>Closed</th><th class="num">Tickets</th><th class="num">Tokens</th><th class="num">Opening</th><th class="num">Closing</th><th>Status</th><th>Notes</th></tr></thead>
 				<tbody>
 					if len(data.Shifts) == 0 {
-						<tr><td colspan="10"><div class="empty">No shifts yet. Once a cashier opens a shift, cash float, token count, sales, and closing cash will appear here.</div></td></tr>
+						<tr><td colspan="10">@emptyState("shifts", "No shifts yet. Once a cashier opens a shift, cash float, token count, sales, and closing cash will appear here.")</td></tr>
 					}
 					for _, row := range data.Shifts {
 						<tr><td>{ row.Staff }</td><td class="mono">{ row.Device }</td><td>{ row.Opened }</td><td>{ row.Closed }</td><td class="num">{ row.Tickets }</td><td class="num">{ row.TokensIssued } / { row.TokensReturned }</td><td class="num">{ row.OpeningCash }</td><td class="num">{ row.ClosingCash }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Notes }</td></tr>
@@ -775,7 +787,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th><th></th></tr></thead>
 						<tbody>
 							if len(data.Staff) == 0 {
-								<tr><td colspan="8"><div class="empty">No staff yet. Owners, managers, cashiers, and operators will appear here.</div></td></tr>
+								<tr><td colspan="8">@emptyState("staff", "No staff yet. Owners, managers, cashiers, and operators will appear here.")</td></tr>
 							}
 							for _, row := range data.Staff {
 								<tr>
@@ -848,7 +860,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						<thead><tr><th>Effective from</th><th class="num">Price</th><th>Set by</th><th>Created</th></tr></thead>
 						<tbody>
 							if len(data.PriceHistory) == 0 {
-								<tr><td colspan="4"><div class="empty">No price history yet. Every price change is kept here instead of overwritten.</div></td></tr>
+								<tr><td colspan="4">@emptyState("prices", "No price history yet. Every price change is kept here instead of overwritten.")</td></tr>
 							}
 							for _, row := range data.PriceHistory {
 								<tr><td>{ row.EffectiveFrom }</td><td class="num">{ row.Price }</td><td>{ row.SetBy }</td><td>{ row.CreatedAt }</td></tr>
@@ -876,7 +888,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<div class="section-title"><h2>Activity trail</h2></div>
 				<div class="timeline">
 					if len(data.Activity) == 0 {
-						<div class="empty">No activity yet. Ticket, price, shift, and staff changes will appear here.</div>
+						@emptyState("activity", "No activity yet. Ticket, price, shift, and staff changes will appear here.")
 					}
 					for _, item := range data.Activity {
 						<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Detail }</span></div>
@@ -974,7 +986,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 				<div class="section-title"><h2>Platform staff</h2></div>
 				<div class="timeline">
 					if len(data.PlatformStaff) == 0 {
-						<div class="empty">No platform admin users found yet.</div>
+						@emptyState("staff", "No platform admin users found yet.")
 					}
 					for _, row := range data.PlatformStaff {
 						<div class="timeline-item"><strong>{ row.Name }</strong><span class="muted">{ row.Phone } · { row.Status } · { row.Plants } plant links</span></div>
@@ -990,7 +1002,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 				<thead><tr><th>Plant</th><th>Location</th><th>Web address</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th><th></th></tr></thead>
 				<tbody>
 					if len(data.Plants) == 0 {
-						<tr><td colspan="12"><div class="empty">No plants yet. Plant records with domain, staff, price, shift, and transaction health will appear here.</div></td></tr>
+						<tr><td colspan="12">@emptyState("plants", "No plants yet. Plant records with domain, staff, price, shift, and transaction health will appear here.")</td></tr>
 					}
 					for _, row := range data.Plants {
 						<tr>
@@ -1071,7 +1083,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 						<thead><tr><th>Plant</th><th>Web address</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead>
 						<tbody>
 							if len(data.Plants) == 0 {
-								<tr><td colspan="6"><div class="empty">No domains to check yet.</div></td></tr>
+								<tr><td colspan="6">@emptyState("domains", "No domains to check yet.")</td></tr>
 							}
 							for _, row := range data.Plants {
 								<tr><td>{ row.Name }</td><td class="mono">{ row.Slug }</td><td>{ row.Domain }</td><td><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></td><td>{ row.CreatedAt }</td><td>{ row.UpdatedAt }</td></tr>
@@ -1084,7 +1096,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 				<div class="section-title"><h2>Reserved web addresses</h2></div>
 				<div class="timeline">
 					if len(data.ReservedSlugs) == 0 {
-						<div class="empty">No reserved words found yet. Protected web addresses like admin, api, and support appear here.</div>
+						@emptyState("domains", "No reserved words found yet. Protected web addresses like admin, api, and support appear here.")
 					}
 					for _, slug := range data.ReservedSlugs {
 						<div class="timeline-item"><strong class="mono">{ slug }</strong><span class="muted">Protected web address</span></div>
@@ -1098,7 +1110,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 			<div class="section-title"><h2>Platform activity</h2></div>
 			<div class="timeline">
 				if len(data.RecentActivity) == 0 {
-					<div class="empty">No platform activity yet. Plant setup, suspension, price, and domain changes will appear here.</div>
+					@emptyState("activity", "No platform activity yet. Plant setup, suspension, price, and domain changes will appear here.")
 				}
 				for _, item := range data.RecentActivity {
 					<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Detail }</span></div>

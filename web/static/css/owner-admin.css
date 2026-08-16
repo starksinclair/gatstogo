@@ -397,14 +397,29 @@ td {
 	vertical-align: top;
 }
 .num { text-align: right; font-family: var(--font-mono, "IBM Plex Mono", monospace); white-space: nowrap; }
+/* Empty states: a small looping illustration (one of the lotties in
+   web/static/lottie, picked per section -- a magnifying glass over a
+   scroll for Sales, a handshake for Shifts, a seedling for Plants,
+   ...) above the existing copy, instead of the small inline icon this
+   replaced. Sized modestly (96px) since these sit inside a table row
+   or a narrow aside, not a dedicated page the way the 404 page's own,
+   much larger animation does -- same idea, proportional to context. */
 .empty {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 10px;
+	text-align: center;
+	gap: 4px;
+	max-width: 340px;
+	margin: 0 auto;
+	padding: 28px 16px;
 	color: var(--muted);
-	padding: 20px 0;
 }
-.empty .icon { flex: none; font-size: 20px; }
+.empty-lottie {
+	width: 96px;
+	height: 96px;
+	margin-bottom: 6px;
+}
 
 /* ---- Forms: bordered inputs stay (a dense field grid genuinely needs
    clear field boundaries, unlike the narrative single-column forms
