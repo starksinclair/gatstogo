@@ -145,12 +145,15 @@ a { color: inherit; text-decoration: none; }
 .nav-button-label .icon { flex: none; font-size: 17px; opacity: 0.85; }
 .nav-button.active .nav-button-label .icon,
 .nav-button:hover .nav-button-label .icon { opacity: 1; }
+/* A hairline top divider, not a boxed/filled callout -- matches the
+   flat, no-cards convention the rest of this file uses (.info-row and
+   friends), rather than reading as a small dark card sitting inside
+   the already-dark rail. */
 .rail-note {
 	margin-top: auto;
-	border: 1px solid #303941;
-	background: #101419;
-	padding: 14px;
-	color: #C9D2DA;
+	border-top: 1px solid #303941;
+	padding: 14px 4px 0;
+	color: #98A6B3;
 }
 .rail-note strong { display: block; color: #FFFFFF; margin-bottom: 4px; }
 .rail-signout { margin: 0; }

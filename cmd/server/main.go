@@ -970,20 +970,42 @@ func countRows(ctx context.Context, db tenantdb.Querier, table string) int64 {
 	return count
 }
 
+// loadActivity backs both the owner dashboard's "Activity trail" and the
+// admin console's "Platform activity" feed. activity_log.action was
+// always stored as a literal code-style string (audit.Log's call sites --
+// "ticket.cash_sale", "plant.status_changed" -- see cmd/server/*.go and
+// internal/plants/plants.go) and shown completely as-is, dots/underscores
+// and all; humanizeActivityAction below is the one place that translates
+// every one of those literal strings into plain English.
+//
+// activity_log.subject is free-form TEXT whose meaning depends entirely
+// on the action (a ticket reference, a plant slug, a status word -- or,
+// for staff.activated/deactivated and shift.closed, a raw user/shift
+// UUID with no meaning to a reader at all). su below opportunistically
+// resolves subject to a real name for exactly the cases where it happens
+// to BE a user id (su.id::text = al.subject just returns no match, not
+// an error, for every other action's non-UUID subject, so this join is
+// safe regardless of what subject holds). act separately resolves who
+// performed the action, always -- every audit.Log call site passes either
+// a real actor or nil, never a raw id with nothing behind it.
 func loadActivity(ctx context.Context, db tenantdb.Querier, plantID any, limit int) []pages.OwnerActivityRow {
 	query := `
-		SELECT action, COALESCE(subject, ''), created_at
-		FROM activity_log
-		ORDER BY created_at DESC
+		SELECT al.action, COALESCE(al.subject, ''), al.created_at, COALESCE(act.name, ''), COALESCE(su.name, '')
+		FROM activity_log al
+		LEFT JOIN users act ON act.id = al.actor_id
+		LEFT JOIN users su ON su.id::text = al.subject
+		ORDER BY al.created_at DESC
 		LIMIT $1
 	`
 	args := []any{limit}
 	if plantID != nil {
 		query = `
-			SELECT action, COALESCE(subject, ''), created_at
-			FROM activity_log
-			WHERE plant_id = $1
-			ORDER BY created_at DESC
+			SELECT al.action, COALESCE(al.subject, ''), al.created_at, COALESCE(act.name, ''), COALESCE(su.name, '')
+			FROM activity_log al
+			LEFT JOIN users act ON act.id = al.actor_id
+			LEFT JOIN users su ON su.id::text = al.subject
+			WHERE al.plant_id = $1
+			ORDER BY al.created_at DESC
 			LIMIT $2
 		`
 		args = []any{plantID, limit}
@@ -997,17 +1019,79 @@ func loadActivity(ctx context.Context, db tenantdb.Querier, plantID any, limit i
 	out := []pages.OwnerActivityRow{}
 	for rows.Next() {
 		var row pages.OwnerActivityRow
+		var rawAction, subject, actorName, subjectUserName string
 		var created time.Time
-		if err := rows.Scan(&row.Action, &row.Subject, &created); err != nil {
+		if err := rows.Scan(&rawAction, &subject, &created, &actorName, &subjectUserName); err != nil {
 			continue
 		}
-		if row.Subject == "" {
-			row.Subject = "No subject"
+		row.Action = humanizeActivityAction(rawAction)
+		actor := fallbackString(actorName, "System")
+		when := created.Format("2 Jan, 15:04")
+
+		// subjectUserName means subject was a user id (staff.activated/
+		// deactivated) that resolved to a real name -- show that, never
+		// the raw id. Otherwise, a subject that doesn't parse as a UUID
+		// is already plain enough to show as-is (a ticket reference,
+		// plant web address, or status word); one that DOES parse as a
+		// UUID but didn't resolve to a name (e.g. a raw shift id) is left
+		// out entirely -- a bare UUID means nothing to a reader.
+		what := subjectUserName
+		if what == "" && subject != "" {
+			if _, err := uuid.Parse(subject); err != nil {
+				what = subject
+			}
 		}
-		row.When = created.Format("2 Jan, 15:04")
+
+		row.Detail = actor + " · " + when
+		if what != "" {
+			row.Detail = actor + " · " + what + " · " + when
+		}
 		out = append(out, row)
 	}
 	return out
+}
+
+// humanizeActivityAction maps every literal action string audit.Log is
+// ever called with (grep audit.Log across cmd/server and internal/plants
+// to see the full list) to the plain-English phrase shown in an activity
+// feed. Anything not in the map -- a future action nobody's added here
+// yet -- still never shows a raw dot/underscore string: it falls back to
+// replacing both with spaces and capitalizing each word.
+func humanizeActivityAction(action string) string {
+	switch action {
+	case "price.set":
+		return "Price updated"
+	case "staff.created":
+		return "Staff member added"
+	case "staff.activated":
+		return "Staff member activated"
+	case "staff.deactivated":
+		return "Staff member deactivated"
+	case "cash.recorded":
+		return "Cash entry recorded"
+	case "shift.opened":
+		return "Shift opened"
+	case "shift.closed":
+		return "Shift closed"
+	case "ticket.created":
+		return "Sale started"
+	case "ticket.paid":
+		return "Payment received"
+	case "ticket.confirmed":
+		return "Sale confirmed"
+	case "ticket.filled":
+		return "Order filled"
+	case "ticket.cash_sale":
+		return "Cash sale recorded"
+	case "ticket.voided":
+		return "Sale voided"
+	case "plant.created":
+		return "Plant created"
+	case "plant.status_changed":
+		return "Plant status changed"
+	default:
+		return humanize(strings.ReplaceAll(action, ".", " "), "Activity")
+	}
 }
 
 func loadReservedSlugs(ctx context.Context, db tenantdb.Querier) []string {

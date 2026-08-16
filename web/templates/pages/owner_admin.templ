@@ -162,9 +162,11 @@ type OwnerPriceRow struct {
 }
 
 type OwnerActivityRow struct {
-	Action  string
-	Subject string
-	When    string
+	Action string
+	// Detail is the full "who · what · when" line already composed --
+	// see loadActivity's own comment for why "what" (the raw subject
+	// column) isn't always present or always safe to show as-is.
+	Detail string
 }
 
 type AdminConsoleData struct {
@@ -760,7 +762,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						<div class="empty">No activity yet. Ticket, price, shift, and staff changes will appear here.</div>
 					}
 					for _, item := range data.Activity {
-						<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Subject } · { item.When }</span></div>
+						<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Detail }</span></div>
 					}
 				</div>
 			</div>
@@ -949,7 +951,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 					<div class="empty">No platform activity yet. Plant setup, suspension, price, and domain changes will appear here.</div>
 				}
 				for _, item := range data.RecentActivity {
-					<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Subject } · { item.When }</span></div>
+					<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Detail }</span></div>
 				}
 			</div>
 		</div>
