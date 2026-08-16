@@ -41,6 +41,17 @@
 	--green: #006B4D;
 	--mint: #10B981;
 	--amber: #92580A;
+	/* --amber above was tuned to pass contrast as small text on a
+	   light background (.badge-warn, .meta-warn) -- at that size its
+	   darkness reads as "amber warning", but the exact same value
+	   filling a whole button (the confirm modal's warning tone) reads
+	   as plain brown instead, nothing else in this app's palette looks
+	   like it. --amber-fill is a brighter, more saturated amber meant
+	   specifically for solid fills with white text on top -- still
+	   comfortably passes contrast there, just doesn't need to be this
+	   dark to do it the way small text on a light background does. */
+	--amber-fill: #B45309;
+	--amber-fill-hover: #8A3F07;
 	--red: #B3261E;
 	--red-bg: #FBEEED;
 }
@@ -620,7 +631,7 @@ td {
 	margin: 0 auto 16px;
 	border-radius: var(--radius-full, 999px);
 	background: var(--soft);
-	color: var(--amber);
+	color: var(--amber-fill);
 	font-size: 22px;
 }
 .confirm-modal[data-tone="danger"] .confirm-icon { color: var(--red); }
@@ -640,8 +651,8 @@ td {
 .confirm-actions .btn { flex: 1; }
 .confirm-modal[data-tone="danger"] [data-confirm-ok] { border-color: var(--red); background: var(--red); }
 .confirm-modal[data-tone="danger"] [data-confirm-ok]:hover { background: #8F1E18; }
-.confirm-modal[data-tone="warning"] [data-confirm-ok] { border-color: var(--amber); background: var(--amber); }
-.confirm-modal[data-tone="warning"] [data-confirm-ok]:hover { background: #744709; }
+.confirm-modal[data-tone="warning"] [data-confirm-ok] { border-color: var(--amber-fill); background: var(--amber-fill); }
+.confirm-modal[data-tone="warning"] [data-confirm-ok]:hover { background: var(--amber-fill-hover); }
 
 .action-strip {
 	display: flex;
