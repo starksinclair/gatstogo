@@ -349,6 +349,12 @@ h3 { font-size: 14px; }
 }
 .info-row:first-child { border-top: 0; padding-top: 0; }
 .info-row span:first-child { color: var(--muted); font-weight: 700; }
+/* The Onboarding checklist's first column is a step number ("1", "2",
+   ...), not a word/phrase label -- .info-row's own 120px/45% minimum
+   (sized for "Domain status", "Plant record", and the like) left a
+   wide dead gap between the number and its text. 28px is enough for
+   two digits. */
+.split-list-steps .info-row { grid-template-columns: 28px minmax(0, 1fr); }
 
 /* ---- Tables: hairlines only, no wrapping bordered box. The rows used
    to go ragged -- a long ticket reference or a name-plus-phone cell
