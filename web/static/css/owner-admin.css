@@ -251,19 +251,17 @@ h3 { font-size: 14px; }
 .meta-row .meta-ok { color: var(--green); font-weight: 700; }
 .meta-row .meta-warn { color: var(--amber); font-weight: 700; }
 .meta-row .meta-danger { color: var(--red); font-weight: 700; }
-/* Status tags: outlined, not filled -- same convention as customer-
-   home.css's .status-tag. Class names (.badge, .badge-ok/-warn/-danger/
-   -muted) stay exactly as they are: cmd/server/main.go builds these as
-   literal strings server-side (badgeForStatus and friends), so renaming
-   them here would mean touching Go code for a pure styling change. */
+/* Status words: plain colored text, no pill/border shape at all -- a
+   bordered rounded-rect still reads as a small card even with zero
+   fill, same complaint as the "card background" this replaced. Same
+   idea as .meta-row's meta-ok/-warn/-danger above, just reused across
+   every status column instead of only the topline. Class names
+   (.badge, .badge-ok/-warn/-danger/-muted) stay exactly as they are:
+   cmd/server/main.go builds these as literal strings server-side
+   (badgeForStatus and friends), so renaming them here would mean
+   touching Go code for a pure styling change. */
 .badge {
-	display: inline-flex;
-	align-items: center;
-	min-height: 24px;
-	padding: 0 9px;
-	border: 1px solid currentColor;
-	border-radius: var(--radius-sm, 6px);
-	background: transparent;
+	display: inline;
 	color: var(--muted);
 	font-size: 11px;
 	font-weight: 800;
