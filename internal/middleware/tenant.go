@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -17,20 +16,46 @@ type contextKey string
 
 const PlantContextKey contextKey = "plant"
 
+// BaseDomain is this app's own real domain -- "gatstogo.ng" in
+// production, "localhost" for the local dev loop (sunrise.localhost:8080)
+// -- set once at startup from APP_BASE_DOMAIN (cmd/server/main.go)
+// before Tenant is ever invoked. Every legitimate tenant request's Host
+// header has the shape "<slug>.<BaseDomain>[:port]"; Tenant below refuses
+// to resolve a plant for anything else.
+//
+// This check is the fix for a real, confirmed Host-header-injection
+// vulnerability: before it existed, Tenant resolved a plant using only
+// the leftmost label of r.Host (ExtractSubdomain), with nothing checking
+// that the rest of the host was actually this app's own domain. A request
+// with Host: sunrise.evil.com resolved the real "sunrise" plant just as
+// successfully as sunrise.gatstogo.ng would have -- and since several
+// handlers build absolute URLs from r.Host (most seriously, the owner
+// "forgot password" email's reset link, cmd/server/auth.go), an attacker
+// could get a real, valid password-reset link emailed to a real owner
+// with attacker-controlled host, a textbook password-reset-poisoning
+// setup: whoever controls that host captures the token the moment the
+// owner clicks it. Confirmed exploitable end-to-end (including a real
+// email delivery) against this app before this fix.
+var BaseDomain string
+
 func Tenant(db *pgxpool.Pool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			host := r.Host // e.g. sunrise.gatstogo.ng or sunrise.localhost:8080
-			fmt.Print("Host: ", host, "\n")
 
 			slug := ExtractSubdomain(host)
-			if slug == "" || slug == "www" || slug == "admin" || slug == "api" {
+			if slug == "" || slug == "www" || slug == "admin" || slug == "api" || !hasBaseDomainSuffix(host, BaseDomain) {
 				// "" and "www" are the marketing host -- cmd/server's
 				// rootOrTenant handler intercepts / and /home for those
 				// before this middleware ever runs, so reaching here with
 				// no slug means some other tenant-only route (e.g.
 				// /terminal, /owner/login) was hit directly on the bare
-				// domain. Same branded 404 as an unresolved subdomain.
+				// domain. Same branded 404 as an unresolved subdomain, and
+				// -- deliberately -- the same 404 a spoofed-host request
+				// now gets too (see BaseDomain's own doc comment): there's
+				// no legitimate case where telling an attacker "that host
+				// doesn't match, but the slug would otherwise be valid" is
+				// the right amount of information to hand back.
 				renderNotFound(w, r)
 				return
 			}
@@ -102,4 +127,20 @@ func ExtractSubdomain(host string) string {
 		return ""
 	}
 	return parts[0]
+}
+
+// hasBaseDomainSuffix reports whether host is a direct subdomain of
+// baseDomain -- "sunrise.gatstogo.ng" of "gatstogo.ng", but not
+// "sunrise.evilgatstogo.ng" (no dot boundary before the match) or
+// "sunrise.evil.com" (no match at all) of the same baseDomain. Fails
+// closed (false) if baseDomain is empty -- a misconfigured/unset
+// BaseDomain must never make every host pass this check by accident.
+func hasBaseDomainSuffix(host, baseDomain string) bool {
+	if baseDomain == "" {
+		return false
+	}
+	if colonIndex := strings.Index(host, ":"); colonIndex != -1 {
+		host = host[:colonIndex]
+	}
+	return strings.HasSuffix(host, "."+baseDomain)
 }

@@ -36,6 +36,25 @@ func ownerLoginPageHandler(s *Server) http.HandlerFunc {
 	}
 }
 
+// loginRateLimitMax/-Window cap how many login attempts a single IP can
+// make against a password-login endpoint (owner or admin) -- previously
+// nothing did. bcrypt's own cost provides some natural throttling (each
+// wrong guess costs real CPU time), but that's incidental, not a
+// substitute for an actual limit: a distributed/patient attacker isn't
+// slowed by it at all. Reuses checkIPRateLimit (cmd/server/accounts.go),
+// the same building block GET /accounts/resolve and forgot-password
+// already use. Deliberately IP-scoped, not account-scoped (unlike
+// internal/shifts.PINLimiter's per-user lockout) -- a per-account lockout
+// here would let anyone lock a real owner out of their own dashboard
+// just by submitting a few wrong passwords for their phone number, a
+// worse trade than the IP-only limit's own gap (a distributed attacker
+// spread across many IPs isn't slowed by this alone -- a real residual
+// limitation, not something a code-level fix alone can fully close).
+const (
+	loginRateLimitMax    = 10
+	loginRateLimitWindow = 15 * time.Minute
+)
+
 func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
@@ -47,6 +66,14 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 			renderOwnerLoginError(w, r, plant.Name, "Could not read that submission. Try again.")
 			return
 		}
+
+		if allowed, err := checkIPRateLimit(r.Context(), s.Redis, "owner_login_rl:", clientIP(r), loginRateLimitMax, loginRateLimitWindow); err != nil {
+			log.Println("owner login: rate limit check failed:", err)
+		} else if !allowed {
+			renderOwnerLoginError(w, r, plant.Name, "Too many attempts. Please wait a few minutes and try again.")
+			return
+		}
+
 		phone := strings.TrimSpace(r.FormValue("phone"))
 		password := r.FormValue("password")
 		if phone == "" || password == "" {
@@ -377,6 +404,14 @@ func adminLoginSubmitHandler(s *Server) http.HandlerFunc {
 			renderAdminLoginError(w, r, "Could not read that submission. Try again.")
 			return
 		}
+
+		if allowed, err := checkIPRateLimit(r.Context(), s.Redis, "admin_login_rl:", clientIP(r), loginRateLimitMax, loginRateLimitWindow); err != nil {
+			log.Println("admin login: rate limit check failed:", err)
+		} else if !allowed {
+			renderAdminLoginError(w, r, "Too many attempts. Please wait a few minutes and try again.")
+			return
+		}
+
 		phone := strings.TrimSpace(r.FormValue("phone"))
 		password := r.FormValue("password")
 		if phone == "" || password == "" {

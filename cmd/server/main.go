@@ -72,6 +72,23 @@ func main() {
 	srv := &http.Server{
 		Addr:    ":" + getEnv("APP_PORT", "8080"),
 		Handler: s.Router,
+		// None of these had any value at all before -- Go's http.Server
+		// defaults every one of them to "no limit". chimw.Timeout(60s)
+		// (MountHandlers) only bounds how long a handler may run once
+		// invoked; it does nothing for a client that's still slowly
+		// trickling in the request itself (the classic Slowloris
+		// pattern: open many connections, send headers/body one byte at
+		// a time, exhaust the server's connection pool). ReadHeaderTimeout
+		// is the specific, well-known Go hardening gap here (flagged by
+		// most Go security linters as exactly this); the other three
+		// round out the same protection for the body, the response, and
+		// idle keep-alives. 60s matches chimw.Timeout's own value for
+		// consistency, generous enough for a real logo upload
+		// (internal/uploads, up to 2MB) over a slow mobile connection.
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	go func() {
@@ -146,6 +163,21 @@ func CreateNewServer() (*Server, error) {
 	}
 	csrf.Secret = secret
 
+	// 4b. Tenant base domain. Required, not defaulted: middleware.Tenant
+	// refuses to resolve a plant for any Host that isn't
+	// "<slug>.<BaseDomain>" -- the fix for a confirmed Host-header-injection
+	// vulnerability (middleware.BaseDomain's own doc comment has the full
+	// story). A missing/empty value here must fail startup loudly, not
+	// silently fall back to something permissive that quietly reopens it.
+	baseDomain := os.Getenv("APP_BASE_DOMAIN")
+	if baseDomain == "" {
+		appDB.Close()
+		adminDB.Close()
+		_ = rdb.Close()
+		return nil, fmt.Errorf("APP_BASE_DOMAIN is required (e.g. gatstogo.ng in production, localhost for local dev)")
+	}
+	middleware.BaseDomain = baseDomain
+
 	// 5. Paystack. Required: a server that can't take payment isn't
 	// meaningfully "up" for this app's purpose.
 	paystackSecretKey := os.Getenv("PAYSTACK_SECRET_KEY")
@@ -187,6 +219,7 @@ func (s *Server) MountHandlers() {
 	s.Router.Use(chimw.Logger)
 	s.Router.Use(chimw.Recoverer)
 	s.Router.Use(chimw.Timeout(60 * time.Second))
+	s.Router.Use(securityHeaders)
 
 	//_deps := &config.Dependencies{
 	//	AppDB:   s.AppDB,
@@ -356,6 +389,71 @@ func (s *Server) MountHandlers() {
 		//r.Route("/attendant", func(r chi.Router) {
 		//	r.Post("/code", attendant.EnterCode(deps))
 		//})
+	})
+}
+
+// securityHeaders sets a baseline of response headers this app had none
+// of before -- standard production hardening, defense in depth on top of
+// (not a substitute for) fixing the actual vulnerabilities that came up
+// during the production-readiness audit this was added as part of.
+//
+// The CSP here is deliberately scoped to exactly what this app's own
+// pages actually load (grepped every <script src>/<link href> across
+// web/templates): Google Fonts, the lottie-player CDN script used by
+// emptyState (owner_admin.templ), and nothing else external. It allows
+// 'unsafe-inline' for script/style because every page's <script> is
+// inline (there is no external app JS file anywhere in this codebase)
+// and several pages use inline style="..." attributes -- eliminating
+// that would mean a nonce-per-request scheme touching every template in
+// the app, out of scope for this pass.
+//
+// 'unsafe-eval' is also required in script-src, for one specific reason:
+// the customer buy-gas page (customer_home.templ) loads the standard
+// Alpine.js CDN build, which evaluates x-data/x-model/x-text expressions
+// as strings at runtime -- confirmed the hard way, via a real headless-
+// browser pass across every page after first shipping this CSP without
+// it, which showed the entire buy-gas form silently breaking (every
+// Alpine expression throwing a CSP violation, the amount field and
+// payment-channel picker both going dead) while every *other* page in
+// the app was completely unaffected. Alpine does ship a CSP-compliant
+// build (@alpinejs/csp), but it requires pre-registering every x-data
+// object via Alpine.data(...) instead of the inline object-literal
+// expressions this page currently uses throughout -- a real rewrite of
+// this app's single most business-critical page (it's the one that takes
+// payment), correctly out of scope for a security-hardening pass to risk
+// breaking. Still real value even with 'unsafe-inline'/'unsafe-eval'
+// allowed: object-src/base-uri/frame-ancestors close off other real
+// vectors, and connect-src/img-src/style-src (plus script-src's own host
+// allowlist) still block a successful XSS from loading or exfiltrating
+// to an arbitrary attacker-controlled host.
+func securityHeaders(next http.Handler) http.Handler {
+	const csp = "default-src 'self'; " +
+		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " +
+		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+		"font-src 'self' https://fonts.gstatic.com; " +
+		"img-src 'self' data:; " +
+		"connect-src 'self'; " +
+		"object-src 'none'; " +
+		"base-uri 'self'; " +
+		"frame-ancestors 'self';"
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		h.Set("Content-Security-Policy", csp)
+		// Same env check session.SecureCookies() already uses, and for
+		// the same reason: HSTS told to a browser over plain HTTP (the
+		// local dev loop, sunrise.localhost:8080, has no TLS at all)
+		// would make that browser refuse to connect over HTTP to this
+		// host again for the policy's whole max-age -- actively breaking
+		// dev, not just failing safe. Only ever sent once APP_ENV says
+		// this is a real, HTTPS-served deployment.
+		if session.SecureCookies() {
+			h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+		next.ServeHTTP(w, r)
 	})
 }
 
