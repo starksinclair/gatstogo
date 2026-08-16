@@ -8,6 +8,8 @@ package pages
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "gatstogo/web/templates/components"
+
 func OwnerLogin(plantName string, errorMsg string, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -29,7 +31,7 @@ func OwnerLogin(plantName string, errorMsg string, csrfToken string) templ.Compo
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = authShell(plantName+" owner sign in", "Owner sign in", errorMsg, "/owner/login", csrfToken).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = authShell(plantName+" owner sign in", "Sign in", errorMsg, "/owner/login", csrfToken).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -37,6 +39,17 @@ func OwnerLogin(plantName string, errorMsg string, csrfToken string) templ.Compo
 	})
 }
 
+// authShell is the shared sign-in page for both owner/manager/staff login
+// (OwnerLogin) and the platform admin console (AdminLogin, admin_login.templ).
+// Split-screen on wider viewports -- the same LPG storage photo the landing
+// page's own photo-band already uses (web/static/images/landing-
+// industrial.jpg), so this doesn't need a second licensed/attributed image
+// just for the login page -- with the actual sign-in form on its own,
+// unbordered half. Collapses to a single centered card below 860px rather
+// than trying to keep the split at a width where the photo half would have
+// nothing left to show: .login-visual is display:none by default, only
+// switched on at that breakpoint, so mobile gets exactly the plain
+// centered-card layout this page always had, not the split squeezed down.
 func authShell(title string, heading string, errorMsg string, action string, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -65,51 +78,55 @@ func authShell(title string, heading string, errorMsg string, action string, csr
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 13, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 26, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/png\" href=\"/static/images/gatstogo.png\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/owner-admin.css\"></head><body><div class=\"login-page\"><form class=\"panel panel-pad login-card\" method=\"post\" action=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/png\" href=\"/static/images/gatstogo.png\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/owner-admin.css\"><script>\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-password-toggle]\").forEach(function (button) {\n\t\t\t\t\t\tvar input = document.getElementById(button.dataset.passwordToggle);\n\t\t\t\t\t\tif (!input) return;\n\t\t\t\t\t\tbutton.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\tvar showing = input.type === \"text\";\n\t\t\t\t\t\t\tinput.type = showing ? \"password\" : \"text\";\n\t\t\t\t\t\t\tbutton.setAttribute(\"aria-label\", showing ? \"Show password\" : \"Hide password\");\n\t\t\t\t\t\t\tbutton.innerHTML = showing\n\t\t\t\t\t\t\t\t? '<svg class=\"icon\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z\"/></svg>'\n\t\t\t\t\t\t\t\t: '<svg class=\"icon\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M53.92,34.62A8,8,0,1,0,42.08,45.38L61.32,66.55C25,88.84,9.38,123.2,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208a127.11,127.11,0,0,0,52.07-10.83l22,24.21a8,8,0,1,0,11.84-10.76Zm47.33,75.84,41.67,45.85a32,32,0,0,1-41.67-45.85ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.16,133.16,0,0,1,25,128c4.69-8.79,19.66-33.39,47.35-49.38l18,19.75a48,48,0,0,0,63.66,70l14.73,16.2A112,112,0,0,1,128,192Zm6-95.43a8,8,0,0,1,3-15.72,48.16,48.16,0,0,1,38.77,42.64,8,8,0,0,1-7.22,8.71,6.39,6.39,0,0,1-.75,0,8,8,0,0,1-8-7.26A32.09,32.09,0,0,0,134,96.57Zm113.28,34.69c-.42.94-10.55,23.37-33.36,43.8a8,8,0,1,1-10.67-11.92A132.77,132.77,0,0,0,231.05,128a133.15,133.15,0,0,0-23.12-30.77C185.67,75.19,158.78,64,128,64a118.37,118.37,0,0,0-19.36,1.57A8,8,0,1,1,106,49.79,134,134,0,0,1,128,48c34.88,0,66.57,13.26,91.66,38.35,18.83,18.83,27.3,37.62,27.65,38.41A8,8,0,0,1,247.31,131.26Z\"/></svg>';\n\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t</script></head><body><div class=\"login-page\"><div class=\"login-visual\"><a class=\"login-visual-brand\" href=\"/\"><img class=\"mark\" src=\"/static/images/gatstogo.png\" alt=\"GatsToGo\"> <span>GATSTOGO</span></a><div class=\"login-visual-copy\"><h2>Run your plant from anywhere.</h2><p>Sign in to see today's sales, cash position, and shift activity, live.</p></div></div><div class=\"login-form-col\"><form class=\"login-card\" method=\"post\" action=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(action))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 22, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 62, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><div class=\"login-brand\"><img class=\"mark\" src=\"/static/images/gatstogo.png\" alt=\"GatsToGo\"><span>GATSTOGO</span></div><h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><div class=\"login-brand\"><img class=\"mark\" src=\"/static/images/gatstogo.png\" alt=\"GatsToGo\"><span>GATSTOGO</span></div><div><h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(heading)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 24, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 65, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h1><p class=\"login-sub\">Enter your phone number and password to continue.</p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if errorMsg != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"badge badge-danger login-error\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"owner-error login-error\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Icon("warning-circle").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(errorMsg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 26, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 71, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -127,13 +144,21 @@ func authShell(title string, heading string, errorMsg string, action string, csr
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 28, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_login.templ`, Line: 74, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><div class=\"field\"><label>Phone number</label> <input type=\"tel\" name=\"phone\" placeholder=\"0803 000 0000\" autocomplete=\"tel\" required autofocus></div><div class=\"field\"><label>Password</label> <input type=\"password\" name=\"password\" autocomplete=\"current-password\" required></div><button class=\"btn primary full-width\" type=\"submit\">Sign in</button></form></div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><div class=\"field\"><label for=\"login-phone\">Phone number</label> <input id=\"login-phone\" type=\"tel\" name=\"phone\" placeholder=\"0803 000 0000\" autocomplete=\"tel\" required autofocus></div><div class=\"field\"><label for=\"login-password\">Password</label><div class=\"field-password\"><input id=\"login-password\" type=\"password\" name=\"password\" autocomplete=\"current-password\" required> <button type=\"button\" class=\"field-password-toggle\" data-password-toggle=\"login-password\" aria-label=\"Show password\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("eye").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</button></div></div><button class=\"btn primary full-width\" type=\"submit\">Sign in</button></form></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

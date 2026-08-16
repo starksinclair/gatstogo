@@ -458,6 +458,27 @@ td {
 	border-color: var(--ink);
 }
 .field textarea { min-height: 86px; resize: vertical; }
+/* Chrome/Safari repaint an autofilled input with their own pale blue
+   or yellow background the instant it's filled, regardless of the
+   background this file sets above -- not a bug in any rule here, a
+   browser default that only shows up once a field is actually
+   autofilled (real login credentials, saved phone numbers), so it's
+   easy to never see it while just styling the page. Forcing it back
+   via an absurdly long inset box-shadow transition is the standard,
+   only reliable cross-browser override -- background: #FFFFFF alone
+   does not win against the browser's own autofill styling. Uses
+   --soft (the same pale surface tint table headers and hover states
+   already use) rather than plain white, so an autofilled field still
+   reads as this app's own theme instead of either the browser's blue
+   or a flat, uncolored white. */
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus {
+	-webkit-text-fill-color: var(--ink);
+	-webkit-box-shadow: 0 0 0 1000px var(--soft) inset;
+	box-shadow: 0 0 0 1000px var(--soft) inset;
+	transition: background-color 600000s ease-in-out 0s;
+}
 /* <select> theming, two layers:
    1. The native element itself -- strips the browser's own arrow
       (appearance: none) and draws the same caret-down glyph the rest
@@ -795,10 +816,28 @@ td {
 	.confirm-actions .btn { width: auto; }
 }
 
-/* ---- Auth (owner + admin login) ---- */
+/* ---- Auth (owner + admin login): split-screen on wider viewports, a
+   photo half (the same LPG storage image the landing page's own
+   photo-band uses) alongside the sign-in form on its own unbordered
+   half. .login-visual is display:none until the 860px breakpoint --
+   below that, this is just the plain centered card the page always
+   was, not the split layout squeezed into a width that can't fit it.
+   min-width: 0 on both halves matters here specifically because this
+   file already shipped one real bug from skipping it: a bare flex/grid
+   basis let a wide child grow a track past its container instead of
+   the container clamping to the viewport (see .dashboard-grid's own
+   fix, same file). Neither half has anything that wide in it, but
+   there's no reason to leave the same trap unguarded twice. ---- */
 .full-width { width: 100%; }
 .login-page {
 	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+.login-visual { display: none; }
+.login-form-col {
+	flex: 1;
+	min-width: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -825,7 +864,69 @@ td {
 }
 .login-card h1 {
 	font-family: var(--font-display, Archivo, sans-serif);
-	font-size: 20px;
-	margin: 0;
+	font-size: 22px;
+	margin: 0 0 4px;
 }
-.login-error { justify-self: start; }
+.login-sub { margin: 0; color: var(--muted); font-size: 14px; }
+.login-error { align-items: flex-start; }
+.field-password { position: relative; }
+.field-password input { padding-right: 44px; }
+.field-password-toggle {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	border: 0;
+	background: transparent;
+	color: var(--muted);
+}
+.field-password-toggle:hover { color: var(--ink); }
+.field-password-toggle .icon { font-size: 18px; }
+
+@media (min-width: 860px) {
+	.login-page { flex-direction: row; }
+	.login-visual {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		flex: 1;
+		min-width: 0;
+		min-height: 100vh;
+		padding: 40px;
+		background-image: linear-gradient(180deg, rgba(10, 16, 20, 0.2) 0%, rgba(10, 16, 20, 0.8) 100%), url("/static/images/landing-industrial.jpg");
+		background-size: cover;
+		background-position: center;
+		color: #FFFFFF;
+	}
+	.login-visual-brand {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		font-family: var(--font-display, Archivo, sans-serif);
+		font-weight: 800;
+		letter-spacing: 0.02em;
+		color: #FFFFFF;
+	}
+	.login-visual-brand .mark { width: 28px; height: 28px; }
+	.login-visual-copy h2 {
+		margin: 0 0 10px;
+		font-family: var(--font-display, Archivo, sans-serif);
+		font-weight: 800;
+		font-size: clamp(26px, 3vw, 34px);
+		line-height: 1.15;
+	}
+	.login-visual-copy p {
+		margin: 0;
+		max-width: 38ch;
+		color: rgba(255, 255, 255, 0.82);
+		font-size: 15px;
+		line-height: 1.5;
+	}
+	.login-form-col { flex: 1; min-width: 0; }
+	.login-card { border: 0; padding: 8px; }
+	.login-brand { display: none; }
+}
