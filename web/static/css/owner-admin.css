@@ -654,36 +654,65 @@ td {
    dropdown). Desktop .rail above is completely untouched by anything
    below this point -- the fixed/transform drawer behavior only applies
    inside this media query.
+
+   One toggle button now, not two: it used to be a hamburger icon in the
+   top bar plus a separate X button inside the drawer itself, each a
+   static Phosphor glyph sitting in its own bordered square. Replaced
+   with a single button that stays in the same spot and visually
+   morphs between the two states (the .burger bars below), which means
+   it has to stay on top of and reachable through the open drawer --
+   .mobile-topbar's z-index is now above .rail/.rail-backdrop, and the
+   drawer opens below it (top: var(--topbar-h)) rather than under it.
+   No border/background box around the button itself either, just the
+   icon -- a 44px tap target without needing a visible container to get
+   there.
    ========================================================================== */
+:root { --topbar-h: 60px; }
 .mobile-topbar {
 	display: none;
 	position: sticky;
 	top: 0;
-	z-index: 30;
+	z-index: 45;
 	align-items: center;
 	gap: 12px;
-	min-height: 56px;
-	padding: 0 16px;
+	min-height: var(--topbar-h);
+	padding: 0 12px;
 	background: var(--rail);
 	color: #F8FAFC;
 }
 .mobile-topbar .brand { border-bottom: 0; padding: 0; flex: 1; min-width: 0; }
-.mobile-topbar .brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-topbar .brand span { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rail-toggle {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	flex: none;
-	width: 36px;
-	height: 36px;
-	border: 1px solid #303941;
+	width: 44px;
+	height: 44px;
+	border: 0;
 	border-radius: var(--radius-sm, 6px);
 	background: transparent;
 	color: #F8FAFC;
 }
-.rail-toggle:hover { border-color: #4A5560; }
-.rail-toggle .icon { font-size: 18px; }
-.rail-close { display: none; }
+.rail-toggle:hover { background: rgba(248, 250, 252, 0.08); }
+/* Three bars that rotate/fade into an X -- see setExpanded in opsShell's
+   script, which is the one thing that flips aria-expanded. */
+.burger { position: relative; display: inline-block; width: 20px; height: 14px; }
+.burger span {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	border-radius: var(--radius-full, 999px);
+	background: currentColor;
+	transition: transform 200ms ease, opacity 150ms ease, top 200ms ease;
+}
+.burger span:nth-child(1) { top: 0; }
+.burger span:nth-child(2) { top: 6px; }
+.burger span:nth-child(3) { top: 12px; }
+.rail-toggle[aria-expanded="true"] .burger span:nth-child(1) { top: 6px; transform: rotate(45deg); }
+.rail-toggle[aria-expanded="true"] .burger span:nth-child(2) { opacity: 0; }
+.rail-toggle[aria-expanded="true"] .burger span:nth-child(3) { top: 6px; transform: rotate(-45deg); }
 .rail-backdrop {
 	display: none;
 	position: fixed;
@@ -697,29 +726,15 @@ td {
 	.mobile-topbar { display: flex; }
 	.rail {
 		position: fixed;
-		top: 0;
+		top: var(--topbar-h);
 		left: 0;
-		height: 100vh;
+		height: calc(100vh - var(--topbar-h));
 		width: min(280px, 84vw);
 		transform: translateX(-100%);
 		transition: transform 220ms ease;
 		z-index: 40;
 	}
-	.rail .brand { padding-right: 36px; position: relative; }
-	.rail-close {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		position: absolute;
-		top: 0;
-		right: 4px;
-		width: 32px;
-		height: 32px;
-		border: 1px solid #303941;
-		border-radius: var(--radius-sm, 6px);
-		background: transparent;
-		color: #F8FAFC;
-	}
+	.rail-backdrop { top: var(--topbar-h); }
 	.shell.rail-open .rail { transform: translateX(0); }
 	.shell.rail-open .rail-backdrop { display: block; }
 	/* position: fixed (not just overflow: hidden, which iOS Safari

@@ -282,19 +282,31 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 						// which is exactly the "sidebar drifts away while
 						// scrolling" bug this replaces.
 						var lockedScrollY = 0;
+						var toggleButtons = root.querySelectorAll("[data-rail-toggle]");
+						function setExpanded(expanded) {
+							// Drives the toggle button's hamburger<->X morph
+							// (owner-admin.css's .rail-toggle[aria-expanded]
+							// rules) off the same attribute a screen reader
+							// needs anyway, rather than a separate class.
+							toggleButtons.forEach(function (btn) {
+								btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+							});
+						}
 						function openDrawer() {
 							lockedScrollY = window.scrollY;
 							document.body.classList.add("rail-locked");
 							document.body.style.top = (-lockedScrollY) + "px";
 							root.classList.add("rail-open");
+							setExpanded(true);
 						}
 						function closeDrawer() {
 							root.classList.remove("rail-open");
 							document.body.classList.remove("rail-locked");
 							document.body.style.top = "";
 							window.scrollTo(0, lockedScrollY);
+							setExpanded(false);
 						}
-						root.querySelectorAll("[data-rail-toggle]").forEach(function (button) {
+						toggleButtons.forEach(function (button) {
 							button.addEventListener("click", function () {
 								root.classList.contains("rail-open") ? closeDrawer() : openDrawer();
 							});
@@ -503,19 +515,16 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 		<body>
 			<div class="shell" data-tabs>
 				<div class="mobile-topbar">
-					<button class="rail-toggle" type="button" data-rail-toggle aria-label="Open menu">
-						@components.Icon("list")
+					<button class="rail-toggle" type="button" data-rail-toggle aria-label="Open menu" aria-expanded="false" aria-controls="mobile-rail">
+						<span class="burger" aria-hidden="true"><span></span><span></span><span></span></span>
 					</button>
 					<div class="brand"><img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/><span>{ railLabel } workspace</span></div>
 				</div>
 				<div class="rail-backdrop" data-rail-backdrop></div>
-				<aside class="rail">
+				<aside class="rail" id="mobile-rail">
 					<div class="brand">
 						<img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/>
 						<span>GATSTOGO</span>
-						<button class="rail-close" type="button" data-rail-toggle aria-label="Close menu">
-							@components.Icon("x")
-						</button>
 					</div>
 					<div class="rail-label">{ railLabel } workspace</div>
 					@nav
