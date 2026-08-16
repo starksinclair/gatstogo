@@ -567,10 +567,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			<div>
 				<div class="section-title"><h2>Sales and receipts</h2></div>
 				<div class="table-wrap">
-					<table class="table-fixed" style="min-width:1180px">
-						<colgroup>
-							<col style="width:11%"/><col style="width:17%"/><col style="width:6%"/><col style="width:8%"/><col style="width:12%"/><col style="width:9%"/><col style="width:11%"/><col style="width:9%"/><col style="width:9%"/><col style="width:8%"/>
-						</colgroup>
+					<table style="min-width:1240px">
 						<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th class="num">Paid kg</th><th class="num">Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead>
 						<tbody>
 							if len(data.RecentTickets) == 0 {
@@ -578,7 +575,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 							}
 							for _, row := range data.RecentTickets {
 								<tr>
-									<td class="mono" title={ row.Reference }>{ shortTicketRef(row.Reference, data.PlantSlug) }</td><td class="wrap">{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="num">{ row.Kg }</td><td class="num">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td>
+									<td class="mono" title={ row.Reference }>{ shortTicketRef(row.Reference, data.PlantSlug) }</td><td>{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="num">{ row.Kg }</td><td class="num">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td>
 									<td>
 										if row.Status == "PENDING" || row.Status == "PAID" {
 											<form method="post" action={ templ.SafeURL("/tickets/" + row.Reference + "/void") } onsubmit="return confirm('Void this ticket? This cannot be undone.')">
@@ -853,10 +850,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 	<section class="tab-panel" data-tab-panel="plants">
 		<div class="section-title"><h2>Plants</h2></div>
 		<div class="table-wrap">
-			<table class="table-fixed" style="min-width:1220px">
-				<colgroup>
-					<col style="width:12%"/><col style="width:10%"/><col style="width:11%"/><col style="width:10%"/><col style="width:10%"/><col style="width:4%"/><col style="width:4%"/><col style="width:6%"/><col style="width:6%"/><col style="width:8%"/><col style="width:9%"/><col style="width:10%"/>
-				</colgroup>
+			<table style="min-width:1300px">
 				<thead><tr><th>Plant</th><th>Location</th><th>Web address</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th><th></th></tr></thead>
 				<tbody>
 					if len(data.Plants) == 0 {
@@ -864,8 +858,8 @@ templ adminConsoleContent(data AdminConsoleData) {
 					}
 					for _, row := range data.Plants {
 						<tr>
-							<td class="wrap"><strong>{ row.Name }</strong><div class="muted mono">{ row.Phone }</div></td><td class="wrap">{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono" title={ row.Slug }>{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td class="wrap">{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td>
-							<td class="action-strip wrap">
+							<td><strong>{ row.Name }</strong><div class="muted mono">{ row.Phone }</div></td><td>{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono" title={ row.Slug }>{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td>
+							<td class="action-strip">
 								switch row.RawStatus {
 									case "active":
 										@plantStatusForm(row.ID, "suspended", "Suspend", data.CSRFToken)

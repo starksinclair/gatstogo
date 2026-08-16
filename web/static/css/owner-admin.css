@@ -353,15 +353,26 @@ h3 { font-size: 14px; }
    to go ragged -- a long ticket reference or a name-plus-phone cell
    would force its column narrow enough that short values like "12.50
    kg" or "Awaiting fill" wrapped mid-word, so every row ended up a
-   different height and the whole table read as disorganized. Fixed
-   two ways: .num/.mono (numbers, codes, references -- content that
-   should never break mid-string) never wrap, full stop; and the two
-   widest, most column-heavy tables (tickets, admin plants) go further
-   with .table-fixed -- table-layout: fixed plus an explicit <colgroup>
-   so every column gets a deliberate, stable share of the width
-   instead of the browser's auto layout improvising one from whatever
-   happens to be in each row. .table-wrap's horizontal scroll is the
-   release valve below each table's min-width, not column wrapping. ---- */
+   different height and the whole table read as disorganized.
+
+   First fix tried table-layout: fixed with a hand-guessed <colgroup>
+   percentage per column. Reverted -- percentages tuned against one
+   headless-Chrome capture didn't hold up in a real browser (different
+   font metrics once the real webfont was loaded put several rows a
+   few characters over their guessed budget, wrapping worse than
+   before). Auto layout turns out to be the more robust fit for this
+   data anyway: .num/.mono (numbers, codes, references) never wrap,
+   full stop, which is the one rule actually doing the work -- every
+   one of those columns already holds naturally bounded content (a
+   4-digit code, a currency amount, one of four channel names, a
+   fixed date format), so the browser's own per-column width
+   allocation has nothing unpredictable to guess wrong. Free-text
+   columns (customer/plant name+phone, city+address, domain) stay
+   plain <td> -- wrapping is their normal, correct behavior, not a
+   bug to route around. Each table's min-width (set inline per table,
+   since column counts differ) just keeps it from ever being squeezed
+   below a comfortable size; .table-wrap's horizontal scroll is the
+   release valve on narrower viewports, not column wrapping. ---- */
 .table-wrap { overflow-x: auto; }
 table {
 	width: 100%;
@@ -385,24 +396,6 @@ td {
 	vertical-align: top;
 }
 .num { text-align: right; font-family: var(--font-mono, "IBM Plex Mono", monospace); white-space: nowrap; }
-/* .table-fixed: deterministic column widths via <colgroup> (set inline
-   per table in owner_admin.templ, since each table's columns differ)
-   instead of the browser guessing from content. Every cell defaults to
-   nowrap + ellipsis as a safety net for the rare value that still
-   doesn't fit its column; .wrap opts specific cells back into normal
-   wrapping -- customer/plant name+phone, city+address -- the small
-   number of columns that hold genuinely unpredictable-length text. */
-.table-fixed { table-layout: fixed; }
-.table-fixed td {
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-.table-fixed td.wrap {
-	overflow: visible;
-	white-space: normal;
-	text-overflow: clip;
-}
 .empty {
 	display: flex;
 	align-items: center;
