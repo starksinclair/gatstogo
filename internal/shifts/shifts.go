@@ -159,6 +159,35 @@ func findOpen(ctx context.Context, q tenantdb.Querier, plantID, userID uuid.UUID
 	return &s, nil
 }
 
+// OpenShiftStarts returns, for every currently open shift at a plant, the
+// user who opened it and when. The terminal's start screen uses this to
+// show a staff member whether picking their tile would resume an existing
+// shift -- StartOrResume already handles that case (the schema only ever
+// allows one open shift per user anyway, idx_shifts_one_open_per_user) --
+// before they've entered a PIN, rather than only finding out after the
+// fact. Keyed by user ID rather than returned as a slice since every
+// caller so far just needs a fast per-staff-member lookup.
+func OpenShiftStarts(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID) (map[uuid.UUID]time.Time, error) {
+	rows, err := q.Query(ctx, `
+		SELECT user_id, opened_at FROM shifts WHERE plant_id = $1 AND closed_at IS NULL
+	`, plantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := map[uuid.UUID]time.Time{}
+	for rows.Next() {
+		var userID uuid.UUID
+		var openedAt time.Time
+		if err := rows.Scan(&userID, &openedAt); err != nil {
+			return nil, err
+		}
+		out[userID] = openedAt
+	}
+	return out, rows.Err()
+}
+
 // StartOrResume opens a new shift for userID (recording an opening_float
 // cash movement) or, if one is already open -- the terminal reloaded or
 // reconnected mid-shift -- returns that existing shift unchanged instead.

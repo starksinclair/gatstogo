@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"gatstogo/internal/audit"
 	"gatstogo/internal/auth"
@@ -48,6 +49,7 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 // baked into the JS itself.
 type terminalInitPayload struct {
 	PlantName      string                 `json:"plantName"`
+	TodayLabel     string                 `json:"todayLabel"`
 	Staff          []terminalStaffPayload `json:"staff"`
 	CSRFToken      string                 `json:"csrfToken"`
 	PricePerKgKobo int64                  `json:"pricePerKgKobo"`
@@ -57,6 +59,11 @@ type terminalStaffPayload struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	Role string `json:"role"`
+	// ShiftOpenSince is set only when this staff member already has an
+	// open shift at this plant (formatted "3:04 PM") -- picking their
+	// tile and starting would resume it (StartOrResume), not open a new
+	// one. Empty means no open shift.
+	ShiftOpenSince string `json:"shiftOpenSince,omitempty"`
 }
 
 func terminalPageHandler(s *Server) http.HandlerFunc {
@@ -70,6 +77,7 @@ func terminalPageHandler(s *Server) http.HandlerFunc {
 		var (
 			staff      []shifts.StaffMember
 			pricePerKg int64
+			openSince  map[uuid.UUID]time.Time
 		)
 		_ = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			var err error
@@ -78,6 +86,9 @@ func terminalPageHandler(s *Server) http.HandlerFunc {
 			}
 			if _, pricePerKg, err = loadCurrentPrice(ctx, q, plant.ID); err != nil {
 				log.Println("terminal page: load price failed:", err)
+			}
+			if openSince, err = shifts.OpenShiftStarts(ctx, q, plant.ID); err != nil {
+				log.Println("terminal page: load open shifts failed:", err)
 			}
 			return nil // best-effort: an empty staff list or zero price still renders a usable (if unusable-until-fixed) page
 		})
@@ -88,12 +99,16 @@ func terminalPageHandler(s *Server) http.HandlerFunc {
 		}
 		payload := terminalInitPayload{
 			PlantName:      plantName,
+			TodayLabel:     time.Now().Format("2 Jan 2006"),
 			Staff:          make([]terminalStaffPayload, len(staff)),
 			CSRFToken:      middleware.EnsurePublicCSRFCookie(w, r),
 			PricePerKgKobo: pricePerKg,
 		}
 		for i, m := range staff {
 			payload.Staff[i] = terminalStaffPayload{ID: m.ID.String(), Name: m.Name, Role: m.Role}
+			if openedAt, ok := openSince[m.ID]; ok {
+				payload.Staff[i].ShiftOpenSince = openedAt.Format("3:04 PM")
+			}
 		}
 
 		// Passed straight through to templ.JSONScript, which does its own

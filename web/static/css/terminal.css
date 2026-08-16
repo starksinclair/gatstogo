@@ -273,6 +273,32 @@ h1 {
 	border-left: 1px solid var(--line);
 }
 
+/* Start-screen footer: plant, date, today's live price -- real values
+   already loaded for the screen anyway (init.plantName/todayLabel/
+   pricePerKgKobo), not new decoration. Sits under the same max-width
+   wrapper as .term-layout so it lines up with the columns above it. */
+.term-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 20px 28px 40px;
+	border-top: 1px solid var(--line);
+	color: var(--faint);
+	font-size: 12px;
+	font-weight: 600;
+	text-align: center;
+}
+.term-meta .sep {
+	display: inline-block;
+	width: 1px;
+	height: 10px;
+	margin: 0 14px;
+	background: var(--line);
+}
+
 /* ---- Form fields: underline style, matching the other surfaces ---- */
 .term-field { margin: 0 0 28px; }
 
@@ -375,7 +401,7 @@ h1 {
 	height: 26px;
 	border: 1px solid var(--line-strong);
 	border-radius: var(--radius-sm, 6px);
-	font-size: 11px;
+	font-size: 14px;
 	font-weight: 700;
 	color: var(--muted);
 }
@@ -387,6 +413,17 @@ h1 {
 	font-size: 12px;
 	font-weight: 600;
 	color: var(--muted);
+}
+/* Shown only when this staff member already has an open shift --
+   picking their tile and starting resumes it (StartOrResume) rather
+   than opening a new one. Surfaced before PIN entry, not just after,
+   so it never reads as a surprise. Amber like the rest of the app's
+   "not wrong, just worth knowing" signals -- text only, no fill. */
+.staff-tile .shift-open-note {
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	color: var(--warning);
 }
 
 .pin-dots {
@@ -630,6 +667,7 @@ h1 {
 	.terminal-top { padding: 14px 20px; }
 	.terminal-tabs { padding: 0 20px; }
 	.staff-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+	.term-meta { padding: 16px 20px 32px; }
 }
 
 @media (max-width: 640px) {
@@ -638,6 +676,8 @@ h1 {
 	.shift-strip button { margin-left: auto; }
 
 	.term-layout { padding: 22px 16px 40px; }
+	.term-meta { padding: 14px 16px 28px; }
+	.term-meta .sep { margin: 0 10px; }
 
 	.staff-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
