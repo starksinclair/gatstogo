@@ -31,6 +31,25 @@ templ authShell(title string, heading string, errorMsg string, action string, cs
 			<link rel="stylesheet" href="/static/css/owner-admin.css"/>
 			<script>
 				document.addEventListener("DOMContentLoaded", function () {
+					// The splash overlay only ever appears here because this
+					// page's one form carries data-splash -- see splashOverlay's
+					// own comment (splash.templ) for why there's no matching
+					// "hide" call anywhere: the real POST this triggers either
+					// redirects to the dashboard (this whole document, splash
+					// included, gets replaced) or back to this same login page
+					// with an error (a fresh load, starting hidden again).
+					var splashOverlay = document.querySelector("[data-splash-overlay]");
+					if (splashOverlay) {
+						var splashMessage = splashOverlay.querySelector("[data-splash-message]");
+						document.querySelectorAll("form[data-splash]").forEach(function (form) {
+							form.addEventListener("submit", function () {
+								if (splashMessage) splashMessage.textContent = form.dataset.splash;
+								splashOverlay.hidden = false;
+								requestAnimationFrame(function () { splashOverlay.classList.add("open"); });
+							});
+						});
+					}
+
 					document.querySelectorAll("[data-password-toggle]").forEach(function (button) {
 						var input = document.getElementById(button.dataset.passwordToggle);
 						if (!input) return;
@@ -59,7 +78,7 @@ templ authShell(title string, heading string, errorMsg string, action string, cs
 					</div>
 				</div>
 				<div class="login-form-col">
-					<form class="login-card" method="post" action={ templ.SafeURL(action) }>
+					<form class="login-card" method="post" action={ templ.SafeURL(action) } data-splash="Signing in">
 						<div class="login-brand"><img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/><span>GATSTOGO</span></div>
 						<div>
 							<h1>{ heading }</h1>
@@ -89,6 +108,7 @@ templ authShell(title string, heading string, errorMsg string, action string, cs
 					</form>
 				</div>
 			</div>
+			@splashOverlay()
 		</body>
 	</html>
 }

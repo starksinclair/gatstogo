@@ -655,6 +655,44 @@ td {
 .confirm-modal[data-tone="warning"] [data-confirm-ok] { border-color: var(--amber-fill); background: var(--amber-fill); }
 .confirm-modal[data-tone="warning"] [data-confirm-ok]:hover { background: var(--amber-fill-hover); }
 
+/* ==========================================================================
+   Splash overlay -- a full-screen branded moment for the couple of
+   forms in this console that carry data-splash (signing in, creating
+   a plant): genuinely slow actions (bcrypt is deliberately expensive;
+   plant creation is a real multi-row transaction), not every
+   navigation. z-index sits above .confirm-overlay -- a real page
+   navigation about to happen outranks a same-page dialog. See
+   splash.templ for the markup and opsShell/authShell's own scripts
+   for what triggers it.
+   ========================================================================== */
+.splash-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 300;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 20px;
+	background: var(--rail);
+	opacity: 0;
+	transition: opacity 160ms ease;
+}
+.splash-overlay.open { opacity: 1; }
+.splash-overlay[hidden] { display: none; }
+.splash-mark {
+	display: block;
+	width: 48px;
+	height: 48px;
+	object-fit: cover;
+	animation: splash-pulse 1400ms ease-in-out infinite;
+}
+@keyframes splash-pulse {
+	0%, 100% { transform: scale(1); opacity: 1; }
+	50% { transform: scale(1.14); opacity: 0.7; }
+}
+.splash-message { margin: 0; color: #98A6B3; font-size: 14px; font-weight: 700; }
+
 .action-strip {
 	display: flex;
 	gap: 10px;

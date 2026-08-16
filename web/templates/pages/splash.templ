@@ -1,0 +1,23 @@
+package pages
+
+// splashOverlay is a full-screen branded loading moment shown only for
+// specific, genuinely slow actions (signing in -- bcrypt is deliberately
+// slow -- and creating a plant), not on every navigation. Shared between
+// authShell (owner_login.templ) and opsShell (owner_admin.templ), since
+// both have at least one form that triggers it.
+//
+// This only ever covers the page it's already on while a real POST
+// request is in flight -- there's no client-side routing here to splash
+// over, and no explicit "hide" step to write: the instant the browser
+// finishes navigating to wherever that POST redirects, this whole
+// document (splash included) is discarded and replaced. A form whose
+// HTML5 validation fails (a required field left empty) never fires the
+// submit event this listens for, so the splash correctly never shows for
+// that case either -- nothing extra needed to keep it in sync with
+// validation.
+templ splashOverlay() {
+	<div class="splash-overlay" data-splash-overlay hidden>
+		<img class="splash-mark" src="/static/images/gatstogo.png" alt=""/>
+		<p class="splash-message" data-splash-message role="status" aria-live="polite">Loading</p>
+	</div>
+}

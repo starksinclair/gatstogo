@@ -510,6 +510,29 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 						if (event.key === "Escape" && !overlay.hidden) close();
 					});
 				});
+
+				// Full-screen branded splash for the couple of forms in this
+				// console carrying data-splash (Create plant -- see
+				// splash.templ's own comment for why there's no matching
+				// "hide" call anywhere: the real POST this triggers either
+				// redirects into the new plant's own console or back to this
+				// same form with an error, and either way this whole document
+				// gets replaced). If a confirm-modal form also ever needs
+				// this, it composes for free -- the modal's own Confirm
+				// button calls form.requestSubmit(), which fires this exact
+				// listener same as a direct submit would.
+				document.addEventListener("DOMContentLoaded", function () {
+					var splashOverlay = document.querySelector("[data-splash-overlay]");
+					if (!splashOverlay) return;
+					var splashMessage = splashOverlay.querySelector("[data-splash-message]");
+					document.querySelectorAll("form[data-splash]").forEach(function (form) {
+						form.addEventListener("submit", function () {
+							if (splashMessage) splashMessage.textContent = form.dataset.splash;
+							splashOverlay.hidden = false;
+							requestAnimationFrame(function () { splashOverlay.classList.add("open"); });
+						});
+					});
+				});
 			</script>
 		</head>
 		<body>
@@ -572,6 +595,7 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 					</div>
 				</div>
 			</div>
+			@splashOverlay()
 		</body>
 	</html>
 }
@@ -1061,7 +1085,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 		<div class="dashboard-grid">
 			<div>
 				<div class="section-title"><h2>Create plant</h2></div>
-				<form method="post" action="/admin/plants">
+				<form method="post" action="/admin/plants" data-splash="Setting up your plant">
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<div class="form-grid">
 						<div class="field"><label>Plant name</label><input type="text" name="name" placeholder="Sunrise Gas Plant" required/></div>
