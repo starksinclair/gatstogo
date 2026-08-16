@@ -6,7 +6,18 @@ cmd = "go run github.com/a-h/templ/cmd/templ@v0.3.1020 generate && go build -o .
 entrypoint = ["./tmp/server"]
 delay = 1000
 include_ext = ["go", "templ"]
-exclude_dir = ["tmp", "vendor", ".git"]
+
+# web/images and web/lottie are the user's own raw-asset staging
+# folders (never served directly -- optimized/renamed copies get made
+# under web/static/... instead), so air has no reason to watch them
+# for rebuild triggers anyway (include_ext above is just go/templ).
+# Excluding them outright, not just relying on that filter, matters
+# because air still has to enumerate every file in a non-excluded
+# directory to set up its watcher in the first place -- a filename
+# with an unusual character (an "&" in this repo's own history) can
+# fail that enumeration outright and take the whole dev server down in
+# a boot loop, never reaching "building..." at all.
+exclude_dir = ["tmp", "vendor", ".git", "web/images", "web/lottie"]
 
 [log]
 time = true
