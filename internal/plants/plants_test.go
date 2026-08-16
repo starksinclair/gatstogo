@@ -12,11 +12,33 @@ import (
 // for these cases -- the same pattern internal/prices and internal/staff's
 // tests use.
 
-func TestCreateValidation(t *testing.T) {
-	valid := CreateParams{
-		Name: "Sunrise Gas Plant", Slug: "sunrise", OwnerName: "Ada Nwosu",
-		OwnerPhone: "08030000000", OwnerPassword: "a-real-password", StartingPriceKobo: 150000,
+// validParams is a full, valid CreateParams -- including BankName,
+// BankAccountName, and PaystackSubaccountCode, which a real caller only
+// ever has after a successful Paystack round trip (cmd/server's
+// provisionPlant), but which Create itself doesn't know or care how they
+// were obtained.
+func validParams() CreateParams {
+	return CreateParams{
+		Name: "Sunrise Gas Plant", Slug: "sunrise",
+		State:                  "Imo",
+		LegalBusinessName:      "Sunrise Gas Plant Nigeria Ltd",
+		CACNumber:              "RC1234567",
+		NMDPRALicenseNumber:    "NMDPRA-LPG-000123",
+		BankCode:               "058",
+		BankName:               "GTBank",
+		BankAccountNumber:      "0123456789",
+		BankAccountName:        "Sunrise Gas Plant Nigeria Ltd",
+		PaystackSubaccountCode: "ACCT_abc123",
+		OwnerName:              "Ada Nwosu",
+		OwnerPhone:             "08030000000",
+		OwnerEmail:             "ada@sunrisegas.ng",
+		OwnerPassword:          "a-real-password",
+		StartingPriceKobo:      150000,
 	}
+}
+
+func TestCreateValidation(t *testing.T) {
+	valid := validParams()
 
 	cases := []struct {
 		name    string
@@ -25,8 +47,20 @@ func TestCreateValidation(t *testing.T) {
 	}{
 		{"missing name", func(p CreateParams) CreateParams { p.Name = ""; return p }, ErrMissingField},
 		{"missing slug", func(p CreateParams) CreateParams { p.Slug = ""; return p }, ErrMissingField},
+		{"missing state", func(p CreateParams) CreateParams { p.State = ""; return p }, ErrMissingField},
+		{"invalid state", func(p CreateParams) CreateParams { p.State = "Neverland"; return p }, ErrMissingField},
+		{"missing legal business name", func(p CreateParams) CreateParams { p.LegalBusinessName = ""; return p }, ErrMissingField},
+		{"missing CAC number", func(p CreateParams) CreateParams { p.CACNumber = ""; return p }, ErrMissingField},
+		{"missing NMDPRA license number", func(p CreateParams) CreateParams { p.NMDPRALicenseNumber = ""; return p }, ErrMissingField},
+		{"missing bank code", func(p CreateParams) CreateParams { p.BankCode = ""; return p }, ErrMissingField},
+		{"missing bank account number", func(p CreateParams) CreateParams { p.BankAccountNumber = ""; return p }, ErrMissingField},
+		{"missing bank name (derived, not user-typed)", func(p CreateParams) CreateParams { p.BankName = ""; return p }, ErrMissingField},
+		{"missing bank account name (derived, not user-typed)", func(p CreateParams) CreateParams { p.BankAccountName = ""; return p }, ErrMissingField},
+		{"missing paystack subaccount code (derived, not user-typed)", func(p CreateParams) CreateParams { p.PaystackSubaccountCode = ""; return p }, ErrMissingField},
 		{"missing owner name", func(p CreateParams) CreateParams { p.OwnerName = ""; return p }, ErrMissingField},
 		{"missing owner phone", func(p CreateParams) CreateParams { p.OwnerPhone = ""; return p }, ErrMissingField},
+		{"missing owner email", func(p CreateParams) CreateParams { p.OwnerEmail = ""; return p }, ErrMissingField},
+		{"invalid owner email", func(p CreateParams) CreateParams { p.OwnerEmail = "not-an-email"; return p }, ErrInvalidEmail},
 		{"missing owner password", func(p CreateParams) CreateParams { p.OwnerPassword = ""; return p }, ErrMissingField},
 		{"missing starting price", func(p CreateParams) CreateParams { p.StartingPriceKobo = 0; return p }, ErrMissingField},
 		{"negative starting price", func(p CreateParams) CreateParams { p.StartingPriceKobo = -1; return p }, ErrInvalidPrice},
@@ -47,6 +81,29 @@ func TestCreateValidation(t *testing.T) {
 	}
 }
 
+// TestValidateParamsMatchesCreate confirms ValidateParams (the pre-flight
+// check cmd/server's provisionPlant runs before ever calling Paystack)
+// accepts exactly what Create's own validation accepts -- specifically,
+// that it does NOT require BankName/BankAccountName/PaystackSubaccountCode
+// (those don't exist yet at the point ValidateParams is meant to be
+// called), while still catching every genuinely user-typed missing field.
+func TestValidateParamsMatchesCreate(t *testing.T) {
+	valid := validParams()
+	valid.BankName = ""
+	valid.BankAccountName = ""
+	valid.PaystackSubaccountCode = ""
+
+	if err := ValidateParams(valid); err != nil {
+		t.Errorf("ValidateParams: expected nil for a submission missing only the Paystack-derived fields, got %v", err)
+	}
+
+	missingRequired := valid
+	missingRequired.LegalBusinessName = ""
+	if err := ValidateParams(missingRequired); err != ErrMissingField {
+		t.Errorf("ValidateParams: expected ErrMissingField for a missing user-typed field, got %v", err)
+	}
+}
+
 // TestCreateStatusValidation covers the two real callers of CreateParams.Status:
 // the admin console's onboarding panel, which never sets it (defaulting to
 // "active", the historical behavior, preserved byte-for-byte), and the
@@ -55,12 +112,8 @@ func TestCreateValidation(t *testing.T) {
 // validation (missing name) before ever touching adminDB, so a nil pool
 // and a nil actorID are safe here, same as TestCreateValidation above.
 func TestCreateStatusValidation(t *testing.T) {
-	base := CreateParams{
-		Slug: "sunrise", OwnerName: "Ada Nwosu",
-		OwnerPhone: "08030000000", OwnerPassword: "a-real-password", StartingPriceKobo: 150000,
-		// Name deliberately left blank so every case below still fails at
-		// the same ErrMissingField check, before adminDB.Begin.
-	}
+	base := validParams()
+	base.Name = "" // deliberately left blank so every case below still fails at the same ErrMissingField check, before adminDB.Begin.
 
 	t.Run("admin call site: no Status set, no actor omitted", func(t *testing.T) {
 		actorID := uuid.New()
@@ -128,5 +181,32 @@ func TestValidHexColorOrFallsBack(t *testing.T) {
 	}
 	if got := validHexColorOr("#123456", "#006B4D"); got != "#123456" {
 		t.Errorf("expected the valid color to pass through unchanged, got %q", got)
+	}
+}
+
+func TestValidEmail(t *testing.T) {
+	valid := []string{"ada@sunrisegas.ng", "a.b+tag@example.com"}
+	invalid := []string{"", "not-an-email", "missing-domain@", "@missing-local.com", "no-at-sign.com"}
+	for _, e := range valid {
+		if !validEmail(e) {
+			t.Errorf("validEmail(%q) = false, want true", e)
+		}
+	}
+	for _, e := range invalid {
+		if validEmail(e) {
+			t.Errorf("validEmail(%q) = true, want false", e)
+		}
+	}
+}
+
+func TestNigerianStatesHas37Entries(t *testing.T) {
+	// 36 states + FCT.
+	if len(NigerianStates) != 37 {
+		t.Errorf("expected 37 entries (36 states + FCT), got %d", len(NigerianStates))
+	}
+	for _, s := range NigerianStates {
+		if !validStateNames[s] {
+			t.Errorf("NigerianStates entry %q missing from validStateNames", s)
+		}
 	}
 }

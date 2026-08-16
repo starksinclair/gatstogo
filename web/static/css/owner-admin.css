@@ -220,14 +220,18 @@ h3 { font-size: 14px; }
 	padding: 0 14px;
 	font-weight: 700;
 }
-.btn:hover { border-color: #B9C2BB; }
+.btn:hover:not(:disabled) { border-color: #B9C2BB; }
 .btn .icon { flex: none; }
 .btn.primary {
 	border-color: var(--green);
 	background: var(--green);
 	color: #FFFFFF;
 }
-.btn.primary:hover { background: #00543D; }
+.btn.primary:hover:not(:disabled) { background: #00543D; }
+/* Disabled state -- notably the "Create plant" submit button before the
+   bank-account resolve script (web/templates/pages/account_resolve.templ)
+   has confirmed the submitted account number is real. */
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn:focus-visible, .nav-button:focus-visible, .rail-toggle:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
 	outline: 2px solid var(--green);
 	outline-offset: 2px;
@@ -469,6 +473,19 @@ td {
 	border-color: var(--ink);
 }
 .field textarea { min-height: 86px; resize: vertical; }
+/* Live account-name readout (web/templates/pages/account_resolve.templ) --
+   plain text, not another bordered input: it's a status message, not
+   something the visitor edits directly. Color keys off data-state, set by
+   that script as verification runs. */
+.account-readout {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--muted);
+	padding: 4px 0 0;
+}
+.account-readout[data-state="checking"] { color: var(--muted); }
+.account-readout[data-state="ok"] { color: var(--green); }
+.account-readout[data-state="error"] { color: var(--red); }
 /* Chrome/Safari repaint an autofilled input with their own pale blue
    or yellow background the instant it's filled, regardless of the
    background this file sets above -- not a bug in any rule here, a

@@ -22,11 +22,12 @@ import (
 )
 
 var (
-	ErrMissingField  = errors.New("plants: plant name, slug, owner name, owner phone, owner password, and starting price are all required")
+	ErrMissingField  = errors.New("plants: plant name, slug, business details, bank details, owner details, and starting price are all required")
 	ErrInvalidSlug   = errors.New("plants: slug must be lowercase letters, numbers, and hyphens only, and can't start or end with a hyphen")
 	ErrReservedSlug  = errors.New("plants: that slug is reserved and can't be used")
 	ErrSlugTaken     = errors.New("plants: that slug is already in use")
 	ErrInvalidPrice  = errors.New("plants: starting price per kg must be greater than zero")
+	ErrInvalidEmail  = errors.New("plants: owner email is not a valid email address")
 	ErrNotFound      = errors.New("plants: not found")
 	ErrInvalidStatus = errors.New("plants: status must be provisioning, active, suspended, or closed")
 )
@@ -40,6 +41,40 @@ var (
 // hostname label, not just URL-safe.
 var slugPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
 
+// emailPattern is a deliberately loose "does this look like an email"
+// check, not a full RFC 5322 validator -- the real, authoritative check on
+// any address this app actually sends mail to is the mail system itself
+// (the same reasoning cmd/server/tickets.go's ticketEmail doc comment
+// already lands on for Paystack's own email validation).
+var emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+
+func validEmail(value string) bool {
+	return emailPattern.MatchString(value)
+}
+
+// NigerianStates lists Nigeria's 36 states plus the Federal Capital
+// Territory, in the fixed order shown on both onboarding forms' State
+// dropdown (web/templates/pages/signup.templ, owner_admin.templ). This is
+// a hardcoded list rather than anything database-backed because it simply
+// doesn't change -- the single source of truth both templates render from
+// and validate below reuses.
+var NigerianStates = []string{
+	"Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
+	"Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu",
+	"Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi",
+	"Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo",
+	"Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
+	"FCT (Abuja)",
+}
+
+var validStateNames = func() map[string]bool {
+	m := make(map[string]bool, len(NigerianStates))
+	for _, s := range NigerianStates {
+		m[s] = true
+	}
+	return m
+}()
+
 // Brand defaults (matching web/templates/pages/customer_home.templ's own
 // customerDefault* constants) used when the admin leaves a color field
 // blank or enters something that isn't a valid hex color -- not the
@@ -50,26 +85,71 @@ const (
 	defaultButtonColor  = "#006B4D"
 )
 
-// CreateParams are the fields the admin console's "Create plant" form
-// collects. This deliberately covers the first three steps of the
-// console's own "Provisioning checklist" (reserve slug + create tenant
-// row, add owner user with a password, set a starting price) in one
-// submission -- consolidated into a single Create call rather than
-// separate plant/owner endpoints, so a newly provisioned plant is
-// immediately usable (a real owner can log in, a real price exists for
-// the customer page to sell at) instead of left half-set-up. The
-// checklist's fourth step (test the pages) is inherently manual.
+// CreateParams are the fields both onboarding entry points collect: the
+// admin console's "Create plant" panel and the public self-serve
+// /get-started form (cmd/server/marketing.go's signupSubmitHandler). This
+// deliberately covers plant identity, the business's real-world
+// legal/regulatory identity (CAC, NMDPRA), where it actually gets paid
+// (bank/Paystack subaccount), and the owner's first login -- consolidated
+// into a single Create call rather than separate endpoints, so a newly
+// provisioned plant is immediately usable (a real owner can log in, a real
+// price exists to sell at, real settlement is already wired up) instead of
+// left half-set-up.
+//
+// BankName, BankAccountName, and PaystackSubaccountCode are deliberately
+// NOT something either form's visitor types directly -- they're derived
+// server-side (cmd/server's provisionPlant) from a real Paystack call
+// before Create is ever reached, the same "don't trust the client for
+// what the server can derive authoritatively" reasoning BankAccountName's
+// own field doc below explains. Create still requires all three to be
+// present (see the second validation block below): a plant row should
+// never exist without a real, working settlement path attached to it.
 type CreateParams struct {
-	Name              string
-	Slug              string
-	City              string
-	Phone             string
-	Address           string
-	PrimaryColor      string
-	ButtonColor       string
-	OwnerName         string
-	OwnerPhone        string
-	OwnerPassword     string
+	Name         string
+	Slug         string
+	City         string
+	Phone        string
+	Address      string
+	State        string
+	PrimaryColor string
+	ButtonColor  string
+
+	// LegalBusinessName, CACNumber, and NMDPRALicenseNumber are the
+	// business's real-world registered identity -- LegalBusinessName may
+	// differ from Name (a customer-facing trade name), CACNumber is the
+	// business's CAC registration number, and NMDPRALicenseNumber is its
+	// NMDPRA LPG retail operating license number. Nigerian LPG retail
+	// requires an NMDPRA license; there was previously nowhere in this
+	// schema to record one at all.
+	LegalBusinessName   string
+	CACNumber           string
+	NMDPRALicenseNumber string
+
+	// BankCode and BankAccountNumber are submitted by the visitor (a bank
+	// chosen from a live-populated dropdown, an account number typed in).
+	// BankName and BankAccountName are resolved server-side -- see the
+	// type doc comment above.
+	BankCode          string
+	BankName          string
+	BankAccountNumber string
+	BankAccountName   string
+
+	// PaystackSubaccountCode is returned by Paystack once the subaccount
+	// is created (cmd/server's provisionPlant, before Create is called) --
+	// this is what gets attached to every ticket this plant sells
+	// (cmd/server/tickets.go's buyGasSubmitHandler), so customer payments
+	// settle straight to the plant's own bank account instead of
+	// GatsToGo's, with GatsToGo's commission deducted automatically per
+	// transaction by Paystack's own split payment mechanics (see
+	// internal/payments/paystack.go's package doc for the full mechanism
+	// and PlantSettlementPercentage for the actual number).
+	PaystackSubaccountCode string
+
+	OwnerName     string
+	OwnerPhone    string
+	OwnerEmail    string
+	OwnerPassword string
+
 	StartingPriceKobo int64
 
 	// Status is the plant's initial lifecycle status. Empty means
@@ -89,6 +169,85 @@ type CreateParams struct {
 type Plant struct {
 	ID   uuid.UUID
 	Slug string
+}
+
+// validated is the trimmed/normalized form of a CreateParams that passed
+// validate below -- exactly the set of values Create needs for its
+// INSERTs, computed once instead of re-trimming the same strings twice.
+type validated struct {
+	name, slug                                               string
+	state, legalBusinessName, cacNumber, nmdpraLicenseNumber string
+	bankCode, bankAccountNumber                              string
+	ownerName, ownerPhone, ownerEmail                        string
+	status                                                   string
+	primaryColor, buttonColor                                string
+}
+
+// validate normalizes and checks every field a visitor actually fills in
+// on either onboarding form. Deliberately does NOT check BankName,
+// BankAccountName, or PaystackSubaccountCode -- those are only ever
+// derived after a real Paystack call the caller hasn't necessarily made
+// yet (see ValidateParams's own doc comment for why this split exists).
+// Create (below) checks those three separately, immediately before it
+// touches the database, so a plant row can still never be written without
+// them.
+func validate(p CreateParams) (validated, error) {
+	var v validated
+	v.name = strings.TrimSpace(p.Name)
+	v.slug = strings.ToLower(strings.TrimSpace(p.Slug))
+	v.state = strings.TrimSpace(p.State)
+	v.legalBusinessName = strings.TrimSpace(p.LegalBusinessName)
+	v.cacNumber = strings.TrimSpace(p.CACNumber)
+	v.nmdpraLicenseNumber = strings.TrimSpace(p.NMDPRALicenseNumber)
+	v.bankCode = strings.TrimSpace(p.BankCode)
+	v.bankAccountNumber = strings.TrimSpace(p.BankAccountNumber)
+	v.ownerName = strings.TrimSpace(p.OwnerName)
+	v.ownerPhone = strings.TrimSpace(p.OwnerPhone)
+	v.ownerEmail = strings.TrimSpace(p.OwnerEmail)
+	v.primaryColor = validHexColorOr(p.PrimaryColor, defaultPrimaryColor)
+	v.buttonColor = validHexColorOr(p.ButtonColor, defaultButtonColor)
+
+	if v.name == "" || v.slug == "" || v.state == "" || v.legalBusinessName == "" ||
+		v.cacNumber == "" || v.nmdpraLicenseNumber == "" || v.bankCode == "" ||
+		v.bankAccountNumber == "" || v.ownerName == "" || v.ownerPhone == "" ||
+		v.ownerEmail == "" || p.OwnerPassword == "" || p.StartingPriceKobo == 0 {
+		return v, ErrMissingField
+	}
+	if !validStateNames[v.state] {
+		return v, ErrMissingField
+	}
+	if !slugPattern.MatchString(v.slug) {
+		return v, ErrInvalidSlug
+	}
+	if !validEmail(v.ownerEmail) {
+		return v, ErrInvalidEmail
+	}
+	if p.StartingPriceKobo <= 0 {
+		return v, ErrInvalidPrice
+	}
+
+	v.status = strings.TrimSpace(p.Status)
+	if v.status == "" {
+		v.status = "active"
+	}
+	if !validStatuses[v.status] {
+		return v, ErrInvalidStatus
+	}
+	return v, nil
+}
+
+// ValidateParams reports whether p has every field a visitor is
+// responsible for filling in correctly, without touching the database or
+// Paystack. Exported so the handler layer (cmd/server's provisionPlant)
+// can validate a submission fully before calling Paystack's
+// CreateSubaccount, which has a real side effect (a live subaccount
+// entity created at Paystack) that's wasted, orphaned work for a
+// submission that was going to fail validation anyway. Create runs this
+// exact same check internally too, so nothing about calling Create
+// directly changes.
+func ValidateParams(p CreateParams) error {
+	_, err := validate(p)
+	return err
 }
 
 // Create provisions a new tenant: the plants row, its first owner user,
@@ -112,31 +271,22 @@ type Plant struct {
 // "no specific actor" convention audit.Log's other callers already use
 // (e.g. cmd/server/receipts.go's ticket.confirmed entry).
 func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID *uuid.UUID) (*Plant, error) {
-	name := strings.TrimSpace(p.Name)
-	slug := strings.ToLower(strings.TrimSpace(p.Slug))
-	ownerName := strings.TrimSpace(p.OwnerName)
-	ownerPhone := strings.TrimSpace(p.OwnerPhone)
+	v, err := validate(p)
+	if err != nil {
+		return nil, err
+	}
 
-	if name == "" || slug == "" || ownerName == "" || ownerPhone == "" || p.OwnerPassword == "" || p.StartingPriceKobo == 0 {
+	// BankName, BankAccountName, and PaystackSubaccountCode are derived,
+	// not user-typed (see CreateParams's own doc comment) -- checked here,
+	// separately from validate above, as the final integrity gate: a
+	// plant row must never be written without a real, resolved settlement
+	// path already attached to it.
+	bankName := strings.TrimSpace(p.BankName)
+	bankAccountName := strings.TrimSpace(p.BankAccountName)
+	subaccountCode := strings.TrimSpace(p.PaystackSubaccountCode)
+	if bankName == "" || bankAccountName == "" || subaccountCode == "" {
 		return nil, ErrMissingField
 	}
-	if !slugPattern.MatchString(slug) {
-		return nil, ErrInvalidSlug
-	}
-	if p.StartingPriceKobo <= 0 {
-		return nil, ErrInvalidPrice
-	}
-
-	status := strings.TrimSpace(p.Status)
-	if status == "" {
-		status = "active"
-	}
-	if !validStatuses[status] {
-		return nil, ErrInvalidStatus
-	}
-
-	primaryColor := validHexColorOr(p.PrimaryColor, defaultPrimaryColor)
-	buttonColor := validHexColorOr(p.ButtonColor, defaultButtonColor)
 
 	passwordHash, err := auth.HashPassword(p.OwnerPassword)
 	if err != nil {
@@ -155,7 +305,7 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 	}()
 
 	var reserved bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM reserved_slugs WHERE slug = $1)`, slug).Scan(&reserved); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM reserved_slugs WHERE slug = $1)`, v.slug).Scan(&reserved); err != nil {
 		return nil, err
 	}
 	if reserved {
@@ -164,10 +314,22 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 
 	var plantID uuid.UUID
 	err = tx.QueryRow(ctx, `
-		INSERT INTO plants (name, slug, city, address, phone, primary_color, button_color, status)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO plants (
+			name, slug, city, address, phone, state,
+			legal_business_name, cac_number, nmdpra_license_number,
+			bank_code, bank_name, bank_account_number, bank_account_name,
+			paystack_subaccount_code,
+			primary_color, button_color, status
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING id
-	`, name, slug, nullIfEmpty(p.City), nullIfEmpty(p.Address), nullIfEmpty(p.Phone), primaryColor, buttonColor, status).Scan(&plantID)
+	`,
+		v.name, v.slug, nullIfEmpty(p.City), nullIfEmpty(p.Address), nullIfEmpty(p.Phone), v.state,
+		v.legalBusinessName, v.cacNumber, v.nmdpraLicenseNumber,
+		v.bankCode, bankName, v.bankAccountNumber, bankAccountName,
+		subaccountCode,
+		v.primaryColor, v.buttonColor, v.status,
+	).Scan(&plantID)
 	if err != nil {
 		if isUniqueViolation(err) {
 			return nil, ErrSlugTaken
@@ -176,9 +338,9 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 	}
 
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO users (plant_id, name, phone, role, password_hash, active)
-		VALUES ($1, $2, $3, 'owner', $4, true)
-	`, plantID, ownerName, ownerPhone, passwordHash); err != nil {
+		INSERT INTO users (plant_id, name, phone, email, role, password_hash, active)
+		VALUES ($1, $2, $3, $4, 'owner', $5, true)
+	`, plantID, v.ownerName, v.ownerPhone, v.ownerEmail, passwordHash); err != nil {
 		return nil, err
 	}
 
@@ -196,8 +358,9 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 	// every other write path in this codebase (tickets, shifts, staff,
 	// prices) keeps its audit.Log call atomic with the business write it
 	// describes, and provisioning a new tenant with real login credentials
-	// is not the place to be the one exception to that.
-	if err := audit.Log(ctx, tx, &plantID, actorID, "plant.created", slug, nil); err != nil {
+	// and a real settlement path is not the place to be the one exception
+	// to that.
+	if err := audit.Log(ctx, tx, &plantID, actorID, "plant.created", v.slug, nil); err != nil {
 		return nil, err
 	}
 
@@ -205,7 +368,7 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 		return nil, err
 	}
 	committed = true
-	return &Plant{ID: plantID, Slug: slug}, nil
+	return &Plant{ID: plantID, Slug: v.slug}, nil
 }
 
 var validStatuses = map[string]bool{"provisioning": true, "active": true, "suspended": true, "closed": true}

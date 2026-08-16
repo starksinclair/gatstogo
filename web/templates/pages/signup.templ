@@ -1,6 +1,10 @@
 package pages
 
-import "gatstogo/web/templates/components"
+import (
+	"gatstogo/internal/payments"
+	"gatstogo/internal/plants"
+	"gatstogo/web/templates/components"
+)
 
 // SignupViewData backs GET/POST /get-started (cmd/server/marketing.go).
 // Password fields are deliberately never echoed back on a validation
@@ -11,13 +15,26 @@ type SignupViewData struct {
 	ErrorMsg  string
 	Submitted bool
 
-	Name          string
-	Slug          string
-	City          string
-	Address       string
-	Phone         string
+	Name    string
+	Slug    string
+	City    string
+	Address string
+	Phone   string
+	State   string
+
+	LegalBusinessName   string
+	CACNumber           string
+	NMDPRALicenseNumber string
+
+	BankCode          string
+	BankAccountNumber string
+	// Banks backs the Bank <select> -- live-fetched (with fallback) once
+	// per page render, see payments.Client.BanksWithFallback.
+	Banks []payments.Bank
+
 	OwnerName     string
 	OwnerPhone    string
+	OwnerEmail    string
 	StartingPrice string
 }
 
@@ -47,7 +64,7 @@ templ signupContent(data SignupViewData) {
 						{ data.ErrorMsg }
 					</div>
 				}
-				<form method="post" action="/get-started">
+				<form method="post" action="/get-started" data-account-resolve>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="field-group">
@@ -83,6 +100,56 @@ templ signupContent(data SignupViewData) {
 					</div>
 
 					<div class="field-group">
+						<div class="field-group-heading">Business details</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="legal_business_name">Legal business name</label>
+								<input id="legal_business_name" type="text" name="legal_business_name" value={ data.LegalBusinessName } placeholder="As registered with CAC" required/>
+							</div>
+							<div class="field-underline">
+								<label for="cac_number">CAC registration number</label>
+								<input id="cac_number" type="text" name="cac_number" value={ data.CACNumber } placeholder="RC 1234567" required/>
+							</div>
+						</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="state">State</label>
+								<select id="state" name="state" required>
+									<option value="" disabled selected?={ data.State == "" }>Select state</option>
+									for _, st := range plants.NigerianStates {
+										<option value={ st } selected?={ st == data.State }>{ st }</option>
+									}
+								</select>
+							</div>
+							<div class="field-underline">
+								<label for="nmdpra_license_number">NMDPRA license number</label>
+								<input id="nmdpra_license_number" type="text" name="nmdpra_license_number" value={ data.NMDPRALicenseNumber } placeholder="License number" required/>
+							</div>
+						</div>
+					</div>
+
+					<div class="field-group">
+						<div class="field-group-heading">Payout details</div>
+						<p class="field-hint">Customer payments settle straight to this account. GatsToGo keeps a 1.5% fee automatically, no manual payout ever needed.</p>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="bank_code">Bank</label>
+								<select id="bank_code" name="bank_code" required>
+									<option value="" disabled selected?={ data.BankCode == "" }>Select bank</option>
+									for _, b := range data.Banks {
+										<option value={ b.Code } selected?={ b.Code == data.BankCode }>{ b.Name }</option>
+									}
+								</select>
+							</div>
+							<div class="field-underline">
+								<label for="bank_account_number">Account number</label>
+								<input id="bank_account_number" type="text" name="bank_account_number" value={ data.BankAccountNumber } placeholder="0123456789" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required/>
+							</div>
+						</div>
+						<div class="account-readout" data-account-name data-state="idle">Enter your account number and bank to verify.</div>
+					</div>
+
+					<div class="field-group">
 						<div class="field-group-heading">Owner login</div>
 						<div class="field-grid">
 							<div class="field-underline">
@@ -93,6 +160,10 @@ templ signupContent(data SignupViewData) {
 								<label for="owner_phone">Your phone number</label>
 								<input id="owner_phone" type="tel" name="owner_phone" value={ data.OwnerPhone } placeholder="0803 000 0000" required/>
 							</div>
+						</div>
+						<div class="field-underline">
+							<label for="owner_email">Your email</label>
+							<input id="owner_email" type="email" name="owner_email" value={ data.OwnerEmail } placeholder="ada@sunrisegas.ng" required/>
 						</div>
 						<div class="field-grid">
 							<div class="field-underline">
@@ -107,8 +178,9 @@ templ signupContent(data SignupViewData) {
 						<p class="field-hint">This is what you'll use to log in to your plant's dashboard once it's approved: your phone number and this password, at your own plant's login page.</p>
 					</div>
 
-					<button class="button-primary" type="submit">Submit application</button>
+					<button class="button-primary" type="submit" disabled>Submit application</button>
 				</form>
+				@accountResolveScript()
 			</div>
 		}
 	</main>

@@ -102,6 +102,7 @@ func signupPageHandler(s *Server) http.HandlerFunc {
 			CSRFToken: csrfToken,
 			ErrorMsg:  signupErrorMessage(r.URL.Query().Get("error")),
 			Submitted: r.URL.Query().Get("submitted") == "1",
+			Banks:     s.Paystack.BanksWithFallback(r.Context()),
 		}
 		if err := pages.Signup(data).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -129,13 +130,13 @@ func signupPageHandler(s *Server) http.HandlerFunc {
 func signupSubmitHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			renderSignupForm(w, r, "Could not read that submission. Try again.")
+			renderSignupForm(s, w, r, "Could not read that submission. Try again.")
 			return
 		}
 
 		password := r.FormValue("owner_password")
 		if password != r.FormValue("owner_password_confirm") {
-			renderSignupForm(w, r, "Those passwords don't match.")
+			renderSignupForm(s, w, r, "Those passwords don't match.")
 			return
 		}
 
@@ -143,24 +144,31 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 		startingPriceKobo := int64(math.Round(startingPriceNaira * 100))
 
 		params := plants.CreateParams{
-			Name:          r.FormValue("name"),
-			Slug:          r.FormValue("slug"),
-			City:          r.FormValue("city"),
-			Phone:         r.FormValue("phone"),
-			Address:       r.FormValue("address"),
-			OwnerName:     r.FormValue("owner_name"),
-			OwnerPhone:    r.FormValue("owner_phone"),
-			OwnerPassword: password,
-			Status:        "provisioning",
+			Name:                r.FormValue("name"),
+			Slug:                r.FormValue("slug"),
+			City:                r.FormValue("city"),
+			Phone:               r.FormValue("phone"),
+			Address:             r.FormValue("address"),
+			State:               r.FormValue("state"),
+			LegalBusinessName:   r.FormValue("legal_business_name"),
+			CACNumber:           r.FormValue("cac_number"),
+			NMDPRALicenseNumber: r.FormValue("nmdpra_license_number"),
+			BankCode:            r.FormValue("bank_code"),
+			BankAccountNumber:   r.FormValue("bank_account_number"),
+			OwnerName:           r.FormValue("owner_name"),
+			OwnerPhone:          r.FormValue("owner_phone"),
+			OwnerEmail:          r.FormValue("owner_email"),
+			OwnerPassword:       password,
+			Status:              "provisioning",
 		}
 		if priceErr == nil {
 			params.StartingPriceKobo = startingPriceKobo
 		}
 
-		_, err := plants.Create(r.Context(), s.AdminDB, params, nil)
+		_, err := provisionPlant(r.Context(), s, params, nil)
 		if err != nil {
 			log.Println("signup: create plant failed:", err)
-			renderSignupForm(w, r, signupErrorMessage(adminPlantErrorCode(err)))
+			renderSignupForm(s, w, r, signupErrorMessage(adminPlantErrorCode(err)))
 			return
 		}
 
@@ -174,19 +182,27 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 // redirecting -- a redirect would need to round-trip every field through
 // a query string, which is both awkward and would put a plant's contact
 // details in server logs/browser history for no reason.
-func renderSignupForm(w http.ResponseWriter, r *http.Request, errorMsg string) {
+func renderSignupForm(s *Server, w http.ResponseWriter, r *http.Request, errorMsg string) {
 	csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
 	data := pages.SignupViewData{
-		CSRFToken:     csrfToken,
-		ErrorMsg:      errorMsg,
-		Name:          r.FormValue("name"),
-		Slug:          r.FormValue("slug"),
-		City:          r.FormValue("city"),
-		Address:       r.FormValue("address"),
-		Phone:         r.FormValue("phone"),
-		OwnerName:     r.FormValue("owner_name"),
-		OwnerPhone:    r.FormValue("owner_phone"),
-		StartingPrice: r.FormValue("starting_price"),
+		CSRFToken:           csrfToken,
+		ErrorMsg:            errorMsg,
+		Name:                r.FormValue("name"),
+		Slug:                r.FormValue("slug"),
+		City:                r.FormValue("city"),
+		Address:             r.FormValue("address"),
+		Phone:               r.FormValue("phone"),
+		State:               r.FormValue("state"),
+		LegalBusinessName:   r.FormValue("legal_business_name"),
+		CACNumber:           r.FormValue("cac_number"),
+		NMDPRALicenseNumber: r.FormValue("nmdpra_license_number"),
+		BankCode:            r.FormValue("bank_code"),
+		BankAccountNumber:   r.FormValue("bank_account_number"),
+		OwnerName:           r.FormValue("owner_name"),
+		OwnerPhone:          r.FormValue("owner_phone"),
+		OwnerEmail:          r.FormValue("owner_email"),
+		StartingPrice:       r.FormValue("starting_price"),
+		Banks:               s.Paystack.BanksWithFallback(r.Context()),
 	}
 	if err := pages.Signup(data).Render(r.Context(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -194,14 +210,14 @@ func renderSignupForm(w http.ResponseWriter, r *http.Request, errorMsg string) {
 }
 
 // signupErrorMessage maps the same ?error= codes adminPlantErrorCode
-// (cmd/server/admin_write.go) already produces from a plants.Err* to
-// copy written for a public visitor instead of an internal admin --
-// "starting price" instead of "starting_price", no mention of internal
-// concepts an applicant has no context for.
+// (cmd/server/admin_write.go) already produces from a provisionPlant/
+// plants.Err* failure to copy written for a public visitor instead of an
+// internal admin -- "starting price" instead of "starting_price", no
+// mention of internal concepts an applicant has no context for.
 func signupErrorMessage(code string) string {
 	switch code {
 	case "missing":
-		return "Fill in every field -- plant name, web address, your name, phone number, password, and a starting price are all required."
+		return "Fill in every field: plant name, web address, business details, bank details, your name, phone number, email, password, and a starting price are all required."
 	case "slug":
 		return "Your web address can only contain lowercase letters, numbers, and hyphens, and can't start or end with a hyphen."
 	case "reserved-slug":
@@ -210,6 +226,10 @@ func signupErrorMessage(code string) string {
 		return "That web address is already taken. Please choose a different one."
 	case "price":
 		return "Enter a starting price per kg greater than zero."
+	case "email":
+		return "Enter a valid email address."
+	case "bank":
+		return "We couldn't verify that bank account. Double-check the bank and account number, and try again."
 	case "plant":
 		return "Something went wrong submitting your application. Please try again."
 	default:

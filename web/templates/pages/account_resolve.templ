@@ -1,0 +1,90 @@
+package pages
+
+// accountResolveScript wires up the live "does this account number really
+// exist" check shared by both onboarding forms -- signup.templ's public
+// /get-started form and owner_admin.templ's admin "Create plant" panel.
+// Reads the real <select name="bank_code"> and
+// <input name="bank_account_number"> elements directly -- deliberately not
+// scoped to either page's own select implementation (owner_admin.templ's
+// themedSelect keeps a real native <select> in the DOM underneath its
+// custom listbox, and dispatches a real "change" event on it whenever a
+// listbox option is chosen; signup.templ's is a plain native <select> with
+// no JS layer at all), so this one script works unmodified on both.
+//
+// This is a UX convenience only -- see GET /accounts/resolve's own doc
+// comment (cmd/server/accounts.go) for why the actual guarantee that a
+// submitted bank account is real is the server-side ResolveAccount +
+// CreateSubaccount call at plant-creation time, not this. Every value this
+// script reads and shows is discarded, not submitted: the account holder
+// name that actually gets saved (plants.bank_account_name) is whatever the
+// server's own, independent ResolveAccount call returns at submission
+// time, never anything this script fetched.
+templ accountResolveScript() {
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var form = document.querySelector("[data-account-resolve]");
+			if (!form) return;
+			var bankSelect = form.querySelector('[name="bank_code"]');
+			var accountInput = form.querySelector('[name="bank_account_number"]');
+			var readout = form.querySelector("[data-account-name]");
+			var submitBtn = form.querySelector('button[type="submit"]');
+			if (!bankSelect || !accountInput || !readout || !submitBtn) return;
+
+			var verified = false;
+			var requestToken = 0;
+			var debounceTimer = null;
+
+			function setSubmitEnabled(enabled) {
+				submitBtn.disabled = !enabled;
+			}
+			function setReadout(text, state) {
+				readout.textContent = text;
+				readout.dataset.state = state; // "idle" | "checking" | "ok" | "error"
+			}
+
+			function attempt() {
+				var accountNumber = accountInput.value.trim();
+				var bankCode = bankSelect.value;
+				verified = false;
+				setSubmitEnabled(false);
+				if (accountNumber.length !== 10 || !bankCode) {
+					setReadout("Enter your account number and bank to verify.", "idle");
+					return;
+				}
+				var token = ++requestToken;
+				setReadout("Verifying account…", "checking");
+				fetch("/accounts/resolve?account_number=" + encodeURIComponent(accountNumber) + "&bank_code=" + encodeURIComponent(bankCode))
+					.then(function (res) {
+						return res.json().then(function (body) { return { ok: res.ok, body: body }; });
+					})
+					.then(function (result) {
+						if (token !== requestToken) return; // a newer request has since started
+						if (result.ok && result.body.account_name) {
+							setReadout(result.body.account_name, "ok");
+							verified = true;
+							setSubmitEnabled(true);
+						} else {
+							setReadout((result.body && result.body.error) || "Could not verify that account.", "error");
+						}
+					})
+					.catch(function () {
+						if (token !== requestToken) return;
+						setReadout("Could not verify that account right now.", "error");
+					});
+			}
+
+			function debouncedAttempt() {
+				setSubmitEnabled(false);
+				if (debounceTimer) clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(attempt, 500);
+			}
+
+			accountInput.addEventListener("input", debouncedAttempt);
+			bankSelect.addEventListener("change", debouncedAttempt);
+
+			form.addEventListener("submit", function (event) {
+				if (!verified) event.preventDefault();
+			});
+		});
+	</script>
+}

@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gatstogo/internal/payments"
+	"gatstogo/internal/plants"
 	"gatstogo/web/templates/components"
 )
 
@@ -46,6 +48,36 @@ templ themedSelect(name string, options []themedSelectOption) {
 	</div>
 }
 
+// stateSelectOptions builds the "Create plant" panel's State dropdown from
+// plants.NigerianStates -- the single source of truth also used to
+// validate the submitted value server-side (internal/plants.go's
+// validate). A leading placeholder is included since, unlike the Role
+// dropdown's "Cashier" default, there's no sensible state to default to.
+func stateSelectOptions() []themedSelectOption {
+	opts := make([]themedSelectOption, 0, len(plants.NigerianStates)+1)
+	opts = append(opts, themedSelectOption{Value: "", Label: "Select state"})
+	for _, s := range plants.NigerianStates {
+		opts = append(opts, themedSelectOption{Value: s, Label: s})
+	}
+	return opts
+}
+
+// bankSelectOptions builds the "Create plant" panel's Bank dropdown from a
+// live-fetched (with fallback) bank list -- see AdminConsoleData.Banks and
+// payments.Client.BanksWithFallback for where banks actually comes from.
+// Converted to themedSelectOption here, inside this package, rather than
+// exporting themedSelectOption for cmd/server to build directly -- keeps
+// the handler layer's data (AdminConsoleData.Banks, plain []payments.Bank)
+// decoupled from this page's own internal select-widget shape.
+func bankSelectOptions(banks []payments.Bank) []themedSelectOption {
+	opts := make([]themedSelectOption, 0, len(banks)+1)
+	opts = append(opts, themedSelectOption{Value: "", Label: "Select bank"})
+	for _, b := range banks {
+		opts = append(opts, themedSelectOption{Value: b.Code, Label: b.Name})
+	}
+	return opts
+}
+
 type OwnerDashboardData struct {
 	PlantName       string
 	PlantSlug       string
@@ -53,6 +85,19 @@ type OwnerDashboardData struct {
 	PlantAddress    string
 	PlantPhone      string
 	DomainStatus    string
+	// The remaining PlantXxx fields below are the business/regulatory/
+	// settlement details collected at onboarding (internal/plants.
+	// CreateParams) -- populated by cmd/server/main.go's loadPlantProfile,
+	// shown as read-only rows in the "Plant profile" panel
+	// (ownerDashboardContent) so an owner can verify what was submitted.
+	// Editing them, and a dedicated admin-side compliance review view, are
+	// both explicit follow-ups, not built this round.
+	PlantState             string
+	PlantLegalBusinessName string
+	PlantCACNumber         string
+	PlantNMDPRALicense     string
+	PlantBankAccount       string // "<bank name> · <masked account number>"
+	PlantBankAccountName   string
 	TodayLabel      string
 	CurrentPrice    string
 	MoneyToday      string
@@ -186,6 +231,10 @@ type AdminConsoleData struct {
 	SystemTables      []AdminSystemTable
 	CSRFToken         string
 	ErrorMessage      string
+	// Banks backs the "Create plant" panel's Bank dropdown -- live-fetched
+	// (with fallback) once per page render, see payments.Client.
+	// BanksWithFallback and bankSelectOptions above.
+	Banks []payments.Bank
 }
 
 type AdminPlantRow struct {
@@ -706,9 +755,15 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<div class="section-title"><h2>Plant profile</h2></div>
 				<div class="split-list">
 					<div class="info-row"><span>Address</span><strong>{ data.PlantAddress }</strong></div>
+					<div class="info-row"><span>State</span><strong>{ data.PlantState }</strong></div>
 					<div class="info-row"><span>Phone</span><strong>{ data.PlantPhone }</strong></div>
 					<div class="info-row"><span>Web address</span><strong class="mono">{ data.PlantSlug }</strong></div>
 					<div class="info-row"><span>Domain status</span><strong>{ data.DomainStatus }</strong></div>
+					<div class="info-row"><span>Legal business name</span><strong>{ data.PlantLegalBusinessName }</strong></div>
+					<div class="info-row"><span>CAC number</span><strong class="mono">{ data.PlantCACNumber }</strong></div>
+					<div class="info-row"><span>NMDPRA license</span><strong class="mono">{ data.PlantNMDPRALicense }</strong></div>
+					<div class="info-row"><span>Settlement account</span><strong class="mono">{ data.PlantBankAccount }</strong></div>
+					<div class="info-row"><span>Account name</span><strong>{ data.PlantBankAccountName }</strong></div>
 				</div>
 			</div>
 		</div>
@@ -1085,7 +1140,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 		<div class="dashboard-grid">
 			<div>
 				<div class="section-title"><h2>Create plant</h2></div>
-				<form method="post" action="/admin/plants" data-splash="Setting up your plant">
+				<form method="post" action="/admin/plants" data-splash="Setting up your plant" data-account-resolve>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<div class="form-grid">
 						<div class="field"><label>Plant name</label><input type="text" name="name" placeholder="Sunrise Gas Plant" required/></div>
@@ -1096,12 +1151,38 @@ templ adminConsoleContent(data AdminConsoleData) {
 						<div class="field"><label>Primary color</label><input type="text" name="primary_color" placeholder="#006B4D"/></div>
 						<div class="field"><label>Button color</label><input type="text" name="button_color" placeholder="#006B4D"/></div>
 						<div class="field"><label>Starting price per kg</label><input type="text" name="starting_price" placeholder="1150" inputmode="decimal" required/></div>
+					</div>
+
+					<div class="section-title" style="margin-top:20px;"><h3>Business details</h3></div>
+					<div class="form-grid">
+						<div class="field"><label>Legal business name</label><input type="text" name="legal_business_name" placeholder="As registered with CAC" required/></div>
+						<div class="field"><label>CAC registration number</label><input type="text" name="cac_number" placeholder="RC 1234567" required/></div>
+						<div class="field"><label>State</label>@themedSelect("state", stateSelectOptions())</div>
+						<div class="field"><label>NMDPRA license number</label><input type="text" name="nmdpra_license_number" placeholder="License number" required/></div>
+					</div>
+
+					<div class="section-title" style="margin-top:20px;"><h3>Payout details</h3></div>
+					<p class="muted">Customer payments settle straight to this account. GatsToGo keeps a 1.5% fee automatically, no manual payout ever needed.</p>
+					<div class="form-grid">
+						<div class="field"><label>Bank</label>@themedSelect("bank_code", bankSelectOptions(data.Banks))</div>
+						<div class="field"><label>Account number</label><input type="text" name="bank_account_number" placeholder="0123456789" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required/></div>
+						<div class="field" style="grid-column: 1 / -1;">
+							<label>Account name</label>
+							<div class="account-readout" data-account-name data-state="idle">Enter your account number and bank to verify.</div>
+						</div>
+					</div>
+
+					<div class="section-title" style="margin-top:20px;"><h3>Owner login</h3></div>
+					<div class="form-grid">
 						<div class="field"><label>Owner name</label><input type="text" name="owner_name" placeholder="Full name" required/></div>
 						<div class="field"><label>Owner phone</label><input type="tel" name="owner_phone" placeholder="0803 000 0000" required/></div>
+						<div class="field"><label>Owner email</label><input type="email" name="owner_email" placeholder="owner@email.com" required/></div>
 						<div class="field"><label>Owner temporary password</label><input type="text" name="owner_password" placeholder="Set a temporary password" required/></div>
 					</div>
-					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Create plant</button></div>
+
+					<div class="action-strip"><button class="btn primary" type="submit" disabled>@components.Icon("plus") Create plant</button></div>
 				</form>
+				@accountResolveScript()
 			</div>
 			<div class="dash-aside">
 				<div class="section-title"><h2>Onboarding checklist</h2></div>

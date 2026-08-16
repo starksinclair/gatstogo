@@ -195,6 +195,16 @@ func buyGasSubmitHandler(s *Server) http.HandlerFunc {
 			return
 		}
 
+		// Subaccount is left empty (no split payment) for a plant with no
+		// paystack_subaccount_code yet -- every dev/test plant seeded
+		// before real settlement existed. Initialize itself only includes
+		// subaccount/bearer in the request when Subaccount is actually
+		// set, so this is a no-op for those plants, not a broken request.
+		var subaccount string
+		if plant.PaystackSubaccountCode != nil {
+			subaccount = *plant.PaystackSubaccountCode
+		}
+
 		callbackURL := requestScheme(r) + "://" + r.Host + "/tickets/" + ticket.Reference + "/callback"
 		init, err := s.Paystack.Initialize(r.Context(), payments.InitializeParams{
 			Email:       ticketEmail(s.NotificationEmail, ticket.Reference),
@@ -202,6 +212,12 @@ func buyGasSubmitHandler(s *Server) http.HandlerFunc {
 			Reference:   ticket.Reference,
 			CallbackURL: callbackURL,
 			Channels:    paystackChannels,
+			Subaccount:  subaccount,
+			// "subaccount" -- the plant absorbs Paystack's own processing
+			// fee from its share, per the business decision recorded in
+			// internal/plants.CreateParams's own doc comment. Only takes
+			// effect when Subaccount is actually set (see Initialize).
+			Bearer: "subaccount",
 		})
 		if err != nil {
 			// The ticket row already exists (status 'pending') even though

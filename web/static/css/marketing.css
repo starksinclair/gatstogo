@@ -381,7 +381,48 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .field-underline input:focus { outline: none; border-bottom-color: var(--ink); }
 .field-underline input::placeholder { color: var(--faint); font-weight: 400; }
+/* State/Bank <select> -- this public form has never needed a themed
+   select before and doesn't carry owner-admin.css's custom-listbox JS/CSS
+   infrastructure, so this is deliberately just "layer 1" of that same
+   system (owner-admin.css's own .field select comment): the browser's
+   native arrow stripped and replaced with the same caret-down glyph used
+   everywhere else in the app, drawn as a background-image, matching this
+   form's underline visual style rather than a bordered box. A real,
+   fully keyboard/screen-reader-native <select> either way -- no JS
+   dependency for this form to actually work. */
+.field-underline select {
+	width: 100%;
+	border: 0;
+	border-bottom: 1.5px solid var(--line-strong);
+	background-color: transparent;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	padding: 8px 22px 8px 2px;
+	color: var(--ink);
+	font-size: 16px;
+	font-weight: 600;
+	font-family: inherit;
+	cursor: pointer;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%236B6B6B' d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 2px center;
+	background-size: 14px 14px;
+}
+.field-underline select:focus { outline: none; border-bottom-color: var(--ink); }
 .field-hint { margin: 6px 0 0; color: var(--faint); font-size: 12px; }
+/* Live account-name readout (web/templates/pages/account_resolve.templ) --
+   see owner-admin.css's own .account-readout for the full rationale;
+   duplicated rather than shared since these two stylesheets already never
+   share rules anywhere else in this app. */
+.account-readout {
+	margin-top: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--muted);
+}
+.account-readout[data-state="ok"] { color: var(--success); }
+.account-readout[data-state="error"] { color: var(--danger); }
 .slug-preview {
 	display: inline-flex;
 	align-items: baseline;

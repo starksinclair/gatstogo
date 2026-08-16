@@ -40,6 +40,7 @@ func Tenant(db *pgxpool.Pool) func(http.Handler) http.Handler {
 				SELECT id, slug, name, city, address, phone, logo_path,
 				       custom_domain, domain_status, status, timezone,
 				       primary_color, secondary_color, button_color, button_text_color, font_family,
+				       paystack_subaccount_code,
 				       created_at, updated_at
 				FROM plants
 				WHERE slug = $1 AND status = 'active'
@@ -47,7 +48,8 @@ func Tenant(db *pgxpool.Pool) func(http.Handler) http.Handler {
 				&plant.ID, &plant.Slug, &plant.Name, &plant.City, &plant.Address,
 				&plant.Phone, &plant.LogoPath, &plant.CustomDomain, &plant.DomainStatus,
 				&plant.Status, &plant.Timezone, &plant.PrimaryColor, &plant.SecondaryColor,
-				&plant.ButtonColor, &plant.ButtonTextColor, &plant.FontFamily, &plant.CreatedAt, &plant.UpdatedAt,
+				&plant.ButtonColor, &plant.ButtonTextColor, &plant.FontFamily,
+				&plant.PaystackSubaccountCode, &plant.CreatedAt, &plant.UpdatedAt,
 			)
 
 			if err != nil {

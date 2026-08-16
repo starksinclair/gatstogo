@@ -37,9 +37,9 @@ import (
 )
 
 type Server struct {
-	Router   *chi.Mux
-	AppDB    *pgxpool.Pool // used for normal plant traffic (RLS enforced)
-	AdminDB  *pgxpool.Pool // used for platform admin (bypasses RLS)
+	Router     *chi.Mux
+	AppDB      *pgxpool.Pool // used for normal plant traffic (RLS enforced)
+	AdminDB    *pgxpool.Pool // used for platform admin (bypasses RLS)
 	Redis      *redis.Client
 	Sessions   *session.Store
 	Paystack   *payments.Client
@@ -202,6 +202,11 @@ func (s *Server) MountHandlers() {
 	s.Router.Get("/get-started", signupPageHandler(s))
 	s.Router.With(middleware.CSRF).Post("/get-started", signupSubmitHandler(s))
 
+	// GET, not a mutation -- no CSRF needed. Used by both onboarding
+	// forms' JS (see cmd/server/accounts.go's own doc comment) to preview
+	// a bank account holder's name before submission.
+	s.Router.Get("/accounts/resolve", accountsResolveHandler(s))
+
 	// Same branded page as an unresolved tenant subdomain (renderNotFound,
 	// cmd/server/marketing.go) for any route chi's own router can't match
 	// at all -- previously net/http's plain-text default.
@@ -221,6 +226,7 @@ func (s *Server) MountHandlers() {
 			actor := middleware.GetActor(r.Context())
 			data.CSRFToken, _ = csrf.Token(actor.Token)
 			data.ErrorMessage = adminErrorMessage(r.URL.Query().Get("error"))
+			data.Banks = s.Paystack.BanksWithFallback(r.Context())
 			if err := pages.AdminConsole(data).Render(r.Context(), w); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
@@ -479,7 +485,7 @@ func ownerErrorMessage(code string) string {
 func adminErrorMessage(code string) string {
 	switch code {
 	case "missing":
-		return "Fill in every field -- plant name, slug, owner name, owner phone, owner password, and a starting price are all required."
+		return "Fill in every field. Plant name, slug, business details, bank details, owner name, phone, email, password, and a starting price are all required."
 	case "slug":
 		return "Slugs can only contain lowercase letters, numbers, and hyphens, and can't start or end with a hyphen."
 	case "reserved-slug":
@@ -488,6 +494,10 @@ func adminErrorMessage(code string) string {
 		return "That slug is already in use by another plant."
 	case "price":
 		return "Enter a starting price per kg greater than zero."
+	case "email":
+		return "Enter a valid owner email address."
+	case "bank":
+		return "We couldn't verify that bank account. Double-check the bank and account number, and try again."
 	case "plant":
 		return "Could not create that plant. Please try again."
 	case "status":
@@ -510,6 +520,7 @@ func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.
 		TodayLabel:   time.Now().Format("2 Jan 2006"),
 		CurrentPrice: "Price coming soon",
 	}
+	loadPlantProfile(ctx, db, plant.ID, &data)
 
 	var latestPrice int64
 	if err := db.QueryRow(ctx, `SELECT price_per_kg FROM prices WHERE plant_id = $1 ORDER BY effective_from DESC LIMIT 1`, plant.ID).Scan(&latestPrice); err == nil {
@@ -554,6 +565,56 @@ func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.
 		data.HasOpenShift = true
 	}
 	return data
+}
+
+// loadPlantProfile fills in the business/regulatory/settlement fields the
+// owner dashboard's "Plant profile" panel shows as read-only rows so an
+// owner can verify what was submitted at onboarding
+// (internal/plants.CreateParams). These live outside domain.Plant --
+// unlike PaystackSubaccountCode, nothing else on the per-request path
+// needs them (see domain.Plant's own doc comment on that split), so
+// they're queried here instead, scoped to this one dashboard render.
+func loadPlantProfile(ctx context.Context, db tenantdb.Querier, plantID uuid.UUID, data *pages.OwnerDashboardData) {
+	var state, legalBusinessName, cacNumber, nmdpraLicenseNumber, bankName, bankAccountNumber, bankAccountName sql.NullString
+	err := db.QueryRow(ctx, `
+		SELECT state, legal_business_name, cac_number, nmdpra_license_number,
+		       bank_name, bank_account_number, bank_account_name
+		FROM plants WHERE id = $1
+	`, plantID).Scan(&state, &legalBusinessName, &cacNumber, &nmdpraLicenseNumber, &bankName, &bankAccountNumber, &bankAccountName)
+	if err != nil {
+		return
+	}
+	data.PlantState = nullableString(state, "State coming soon")
+	data.PlantLegalBusinessName = nullableString(legalBusinessName, "Not yet provided")
+	data.PlantCACNumber = nullableString(cacNumber, "Not yet provided")
+	data.PlantNMDPRALicense = nullableString(nmdpraLicenseNumber, "Not yet provided")
+	data.PlantBankAccountName = nullableString(bankAccountName, "Not yet provided")
+	if bankName.Valid && bankAccountNumber.Valid {
+		data.PlantBankAccount = bankName.String + " · " + maskAccountNumber(bankAccountNumber.String)
+	} else {
+		data.PlantBankAccount = "Not yet provided"
+	}
+}
+
+func nullableString(v sql.NullString, fallback string) string {
+	if !v.Valid || strings.TrimSpace(v.String) == "" {
+		return fallback
+	}
+	return v.String
+}
+
+// maskAccountNumber shows only the last 4 digits of a bank account number
+// (e.g. "••••••6789") -- the owner dashboard is behind an authenticated
+// session and this is the owner's own account, but there's no real reason
+// to render the full number on screen either, so this costs nothing and
+// meaningfully reduces exposure if a session is ever shoulder-surfed or
+// shared.
+func maskAccountNumber(v string) string {
+	v = strings.TrimSpace(v)
+	if len(v) <= 4 {
+		return v
+	}
+	return strings.Repeat("•", len(v)-4) + v[len(v)-4:]
 }
 
 func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerTicketRow {

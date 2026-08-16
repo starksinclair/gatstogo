@@ -27,8 +27,19 @@ type Plant struct {
 	ButtonColor     string    `json:"button_color"`
 	ButtonTextColor string    `json:"button_text_color"`
 	FontFamily      string    `json:"font_family"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	// PaystackSubaccountCode is the only new plant-onboarding field
+	// (internal/plants.CreateParams) loaded here rather than through a
+	// separate tenant-scoped query -- it's needed on every ticket-purchase
+	// request (cmd/server/tickets.go's buyGasSubmitHandler, to attach the
+	// right split-payment destination to payments.InitializeParams), the
+	// same per-request path every other field on this struct already
+	// serves. The remaining compliance/business fields (CAC number, bank
+	// details, ...) are only ever needed on the owner dashboard's "Plant
+	// profile" panel, which loads them through its own query instead
+	// (cmd/server/main.go's loadOwnerDashboard).
+	PaystackSubaccountCode *string   `json:"paystack_subaccount_code"`
+	CreatedAt              time.Time `json:"created_at"`
+	UpdatedAt              time.Time `json:"updated_at"`
 }
 
 type User struct {
