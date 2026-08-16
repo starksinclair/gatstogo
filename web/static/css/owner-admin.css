@@ -182,7 +182,11 @@ h1 { font-size: clamp(26px, 4vw, 40px); line-height: 0.98; }
 h2 { font-size: 17px; font-weight: 800; }
 h3 { font-size: 14px; }
 .muted { color: var(--muted); }
-.mono { font-family: var(--font-mono, "IBM Plex Mono", monospace); font-variant-numeric: tabular-nums; }
+/* white-space: nowrap here is deliberate and safe everywhere .mono is
+   used in this file (slugs, phone numbers, references, table names,
+   short kg/price figures) -- all short identifiers that should never
+   break mid-string, never long free-flowing prose. */
+.mono { font-family: var(--font-mono, "IBM Plex Mono", monospace); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .toolbar {
 	display: flex;
 	flex-wrap: wrap;
@@ -345,7 +349,19 @@ h3 { font-size: 14px; }
 .info-row:first-child { border-top: 0; padding-top: 0; }
 .info-row span:first-child { color: var(--muted); font-weight: 700; }
 
-/* ---- Tables: hairlines only, no wrapping bordered box ---- */
+/* ---- Tables: hairlines only, no wrapping bordered box. The rows used
+   to go ragged -- a long ticket reference or a name-plus-phone cell
+   would force its column narrow enough that short values like "12.50
+   kg" or "Awaiting fill" wrapped mid-word, so every row ended up a
+   different height and the whole table read as disorganized. Fixed
+   two ways: .num/.mono (numbers, codes, references -- content that
+   should never break mid-string) never wrap, full stop; and the two
+   widest, most column-heavy tables (tickets, admin plants) go further
+   with .table-fixed -- table-layout: fixed plus an explicit <colgroup>
+   so every column gets a deliberate, stable share of the width
+   instead of the browser's auto layout improvising one from whatever
+   happens to be in each row. .table-wrap's horizontal scroll is the
+   release valve below each table's min-width, not column wrapping. ---- */
 .table-wrap { overflow-x: auto; }
 table {
 	width: 100%;
@@ -368,7 +384,25 @@ td {
 	padding: 12px;
 	vertical-align: top;
 }
-.num { text-align: right; font-family: var(--font-mono, "IBM Plex Mono", monospace); }
+.num { text-align: right; font-family: var(--font-mono, "IBM Plex Mono", monospace); white-space: nowrap; }
+/* .table-fixed: deterministic column widths via <colgroup> (set inline
+   per table in owner_admin.templ, since each table's columns differ)
+   instead of the browser guessing from content. Every cell defaults to
+   nowrap + ellipsis as a safety net for the rare value that still
+   doesn't fit its column; .wrap opts specific cells back into normal
+   wrapping -- customer/plant name+phone, city+address -- the small
+   number of columns that hold genuinely unpredictable-length text. */
+.table-fixed { table-layout: fixed; }
+.table-fixed td {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.table-fixed td.wrap {
+	overflow: visible;
+	white-space: normal;
+	text-overflow: clip;
+}
 .empty {
 	display: flex;
 	align-items: center;

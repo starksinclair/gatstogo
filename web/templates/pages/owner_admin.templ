@@ -2,6 +2,7 @@ package pages
 
 import (
 	"strconv"
+	"strings"
 
 	"gatstogo/web/templates/components"
 )
@@ -89,6 +90,23 @@ type OwnerTicketRow struct {
 	PaidAt    string
 	FilledAt  string
 	BadgeCSS  string
+}
+
+// shortTicketRef trims a ticket reference's redundant plant-slug prefix
+// for table display -- every reference on this one-plant dashboard
+// already shares the same slug (tickets.NewReference always mints
+// "{slug}-{suffix}"), so repeating "sunrise-" on every single row was
+// pure noise, and also happened to be the single widest column in the
+// table. Falls back to the untouched reference if it doesn't start with
+// the expected prefix, so this only ever removes known redundancy, never
+// hides real data. The void-ticket form still posts the full row.Reference
+// unchanged -- this affects display only.
+func shortTicketRef(reference, plantSlug string) string {
+	prefix := plantSlug + "-"
+	if trimmed := strings.TrimPrefix(reference, prefix); trimmed != reference {
+		return trimmed
+	}
+	return reference
 }
 
 type OwnerStaffRow struct {
@@ -549,15 +567,18 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			<div>
 				<div class="section-title"><h2>Sales and receipts</h2></div>
 				<div class="table-wrap">
-					<table>
-						<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th>Paid kg</th><th>Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead>
+					<table class="table-fixed" style="min-width:1180px">
+						<colgroup>
+							<col style="width:11%"/><col style="width:17%"/><col style="width:6%"/><col style="width:8%"/><col style="width:12%"/><col style="width:9%"/><col style="width:11%"/><col style="width:9%"/><col style="width:9%"/><col style="width:8%"/>
+						</colgroup>
+						<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th class="num">Paid kg</th><th class="num">Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead>
 						<tbody>
 							if len(data.RecentTickets) == 0 {
 								<tr><td colspan="10"><div class="empty">No sales yet. A paid customer ticket will show its reference, code, weight, payment method, and status here.</div></td></tr>
 							}
 							for _, row := range data.RecentTickets {
 								<tr>
-									<td class="mono">{ row.Reference }</td><td>{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="mono">{ row.Kg }</td><td class="mono">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td>
+									<td class="mono" title={ row.Reference }>{ shortTicketRef(row.Reference, data.PlantSlug) }</td><td class="wrap">{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="num">{ row.Kg }</td><td class="num">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td>
 									<td>
 										if row.Status == "PENDING" || row.Status == "PAID" {
 											<form method="post" action={ templ.SafeURL("/tickets/" + row.Reference + "/void") } onsubmit="return confirm('Void this ticket? This cannot be undone.')">
@@ -592,7 +613,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			<div>
 				<div class="section-title"><h2>Cash drawer</h2></div>
 				<div class="table-wrap">
-					<table>
+					<table style="min-width:860px">
 						<thead><tr><th>When</th><th>Kind</th><th class="num">Amount</th><th class="num">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead>
 						<tbody>
 							if len(data.CashMovements) == 0 {
@@ -633,7 +654,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 	<section class="tab-panel" data-tab-panel="shifts">
 		<div class="section-title"><h2>Shift register</h2></div>
 		<div class="table-wrap">
-			<table>
+			<table style="min-width:980px">
 				<thead><tr><th>Staff</th><th>Device</th><th>Opened</th><th>Closed</th><th class="num">Tickets</th><th class="num">Tokens</th><th class="num">Opening</th><th class="num">Closing</th><th>Status</th><th>Notes</th></tr></thead>
 				<tbody>
 					if len(data.Shifts) == 0 {
@@ -651,7 +672,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			<div>
 				<div class="section-title"><h2>Staff access</h2></div>
 				<div class="table-wrap">
-					<table style="min-width:680px">
+					<table style="min-width:760px">
 						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th><th></th></tr></thead>
 						<tbody>
 							if len(data.Staff) == 0 {
@@ -832,7 +853,10 @@ templ adminConsoleContent(data AdminConsoleData) {
 	<section class="tab-panel" data-tab-panel="plants">
 		<div class="section-title"><h2>Plants</h2></div>
 		<div class="table-wrap">
-			<table>
+			<table class="table-fixed" style="min-width:1220px">
+				<colgroup>
+					<col style="width:12%"/><col style="width:10%"/><col style="width:11%"/><col style="width:10%"/><col style="width:10%"/><col style="width:4%"/><col style="width:4%"/><col style="width:6%"/><col style="width:6%"/><col style="width:8%"/><col style="width:9%"/><col style="width:10%"/>
+				</colgroup>
 				<thead><tr><th>Plant</th><th>Location</th><th>Web address</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th><th></th></tr></thead>
 				<tbody>
 					if len(data.Plants) == 0 {
@@ -840,8 +864,8 @@ templ adminConsoleContent(data AdminConsoleData) {
 					}
 					for _, row := range data.Plants {
 						<tr>
-							<td><strong>{ row.Name }</strong><div class="muted mono">{ row.Phone }</div></td><td>{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono">{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td>
-							<td class="action-strip">
+							<td class="wrap"><strong>{ row.Name }</strong><div class="muted mono">{ row.Phone }</div></td><td class="wrap">{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono" title={ row.Slug }>{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td class="wrap">{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td>
+							<td class="action-strip wrap">
 								switch row.RawStatus {
 									case "active":
 										@plantStatusForm(row.ID, "suspended", "Suspend", data.CSRFToken)
@@ -897,7 +921,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 			<div>
 				<div class="section-title"><h2>Domain health</h2></div>
 				<div class="table-wrap">
-					<table style="min-width:720px">
+					<table style="min-width:800px">
 						<thead><tr><th>Plant</th><th>Web address</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead>
 						<tbody>
 							if len(data.Plants) == 0 {
@@ -939,7 +963,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 	<section class="tab-panel" data-tab-panel="system">
 		<div class="section-title"><h2>System overview</h2></div>
 		<div class="table-wrap">
-			<table>
+			<table style="min-width:820px">
 				<thead><tr><th>Data area</th><th>What it controls</th><th class="num">Entries</th><th>Health</th><th>Notes</th></tr></thead>
 				<tbody>
 					if len(data.SystemTables) == 0 {
