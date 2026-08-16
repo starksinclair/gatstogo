@@ -926,7 +926,17 @@ td {
 		font-size: 15px;
 		line-height: 1.5;
 	}
-	.login-form-col { flex: 1; min-width: 0; }
+	/* True white, not inherited from body's near-white --page -- the
+	   card's own border/shadow are removed below so it blends into
+	   this half rather than reading as a boxed card sitting on it, but
+	   that only works if the half it's blending into is the exact
+	   same white, not --page's very-close-but-not-quite-white tone.
+	   Sitting right next to the photo half's hard, dark edge is what
+	   actually made that few-percent difference read as a mistake --
+	   a stray extra background rectangle -- rather than the
+	   deliberately restrained near-white this app uses everywhere
+	   else, where nothing nearby forces the comparison. */
+	.login-form-col { flex: 1; min-width: 0; background: #FFFFFF; }
 	.login-card { border: 0; padding: 8px; }
 	.login-brand { display: none; }
 }
