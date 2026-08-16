@@ -81,8 +81,10 @@ var validStateNames = func() map[string]bool {
 // generic blue migrations/0001_init_schema.up.sql's own column defaults
 // fall back to, which don't match GatsToGo's actual brand at all.
 const (
-	defaultPrimaryColor = "#006B4D"
-	defaultButtonColor  = "#006B4D"
+	defaultPrimaryColor    = "#006B4D"
+	defaultButtonColor     = "#006B4D"
+	defaultSecondaryColor  = "#10B981"
+	defaultButtonTextColor = "#F8FAFC"
 )
 
 // CreateParams are the fields both onboarding entry points collect: the
@@ -113,6 +115,25 @@ type CreateParams struct {
 	State        string
 	PrimaryColor string
 	ButtonColor  string
+
+	// SecondaryColor and ButtonTextColor round out the brand kit
+	// PrimaryColor/ButtonColor started -- both already read and applied
+	// by the customer-facing page (web/templates/pages/customer_home.templ's
+	// customerTheme) since before this build-out, just never settable by
+	// either onboarding form until now. Optional, same fallback-on-blank-
+	// or-invalid treatment as PrimaryColor/ButtonColor: never gates
+	// submission.
+	SecondaryColor  string
+	ButtonTextColor string
+
+	// LogoPath is the public URL a logo was saved to (cmd/server's
+	// provisionPlant, via internal/uploads.SaveLogo) -- optional, and,
+	// like BankName/BankAccountName below, not something Create trusts a
+	// caller to have typed: it's either empty (no logo uploaded) or a
+	// path SaveLogo itself just returned. plants.logo_path has existed in
+	// the schema since the first migration and customerTheme already
+	// renders it if set; this is what finally lets it ever be set.
+	LogoPath string
 
 	// LegalBusinessName, CACNumber, and NMDPRALicenseNumber are the
 	// business's real-world registered identity -- LegalBusinessName may
@@ -175,12 +196,12 @@ type Plant struct {
 // validate below -- exactly the set of values Create needs for its
 // INSERTs, computed once instead of re-trimming the same strings twice.
 type validated struct {
-	name, slug                                               string
-	state, legalBusinessName, cacNumber, nmdpraLicenseNumber string
-	bankCode, bankAccountNumber                              string
-	ownerName, ownerPhone, ownerEmail                        string
-	status                                                   string
-	primaryColor, buttonColor                                string
+	name, slug                                                 string
+	state, legalBusinessName, cacNumber, nmdpraLicenseNumber   string
+	bankCode, bankAccountNumber                                string
+	ownerName, ownerPhone, ownerEmail                          string
+	status                                                     string
+	primaryColor, buttonColor, secondaryColor, buttonTextColor string
 }
 
 // validate normalizes and checks every field a visitor actually fills in
@@ -206,6 +227,8 @@ func validate(p CreateParams) (validated, error) {
 	v.ownerEmail = strings.TrimSpace(p.OwnerEmail)
 	v.primaryColor = validHexColorOr(p.PrimaryColor, defaultPrimaryColor)
 	v.buttonColor = validHexColorOr(p.ButtonColor, defaultButtonColor)
+	v.secondaryColor = validHexColorOr(p.SecondaryColor, defaultSecondaryColor)
+	v.buttonTextColor = validHexColorOr(p.ButtonTextColor, defaultButtonTextColor)
 
 	if v.name == "" || v.slug == "" || v.state == "" || v.legalBusinessName == "" ||
 		v.cacNumber == "" || v.nmdpraLicenseNumber == "" || v.bankCode == "" ||
@@ -319,16 +342,16 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 			legal_business_name, cac_number, nmdpra_license_number,
 			bank_code, bank_name, bank_account_number, bank_account_name,
 			paystack_subaccount_code,
-			primary_color, button_color, status
+			primary_color, button_color, secondary_color, button_text_color, logo_path, status
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
 		RETURNING id
 	`,
 		v.name, v.slug, nullIfEmpty(p.City), nullIfEmpty(p.Address), nullIfEmpty(p.Phone), v.state,
 		v.legalBusinessName, v.cacNumber, v.nmdpraLicenseNumber,
 		v.bankCode, bankName, v.bankAccountNumber, bankAccountName,
 		subaccountCode,
-		v.primaryColor, v.buttonColor, v.status,
+		v.primaryColor, v.buttonColor, v.secondaryColor, v.buttonTextColor, nullIfEmpty(p.LogoPath), v.status,
 	).Scan(&plantID)
 	if err != nil {
 		if isUniqueViolation(err) {

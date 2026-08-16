@@ -489,6 +489,38 @@ td {
 	border-color: var(--ink);
 }
 .field textarea { min-height: 86px; resize: vertical; }
+/* Custom file input trigger (the "Create plant" panel's Logo field) --
+   input[type=file]'s native "Choose File" button has no cross-browser way
+   to restyle directly, so instead: visually hide the real <input> (still
+   focusable and fully functional) and let a <label for="logo-input">
+   styled as .btn be the actual clickable trigger instead -- clicking a
+   label associated with a file input natively opens the file picker with
+   zero JS needed, so choosing and submitting a file both still work even
+   if the page's own script never runs. That script (opsShell, "File
+   input filename") only ever updates the visible filename text next to
+   it -- a purely cosmetic layer on top of something that already works
+   without it.
+   .field .file-native, not bare .file-native, specifically to win over
+   .field input's own border/padding/min-height above at equal
+   specificity (later in source order) -- without that, this technique's
+   deliberately tiny 1x1px hidden box would inherit that rule's 10px/12px
+   padding and stop being invisible (box-sizing: border-box includes
+   padding in the box's rendered size). */
+.field .file-native {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+	min-height: 0;
+}
+.file-field { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.file-trigger { cursor: pointer; }
+.file-name { color: var(--muted); font-size: 13px; }
 /* Live account-name readout (web/templates/pages/account_resolve.templ) --
    plain text, not another bordered input: it's a status message, not
    something the visitor edits directly. Color keys off data-state, set by
@@ -502,6 +534,10 @@ td {
 .account-readout[data-state="checking"] { color: var(--muted); }
 .account-readout[data-state="ok"] { color: var(--green); }
 .account-readout[data-state="error"] { color: var(--red); }
+/* Plant profile panel's own small logo preview (ownerDashboardContent) --
+   bounded, not full-size: this is a read-only confirmation that
+   something was actually uploaded, not a brand showcase. */
+.brand-logo-preview { display: block; max-height: 32px; max-width: 160px; object-fit: contain; }
 /* Chrome/Safari repaint an autofilled input with their own pale blue
    or yellow background the instant it's filled, regardless of the
    background this file sets above -- not a bug in any rule here, a

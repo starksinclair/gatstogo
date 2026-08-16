@@ -165,7 +165,13 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			params.StartingPriceKobo = startingPriceKobo
 		}
 
-		_, err := provisionPlant(r.Context(), s, params, nil)
+		// No logo/brand-color fields on this form -- see admin_write.go's
+		// adminCreatePlantHandler for where those actually live. A public,
+		// unreviewed applicant sets their business/identity/bank details
+		// here; branding stays an admin-managed step, the same boundary
+		// this form already drew for PrimaryColor/ButtonColor before this
+		// build-out, now extended consistently to the rest of the kit.
+		_, err := provisionPlant(r.Context(), s, params, nil, nil, nil)
 		if err != nil {
 			log.Println("signup: create plant failed:", err)
 			renderSignupForm(s, w, r, signupErrorMessage(adminPlantErrorCode(err)))

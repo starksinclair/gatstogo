@@ -41,7 +41,7 @@ func accountsResolveHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		allowed, err := checkResolveRateLimit(r.Context(), s.Redis, clientIP(r))
+		allowed, err := checkIPRateLimit(r.Context(), s.Redis, "accounts_resolve_rl:", clientIP(r), resolveRateLimitMax, resolveRateLimitWindow)
 		if err != nil {
 			// Fail open: a Redis hiccup shouldn't block real bank-account
 			// verification for every visitor -- the actual enforcement
@@ -73,18 +73,28 @@ func accountsResolveHandler(s *Server) http.HandlerFunc {
 	}
 }
 
-func checkResolveRateLimit(ctx context.Context, rdb *redis.Client, ip string) (bool, error) {
-	key := "accounts_resolve_rl:" + ip
+// checkIPRateLimit caps how many times a single IP can hit whatever
+// endpoint calls this within window, keyed by keyPrefix+ip -- the same
+// Redis INCR+EXPIRE pattern internal/shifts.PINLimiter established for
+// login lockouts, generalized here since this endpoint and
+// ownerForgotPasswordSubmitHandler (cmd/server/auth.go) both need the
+// exact same shape for the exact same reason (probing/spam via a public,
+// unauthenticated endpoint), just with their own prefix/limit/window. A
+// Redis error fails open (returns allowed=true) -- a Redis hiccup
+// shouldn't block a real visitor from using a legitimate endpoint; the
+// caller logs the error so a persistent problem is still visible.
+func checkIPRateLimit(ctx context.Context, rdb *redis.Client, keyPrefix, ip string, max int, window time.Duration) (bool, error) {
+	key := keyPrefix + ip
 	n, err := rdb.Incr(ctx, key).Result()
 	if err != nil {
 		return true, err
 	}
 	if n == 1 {
-		if err := rdb.Expire(ctx, key, resolveRateLimitWindow).Err(); err != nil {
+		if err := rdb.Expire(ctx, key, window).Err(); err != nil {
 			return true, err
 		}
 	}
-	return n <= resolveRateLimitMax, nil
+	return n <= int64(max), nil
 }
 
 // clientIP prefers X-Forwarded-For (set by a trusted reverse proxy in any

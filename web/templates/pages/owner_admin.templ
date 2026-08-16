@@ -121,7 +121,17 @@ type OwnerDashboardData struct {
 	PlantNMDPRALicense     string
 	PlantBankAccount       string // "<bank name> · <masked account number>"
 	PlantBankAccountName   string
-	TodayLabel      string
+	// PlantLogoPath is "" when no logo has been uploaded (the customer
+	// page's own customerBrand, customer_home.templ, shows no mark at all
+	// in that case, deliberately never a fabricated placeholder -- this
+	// panel follows the same rule instead of claiming a logo exists when
+	// it doesn't).
+	PlantLogoPath        string
+	PlantPrimaryColor    string
+	PlantButtonColor     string
+	PlantSecondaryColor  string
+	PlantButtonTextColor string
+	TodayLabel           string
 	CurrentPrice    string
 	MoneyToday      string
 	SalesCount      int64
@@ -605,6 +615,24 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 						});
 					});
 				});
+
+				// File input filename display -- see .file-field/.file-native
+				// (owner-admin.css) for why the real <input type="file"> is
+				// visually hidden and a <label for="..."> styled as .btn is
+				// the actual clickable trigger (a label click natively opens
+				// the file picker with zero JS needed, so choosing and
+				// submitting a file both still work even if this never runs
+				// -- only the filename text stays "No file chosen").
+				document.addEventListener("DOMContentLoaded", function () {
+					document.querySelectorAll("[data-file-input]").forEach(function (shell) {
+						var input = shell.querySelector(".file-native");
+						var nameEl = shell.querySelector("[data-file-name]");
+						if (!input || !nameEl) return;
+						input.addEventListener("change", function () {
+							nameEl.textContent = input.files && input.files.length ? input.files[0].name : "No file chosen";
+						});
+					});
+				});
 			</script>
 		</head>
 		<body>
@@ -823,6 +851,28 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					<div class="info-row"><span>Settlement account</span><strong class="mono">{ data.PlantBankAccount }</strong></div>
 					<div class="info-row"><span>Account name</span><strong>{ data.PlantBankAccountName }</strong></div>
 				</div>
+				<div class="section-title" style="margin-top:28px;"><h2>Brand kit</h2></div>
+				<div class="split-list">
+					<div class="info-row"><span>Logo</span><strong>
+						if data.PlantLogoPath != "" {
+							<img class="brand-logo-preview" src={ data.PlantLogoPath } alt="Plant logo"/>
+						} else {
+							Not yet provided
+						}
+					</strong></div>
+					<div class="info-row"><span>Primary color</span><strong class="mono">{ data.PlantPrimaryColor }</strong></div>
+					<div class="info-row"><span>Button color</span><strong class="mono">{ data.PlantButtonColor }</strong></div>
+					<div class="info-row"><span>Secondary color</span><strong class="mono">{ data.PlantSecondaryColor }</strong></div>
+					<div class="info-row"><span>Button text color</span><strong class="mono">{ data.PlantButtonTextColor }</strong></div>
+				</div>
+				<div class="section-title" style="margin-top:28px;"><h2>Account security</h2></div>
+				<form method="post" action="/owner/password" data-splash="Updating password">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="field"><label>Current password</label><input type="password" name="current_password" autocomplete="current-password" required/></div>
+					<div class="field" style="margin-top:10px;"><label>New password</label><input type="password" name="new_password" autocomplete="new-password" required/></div>
+					<div class="field" style="margin-top:10px;"><label>Confirm new password</label><input type="password" name="new_password_confirm" autocomplete="new-password" required/></div>
+					<div class="action-strip" style="margin-top:12px;"><button class="btn primary" type="submit">Update password</button></div>
+				</form>
 			</div>
 		</div>
 	</section>
@@ -1199,7 +1249,7 @@ templ adminConsoleContent(data AdminConsoleData) {
 		<div class="dashboard-grid">
 			<div>
 				<div class="section-title"><h2>Create plant</h2></div>
-				<form method="post" action="/admin/plants" data-splash="Setting up your plant" data-account-resolve>
+				<form method="post" action="/admin/plants" enctype="multipart/form-data" data-splash="Setting up your plant" data-account-resolve>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<div class="form-grid">
 						<div class="field"><label>Plant name</label><input type="text" name="name" placeholder="Sunrise Gas Plant" required/></div>
@@ -1207,9 +1257,25 @@ templ adminConsoleContent(data AdminConsoleData) {
 						<div class="field"><label>City</label><input type="text" name="city" placeholder="Owerri"/></div>
 						<div class="field"><label>Phone</label><input type="tel" name="phone" placeholder="0803 000 0000"/></div>
 						<div class="field" style="grid-column: 1 / -1;"><label>Address</label><input type="text" name="address" placeholder="Plant address"/></div>
+						<div class="field"><label>Starting price per kg</label><input type="text" name="starting_price" placeholder="1150" inputmode="decimal" required/></div>
+					</div>
+
+					<div class="section-title" style="margin-top:20px;"><h3>Brand kit</h3></div>
+					<p class="muted">Everything here is optional and can be changed later -- a plant works fine with none of it set.</p>
+					<div class="form-grid">
 						<div class="field"><label>Primary color</label><input type="text" name="primary_color" placeholder="#006B4D"/></div>
 						<div class="field"><label>Button color</label><input type="text" name="button_color" placeholder="#006B4D"/></div>
-						<div class="field"><label>Starting price per kg</label><input type="text" name="starting_price" placeholder="1150" inputmode="decimal" required/></div>
+						<div class="field"><label>Secondary color</label><input type="text" name="secondary_color" placeholder="#10B981"/></div>
+						<div class="field"><label>Button text color</label><input type="text" name="button_text_color" placeholder="#F8FAFC"/></div>
+						<div class="field" style="grid-column: 1 / -1;">
+							<label>Logo</label>
+							<div class="file-field" data-file-input>
+								<input type="file" id="logo-input" name="logo" accept="image/png,image/jpeg,image/webp" class="file-native"/>
+								<label class="btn file-trigger" for="logo-input">Choose file</label>
+								<span class="file-name" data-file-name>No file chosen</span>
+							</div>
+							<p class="muted" style="margin-top:6px;">PNG, JPEG, or WebP, up to 2MB.</p>
+						</div>
 					</div>
 
 					<div class="section-title" style="margin-top:20px;"><h3>Business details</h3></div>

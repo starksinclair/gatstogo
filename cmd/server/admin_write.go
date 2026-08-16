@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"math"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/payments"
 	"gatstogo/internal/plants"
+	"gatstogo/internal/uploads"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -38,7 +40,16 @@ func adminCreatePlantHandler(s *Server) http.HandlerFunc {
 			http.Error(w, "Not found", http.StatusNotFound)
 			return
 		}
-		if err := r.ParseForm(); err != nil {
+		// ParseMultipartForm, not ParseForm: the form now carries an
+		// optional logo file (enctype="multipart/form-data",
+		// owner_admin.templ). r.FormValue(...) below works exactly the
+		// same either way -- note this call is largely redundant in
+		// practice, since middleware.CSRF's own r.FormValue("csrf_token")
+		// already triggered the real parse (with Go's default 32MiB
+		// threshold) before this handler ever runs; kept for the explicit
+		// error handling and as a clear signal, to a reader, that this
+		// handler expects a multipart body.
+		if err := r.ParseMultipartForm(uploads.MaxLogoBytes); err != nil {
 			http.Redirect(w, r, "/admin?error=form#onboarding", http.StatusSeeOther)
 			return
 		}
@@ -60,6 +71,8 @@ func adminCreatePlantHandler(s *Server) http.HandlerFunc {
 			BankAccountNumber:   r.FormValue("bank_account_number"),
 			PrimaryColor:        r.FormValue("primary_color"),
 			ButtonColor:         r.FormValue("button_color"),
+			SecondaryColor:      r.FormValue("secondary_color"),
+			ButtonTextColor:     r.FormValue("button_text_color"),
 			OwnerName:           r.FormValue("owner_name"),
 			OwnerPhone:          r.FormValue("owner_phone"),
 			OwnerEmail:          r.FormValue("owner_email"),
@@ -69,7 +82,12 @@ func adminCreatePlantHandler(s *Server) http.HandlerFunc {
 			params.StartingPriceKobo = startingPriceKobo
 		}
 
-		_, err := provisionPlant(r.Context(), s, params, &actor.UserID)
+		logoFile, logoHeader := extractOptionalLogo(r)
+		if logoFile != nil {
+			defer logoFile.Close()
+		}
+
+		_, err := provisionPlant(r.Context(), s, params, logoFile, logoHeader, &actor.UserID)
 		if err != nil {
 			log.Println("admin create plant:", err)
 			http.Redirect(w, r, "/admin?error="+adminPlantErrorCode(err)+"#onboarding", http.StatusSeeOther)
@@ -77,6 +95,18 @@ func adminCreatePlantHandler(s *Server) http.HandlerFunc {
 		}
 		http.Redirect(w, r, "/admin#plants", http.StatusSeeOther)
 	}
+}
+
+// extractOptionalLogo reads the "logo" file field, if the visitor
+// actually attached one -- an empty file input is not an error
+// (http.ErrMissingFile), just "no logo this time", the same optional
+// treatment as an unfilled City/Address field.
+func extractOptionalLogo(r *http.Request) (multipart.File, *multipart.FileHeader) {
+	file, header, err := r.FormFile("logo")
+	if err != nil {
+		return nil, nil
+	}
+	return file, header
 }
 
 // bankVerificationError wraps a Paystack failure from provisionPlant's own
@@ -90,6 +120,23 @@ func (e *bankVerificationError) Error() string {
 	return "provision plant: bank verification failed: " + e.err.Error()
 }
 func (e *bankVerificationError) Unwrap() error { return e.err }
+
+// logoUploadError wraps a rejected logo upload (internal/uploads.SaveLogo)
+// -- distinct from a plants.Err*/bankVerificationError so
+// adminPlantErrorCode can show a specific "that image didn't work"
+// message instead of a generic plant-creation failure. Unlike a bad bank
+// account, a bad logo never had to reach here: the visitor could always
+// have just left the field empty (LogoPath is optional, plants.Create's
+// own validation never requires it) -- provisionPlant still treats a
+// *rejected* upload as a hard stop rather than silently dropping it,
+// though, so a plant is never created with a visitor believing their logo
+// was saved when it actually wasn't.
+type logoUploadError struct{ err error }
+
+func (e *logoUploadError) Error() string {
+	return "provision plant: logo upload failed: " + e.err.Error()
+}
+func (e *logoUploadError) Unwrap() error { return e.err }
 
 // provisionPlant orchestrates plant creation: resolves the submitted bank
 // account and creates its Paystack subaccount before writing anything to
@@ -107,17 +154,41 @@ func (e *bankVerificationError) Unwrap() error { return e.err }
 // ticket a plant must never exist without a real settlement path already
 // attached (see plants.Create's own second validation block).
 //
-// plants.ValidateParams runs first, before any Paystack call: calling
-// CreateSubaccount for a submission that's missing a required field would
-// create a real, orphaned Paystack subaccount for nothing. If the
-// database write somehow fails *after* a successful CreateSubaccount, the
-// subaccount is simply left orphaned at Paystack -- harmless (costs
-// nothing, references nothing), the same accepted trade-off
-// buyGasSubmitHandler's own ticket-then-Paystack sequencing already lives
-// with in the other direction.
-func provisionPlant(ctx context.Context, s *Server, params plants.CreateParams, actorID *uuid.UUID) (*plants.Plant, error) {
+// plants.ValidateParams runs first, before any Paystack call or logo save:
+// calling CreateSubaccount for a submission that's missing a required
+// field would create a real, orphaned Paystack subaccount for nothing,
+// and saving a logo to disk under a slug that's about to be rejected
+// (reserved/taken -- the one thing ValidateParams itself can't catch,
+// since that requires a database check) would leave a stray file behind
+// for the same reason. If the database write somehow fails *after* a
+// successful CreateSubaccount or logo save, both are simply left orphaned
+// -- harmless (costs nothing, references nothing), the same accepted
+// trade-off buyGasSubmitHandler's own ticket-then-Paystack sequencing
+// already lives with in the other direction.
+//
+// logoFile/logoHeader are both nilable -- a plant with no logo attached
+// is the normal case (LogoPath is optional; see CreateParams's own doc
+// comment), not an error.
+func provisionPlant(ctx context.Context, s *Server, params plants.CreateParams, logoFile multipart.File, logoHeader *multipart.FileHeader, actorID *uuid.UUID) (*plants.Plant, error) {
 	if err := plants.ValidateParams(params); err != nil {
 		return nil, err
+	}
+
+	if logoFile != nil {
+		// Normalized (trimmed, lowercased) the same way plants.Create
+		// itself normalizes a slug internally -- using the raw,
+		// as-submitted params.Slug here instead would save the file
+		// under a path that doesn't match the slug plants.Create
+		// actually stores (e.g. mixed-case "Sunrise" on disk vs. the
+		// lowercased "sunrise" every tenant lookup, and every other
+		// plant, actually uses), and plants.logo_path would then point
+		// at a URL that 404s.
+		slug := strings.ToLower(strings.TrimSpace(params.Slug))
+		logoPath, err := uploads.SaveLogo(slug, logoFile, logoHeader)
+		if err != nil {
+			return nil, &logoUploadError{err}
+		}
+		params.LogoPath = logoPath
 	}
 
 	bankCode := strings.TrimSpace(params.BankCode)
@@ -155,6 +226,10 @@ func adminPlantErrorCode(err error) string {
 	var bankErr *bankVerificationError
 	if errors.As(err, &bankErr) {
 		return "bank"
+	}
+	var logoErr *logoUploadError
+	if errors.As(err, &logoErr) {
+		return "logo"
 	}
 	switch {
 	case errors.Is(err, plants.ErrMissingField):

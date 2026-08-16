@@ -10,6 +10,7 @@ import (
 	//"gatstogo/internal/handlers/attendant"
 	"gatstogo/internal/csrf"
 	"gatstogo/internal/domain"
+	"gatstogo/internal/email"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/payments"
 	"gatstogo/internal/receipts"
@@ -46,6 +47,11 @@ type Server struct {
 	PINLimiter *shifts.PINLimiter
 	Receipts   *receipts.CodeStore
 	SMS        sms.Sender
+	// Email sends the owner "forgot password" reset link
+	// (cmd/server/auth.go). Defaults to email.LoggingSender (never
+	// actually sent, same as SMS's own default) unless RESEND_API_KEY is
+	// configured, in which case it's a real email.ResendSender.
+	Email email.Sender
 	// NotificationEmail is GatsToGo's own real inbox, used as the base for
 	// the per-ticket placeholder email Paystack's Initialize API requires
 	// (see ticketEmail in tickets.go). Configurable via
@@ -150,6 +156,16 @@ func CreateNewServer() (*Server, error) {
 		return nil, fmt.Errorf("PAYSTACK_SECRET_KEY is required")
 	}
 
+	// 6. Email (owner password-reset links). Optional, unlike Paystack:
+	// falls back to email.LoggingSender (same graceful-degrade precedent
+	// as SMS) when RESEND_API_KEY isn't set yet, rather than failing
+	// startup -- a reset link that's only ever logged, not actually
+	// delivered, until a real key is added.
+	var emailSender email.Sender = email.NewLoggingSender()
+	if resendAPIKey := os.Getenv("RESEND_API_KEY"); resendAPIKey != "" {
+		emailSender = email.NewResendSender(resendAPIKey, os.Getenv("RESEND_FROM_EMAIL"))
+	}
+
 	s := &Server{
 		Router:            chi.NewRouter(),
 		AppDB:             appDB,
@@ -160,6 +176,7 @@ func CreateNewServer() (*Server, error) {
 		PINLimiter:        shifts.NewPINLimiter(rdb),
 		Receipts:          receipts.NewCodeStore(rdb),
 		SMS:               sms.NewLoggingSender(),
+		Email:             emailSender,
 		NotificationEmail: getEnv("TICKET_NOTIFICATION_EMAIL", "gatstogofficial@gmail.com"),
 	}
 	return s, nil
@@ -297,6 +314,16 @@ func (s *Server) MountHandlers() {
 		r.Get("/owner/login", ownerLoginPageHandler(s))
 		r.With(middleware.CSRF).Post("/owner/login", ownerLoginSubmitHandler(s))
 
+		// Forgot/reset password -- deliberately public, no session: this
+		// is exactly for an owner who can't log in at all. Rate-limited
+		// (checkIPRateLimit, cmd/server/accounts.go) since repeatedly
+		// submitting phone numbers here is the same probing/spam risk
+		// GET /accounts/resolve already guards against.
+		r.Get("/owner/forgot-password", ownerForgotPasswordPageHandler(s))
+		r.With(middleware.CSRF).Post("/owner/forgot-password", ownerForgotPasswordSubmitHandler(s))
+		r.Get("/owner/reset-password", ownerResetPasswordPageHandler(s))
+		r.With(middleware.CSRF).Post("/owner/reset-password", ownerResetPasswordSubmitHandler(s))
+
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.RequireOwnerSession(s.Sessions))
 			// Same ordering rationale as the admin group above: mounted
@@ -312,6 +339,7 @@ func (s *Server) MountHandlers() {
 			r.Post("/owner/staff", ownerCreateStaffHandler(s))
 			r.Post("/owner/staff/{id}/status", ownerStaffStatusHandler(s))
 			r.Post("/owner/cash-movements", ownerCashMovementHandler(s))
+			r.Post("/owner/password", ownerChangePasswordHandler(s))
 		})
 
 		r.Get("/home/summary", func(w http.ResponseWriter, r *http.Request) {
@@ -473,6 +501,14 @@ func ownerErrorMessage(code string) string {
 		return "Could not update that staff member."
 	case "cash":
 		return "Enter a valid amount, and make sure a shift is currently open."
+	case "password-missing":
+		return "Enter your current password and a new password."
+	case "password-mismatch":
+		return "Those new passwords don't match."
+	case "password-current":
+		return "That's not your current password."
+	case "password-form":
+		return "Something went wrong. Please try again."
 	case "form":
 		return "Something went wrong. Please try again."
 	default:
@@ -499,6 +535,8 @@ func adminErrorMessage(code string) string {
 		return "Enter a valid owner email address."
 	case "bank":
 		return "We couldn't verify that bank account. Double-check the bank and account number, and try again."
+	case "logo":
+		return "That image didn't work. Use a PNG, JPEG, or WebP file under 2MB, or leave the logo blank for now."
 	case "plant":
 		return "Could not create that plant. Please try again."
 	case "status":
@@ -520,6 +558,15 @@ func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.
 		DomainStatus: humanize(plant.DomainStatus, "No domain yet"),
 		TodayLabel:   time.Now().Format("2 Jan 2006"),
 		CurrentPrice: "Price coming soon",
+		// Already loaded by middleware.Tenant's own per-request query
+		// (internal/middleware/tenant.go) -- no separate query needed for
+		// these, unlike the compliance/bank fields loadPlantProfile below
+		// queries on its own.
+		PlantLogoPath:        ptrString(plant.LogoPath, ""),
+		PlantPrimaryColor:    plant.PrimaryColor,
+		PlantButtonColor:     plant.ButtonColor,
+		PlantSecondaryColor:  plant.SecondaryColor,
+		PlantButtonTextColor: plant.ButtonTextColor,
 	}
 	loadPlantProfile(ctx, db, plant.ID, &data)
 
@@ -1151,6 +1198,10 @@ func humanizeActivityAction(action string) string {
 		return "Plant created"
 	case "plant.status_changed":
 		return "Plant status changed"
+	case "owner.password_changed":
+		return "Owner password changed"
+	case "owner.password_reset":
+		return "Owner password reset"
 	default:
 		return humanize(strings.ReplaceAll(action, ".", " "), "Activity")
 	}

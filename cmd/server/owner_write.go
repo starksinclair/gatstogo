@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"math"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"gatstogo/internal/audit"
+	"gatstogo/internal/auth"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/prices"
 	"gatstogo/internal/shifts"
@@ -209,5 +211,81 @@ func ownerCashMovementHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		http.Redirect(w, r, "/owner#cash", http.StatusSeeOther)
+	}
+}
+
+// ---- POST /owner/password ----
+
+// errCurrentPasswordWrong distinguishes "the current password didn't
+// verify" from every other failure inside the tenantdb.WithTenant
+// closure below (a genuine DB error), so the redirect can show the one
+// specific, actionable message ("that's not your current password")
+// instead of a generic "something went wrong" for a mistake the owner
+// can immediately fix.
+var errCurrentPasswordWrong = errors.New("owner: current password is incorrect")
+
+// ownerChangePasswordHandler lets an owner who's already logged in (and
+// therefore already knows their current password -- an admin-set
+// temporary one, or a previous one they chose) set a new one. This is
+// deliberately separate from the forgot/reset-password flow
+// (cmd/server/auth.go), which is for the opposite case: an owner who
+// can't log in at all.
+func ownerChangePasswordHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		actor := middleware.GetActor(r.Context())
+		if plant == nil || actor == nil {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		if err := r.ParseForm(); err != nil {
+			http.Redirect(w, r, "/owner?error=password-form#overview", http.StatusSeeOther)
+			return
+		}
+		currentPassword := r.FormValue("current_password")
+		newPassword := r.FormValue("new_password")
+		confirm := r.FormValue("new_password_confirm")
+
+		if currentPassword == "" || newPassword == "" || confirm == "" {
+			http.Redirect(w, r, "/owner?error=password-missing#overview", http.StatusSeeOther)
+			return
+		}
+		if newPassword != confirm {
+			http.Redirect(w, r, "/owner?error=password-mismatch#overview", http.StatusSeeOther)
+			return
+		}
+
+		err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			var currentHash *string
+			if err := q.QueryRow(ctx, `SELECT password_hash FROM users WHERE id = $1 AND plant_id = $2`, actor.UserID, plant.ID).Scan(&currentHash); err != nil {
+				return err
+			}
+			hash := ""
+			if currentHash != nil {
+				hash = *currentHash
+			}
+			if !auth.VerifyPassword(hash, currentPassword) {
+				return errCurrentPasswordWrong
+			}
+
+			newHash, err := auth.HashPassword(newPassword)
+			if err != nil {
+				return err
+			}
+			if _, err := q.Exec(ctx, `UPDATE users SET password_hash = $1 WHERE id = $2 AND plant_id = $3`, newHash, actor.UserID, plant.ID); err != nil {
+				return err
+			}
+			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "owner.password_changed", "", nil)
+		})
+		if err != nil {
+			if errors.Is(err, errCurrentPasswordWrong) {
+				http.Redirect(w, r, "/owner?error=password-current#overview", http.StatusSeeOther)
+				return
+			}
+			log.Println("owner change password:", err)
+			http.Redirect(w, r, "/owner?error=password-form#overview", http.StatusSeeOther)
+			return
+		}
+		http.Redirect(w, r, "/owner#overview", http.StatusSeeOther)
 	}
 }

@@ -17,7 +17,15 @@ include_ext = ["go", "templ"]
 # with an unusual character (an "&" in this repo's own history) can
 # fail that enumeration outright and take the whole dev server down in
 # a boot loop, never reaching "building..." at all.
-exclude_dir = ["tmp", "vendor", ".git", "web/images", "web/lottie"]
+#
+# web/static/uploads is the same class of directory for the same reason:
+# internal/uploads.SaveLogo writes plant-uploaded logos there at runtime,
+# under a fixed, always-safe filename ("logo.png"/"logo.jpg"/"logo.webp",
+# never anything derived from a visitor's own upload), but it's still a
+# directory that only ever grows with binary asset files air has no
+# rebuild-relevant reason to enumerate, and only stands to get larger
+# over the life of a real deployment.
+exclude_dir = ["tmp", "vendor", ".git", "web/images", "web/lottie", "web/static/uploads"]
 
 [log]
 time = true

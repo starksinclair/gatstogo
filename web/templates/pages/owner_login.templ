@@ -103,6 +103,18 @@ templ authShell(title string, heading string, errorMsg string, action string, cs
 									@components.Icon("eye")
 								</button>
 							</div>
+							// Owner login only -- see this file's own doc
+							// comment on why authShell is also the admin
+							// console's login page (AdminLogin,
+							// admin_login.templ), which deliberately has no
+							// self-service forgot-password flow of its own
+							// (a small, trusted, internal group; a locked-out
+							// admin relies on another admin or direct access
+							// instead). action is the one thing already
+							// distinguishing which caller this render is for.
+							if action == "/owner/login" {
+								<a class="login-sub" style="display:inline-block; margin-top:8px;" href="/owner/forgot-password">Forgot your password?</a>
+							}
 						</div>
 						<button class="btn primary full-width" type="submit">Sign in</button>
 					</form>
