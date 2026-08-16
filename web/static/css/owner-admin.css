@@ -622,17 +622,18 @@ td {
 	transition: transform 0.15s ease;
 }
 .confirm-overlay.open .confirm-modal { transform: scale(1) translateY(0); }
+/* Plain icon, no filled circle behind it -- same reasoning as every
+   other "that reads as an unwanted background/card" fix this session
+   (the badges, the rail note, the mobile menu button): a colored
+   shape sitting behind an already-colored icon is decoration this
+   flat, hairline-based design doesn't use anywhere else. */
 .confirm-icon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 48px;
-	height: 48px;
 	margin: 0 auto 16px;
-	border-radius: var(--radius-full, 999px);
-	background: var(--soft);
 	color: var(--amber-fill);
-	font-size: 22px;
+	font-size: 32px;
 }
 .confirm-modal[data-tone="danger"] .confirm-icon { color: var(--red); }
 .confirm-modal[data-tone="ok"] .confirm-icon { color: var(--green); }
