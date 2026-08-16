@@ -532,7 +532,15 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 						<strong>Real numbers only.</strong>
 						Everything on this dashboard reflects what's actually happened. Sections stay empty until there's something real to show.
 					</div>
-					<form method="post" action={ templ.SafeURL(logoutAction) } class="rail-signout">
+					<form
+						method="post"
+						action={ templ.SafeURL(logoutAction) }
+						class="rail-signout"
+						data-confirm-title="Sign out?"
+						data-confirm-desc="You'll need to sign in again to get back to this dashboard."
+						data-confirm-label="Sign out"
+						data-confirm-tone="warning"
+					>
 						<input type="hidden" name="csrf_token" value={ csrfToken }/>
 						<button class="nav-button" type="submit">
 							<span class="nav-button-label">
