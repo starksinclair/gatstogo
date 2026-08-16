@@ -62,6 +62,24 @@ WORKDIR /app
 # Copy the binary from builder
 COPY --from=builder /app/server .
 
+# cmd/server/main.go serves static assets via
+# http.FileServer(http.Dir("web/static")) -- a real filesystem read at
+# request time, relative to the working directory, not something
+# `go build` bakes into the binary the way templ's generated .go files
+# are. Without this, every stylesheet, image, and uploaded plant logo
+# 404s the moment this image runs anywhere that isn't the dev compose
+# setup's own bind mount (docker-compose.yaml's "- .:/app", which only
+# exists for the "dev" stage above, not this one).
+COPY --from=builder /app/web/static ./web/static
+
+# Writable at runtime: internal/uploads.SaveLogo creates
+# web/static/uploads/<slug>/ on demand. A non-root USER (below) can't
+# write into a directory it doesn't already own, so this has to be
+# created and chowned before switching users -- mkdir -p under the
+# now-root `app` user copy, matching where uploads.BaseDir expects it
+# relative to WORKDIR.
+RUN mkdir -p web/static/uploads && chown -R app:app web/static/uploads
+
 # Use non-root user
 USER app
 
