@@ -219,10 +219,10 @@ type AdminStaffRow struct {
 }
 
 type AdminSystemTable struct {
-	Name        string
+	Name        string // the real, internal data-store name -- never shown, only used to run the count query
+	Label       string
 	Role        string
 	Records     int64
-	Health      string
 	Description string
 }
 
@@ -895,11 +895,11 @@ templ adminConsoleContent(data AdminConsoleData) {
 						<div class="field"><label>Owner phone</label><input type="tel" name="owner_phone" placeholder="0803 000 0000" required/></div>
 						<div class="field"><label>Owner temporary password</label><input type="text" name="owner_password" placeholder="Set a temporary password" required/></div>
 					</div>
-					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Provision plant</button></div>
+					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Create plant</button></div>
 				</form>
 			</div>
 			<div class="dash-aside">
-				<div class="section-title"><h2>Provisioning checklist</h2></div>
+				<div class="section-title"><h2>Onboarding checklist</h2></div>
 				<div class="split-list">
 					<div class="info-row"><span>1</span><strong>Reserve the web address and create the plant record.</strong></div>
 					<div class="info-row"><span>2</span><strong>Add owner user and temporary password.</strong></div>
@@ -957,14 +957,14 @@ templ adminConsoleContent(data AdminConsoleData) {
 	<section class="tab-panel" data-tab-panel="system">
 		<div class="section-title"><h2>System overview</h2></div>
 		<div class="table-wrap">
-			<table style="min-width:820px">
-				<thead><tr><th>Data area</th><th>What it controls</th><th class="num">Entries</th><th>Health</th><th>Notes</th></tr></thead>
+			<table style="min-width:720px">
+				<thead><tr><th>Data area</th><th>What it controls</th><th class="num">Entries</th><th>Notes</th></tr></thead>
 				<tbody>
 					if len(data.SystemTables) == 0 {
-						<tr><td colspan="5"><div class="empty">No table stats available yet.</div></td></tr>
+						<tr><td colspan="4"><div class="empty">No table stats available yet.</div></td></tr>
 					}
 					for _, row := range data.SystemTables {
-						<tr><td class="mono">{ row.Name }</td><td>{ row.Role }</td><td class="num">{ row.Records }</td><td><span class="badge badge-ok">{ row.Health }</span></td><td>{ row.Description }</td></tr>
+						<tr><td><strong>{ row.Label }</strong></td><td>{ row.Role }</td><td class="num">{ row.Records }</td><td>{ row.Description }</td></tr>
 					}
 				</tbody>
 			</table>

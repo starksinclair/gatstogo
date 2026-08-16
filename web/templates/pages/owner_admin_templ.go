@@ -374,10 +374,10 @@ type AdminStaffRow struct {
 }
 
 type AdminSystemTable struct {
-	Name        string
+	Name        string // the real, internal data-store name -- never shown, only used to run the count query
+	Label       string
 	Role        string
 	Records     int64
-	Health      string
 	Description string
 }
 
@@ -2832,7 +2832,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 218, "Provision plant</button></div></form></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Provisioning checklist</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>1</span><strong>Reserve the web address and create the plant record.</strong></div><div class=\"info-row\"><span>2</span><strong>Add owner user and temporary password.</strong></div><div class=\"info-row\"><span>3</span><strong>Set starting price per kg.</strong></div><div class=\"info-row\"><span>4</span><strong>Test customer site, receipt page, and staff terminal.</strong></div></div><p class=\"muted\" style=\"margin-top: 12px;\">Steps 1-3 all happen from the one \"Create plant\" form. Step 4 is still on you.</p></div></div></section><section class=\"tab-panel\" data-tab-panel=\"domains\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Domain health</h2></div><div class=\"table-wrap\"><table style=\"min-width:800px\"><thead><tr><th>Plant</th><th>Web address</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 218, "Create plant</button></div></form></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Onboarding checklist</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>1</span><strong>Reserve the web address and create the plant record.</strong></div><div class=\"info-row\"><span>2</span><strong>Add owner user and temporary password.</strong></div><div class=\"info-row\"><span>3</span><strong>Set starting price per kg.</strong></div><div class=\"info-row\"><span>4</span><strong>Test customer site, receipt page, and staff terminal.</strong></div></div><p class=\"muted\" style=\"margin-top: 12px;\">Steps 1-3 all happen from the one \"Create plant\" form. Step 4 is still on you.</p></div></div></section><section class=\"tab-panel\" data-tab-panel=\"domains\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Domain health</h2></div><div class=\"table-wrap\"><table style=\"min-width:800px\"><thead><tr><th>Plant</th><th>Web address</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3032,38 +3032,38 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 239, "</div></div></section><section class=\"tab-panel\" data-tab-panel=\"system\"><div class=\"section-title\"><h2>System overview</h2></div><div class=\"table-wrap\"><table style=\"min-width:820px\"><thead><tr><th>Data area</th><th>What it controls</th><th class=\"num\">Entries</th><th>Health</th><th>Notes</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 239, "</div></div></section><section class=\"tab-panel\" data-tab-panel=\"system\"><div class=\"section-title\"><h2>System overview</h2></div><div class=\"table-wrap\"><table style=\"min-width:720px\"><thead><tr><th>Data area</th><th>What it controls</th><th class=\"num\">Entries</th><th>Notes</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.SystemTables) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 240, "<tr><td colspan=\"5\"><div class=\"empty\">No table stats available yet.</div></td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 240, "<tr><td colspan=\"4\"><div class=\"empty\">No table stats available yet.</div></td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.SystemTables {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 241, "<tr><td class=\"mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 241, "<tr><td><strong>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var163 string
-			templ_7745c5c3_Var163, templ_7745c5c3_Err = templ.JoinStringErrs(row.Name)
+			templ_7745c5c3_Var163, templ_7745c5c3_Err = templ.JoinStringErrs(row.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var163))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 242, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 242, "</strong></td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var164 string
 			templ_7745c5c3_Var164, templ_7745c5c3_Err = templ.JoinStringErrs(row.Role)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var164))
 			if templ_7745c5c3_Err != nil {
@@ -3076,44 +3076,31 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			var templ_7745c5c3_Var165 string
 			templ_7745c5c3_Var165, templ_7745c5c3_Err = templ.JoinStringErrs(row.Records)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var165))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 244, "</td><td><span class=\"badge badge-ok\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 244, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var166 string
-			templ_7745c5c3_Var166, templ_7745c5c3_Err = templ.JoinStringErrs(row.Health)
+			templ_7745c5c3_Var166, templ_7745c5c3_Err = templ.JoinStringErrs(row.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 146}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 127}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var166))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 245, "</span></td><td>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var167 string
-			templ_7745c5c3_Var167, templ_7745c5c3_Err = templ.JoinStringErrs(row.Description)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 967, Col: 181}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var167))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 246, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 245, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 247, "</tbody></table></div></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 246, "</tbody></table></div></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

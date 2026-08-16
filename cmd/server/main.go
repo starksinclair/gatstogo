@@ -873,11 +873,15 @@ func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlan
 			row.LastTxn = lastTxn.Time.Format("2 Jan, 15:04")
 		}
 		row.Volume30d = formatKg(volume)
-		row.Status = strings.ToUpper(fallbackString(row.Status, "provisioning"))
+		row.Status = plantStatusLabel(row.RawStatus)
 		row.DomainStatus = strings.ToUpper(fallbackString(row.DomainStatus, "none"))
 		row.CreatedAt = created.Format("2 Jan 2006")
 		row.UpdatedAt = updated.Format("2 Jan 2006")
-		row.BadgeCSS = badgeForStatus(row.Status)
+		// badgeForStatus keys off the raw status word, not the display
+		// label above -- "provisioning" still needs its amber badge-warn
+		// even though the label now reads "Onboarding", matching the
+		// word the overview tab's own count already uses for this state.
+		row.BadgeCSS = badgeForStatus(row.RawStatus)
 		row.DomainBadge = badgeForDomain(row.DomainStatus)
 		out = append(out, row)
 	}
@@ -917,20 +921,32 @@ func loadPlatformStaff(ctx context.Context, db tenantdb.Querier) []pages.AdminSt
 	return out
 }
 
+// loadSystemTables backs the admin console's "System overview" panel.
+// Name is the real, internal data-store name (only ever used to run
+// countRows' query); Label is the plain-language name actually shown --
+// this split exists because this panel used to show Name directly, which
+// meant a platform admin saw raw values like "reserved_slugs" and
+// "cash_movements" verbatim, underscores and all.
+//
+// This used to also carry a Health field, hardcoded to "Ready" for every
+// row with no check behind it at all -- the exact same kind of always-
+// true, fabricated signal as the plant dashboard's old "ACTIVE" badge
+// (see OwnerDashboardData's PlantStatus removal). Directly contradicted
+// this same page's own "Real numbers only" promise, so it's gone rather
+// than reworded: there's no real health check implemented to report.
 func loadSystemTables(ctx context.Context, db tenantdb.Querier) []pages.AdminSystemTable {
 	defs := []pages.AdminSystemTable{
-		{Name: "plants", Role: "Tenant profile, branding, domain, and lifecycle.", Description: "One row per gas plant."},
-		{Name: "reserved_slugs", Role: "Protected subdomains that plants cannot claim.", Description: "Keeps admin, api, support, and system names safe."},
-		{Name: "users", Role: "Owners, managers, cashiers, operators, and admins.", Description: "Access is scoped to a plant."},
-		{Name: "prices", Role: "Immutable price history used when tickets are sold.", Description: "Never overwrite old rates."},
-		{Name: "shifts", Role: "Cashier/operator work sessions and drawer totals.", Description: "One open shift per user per plant."},
-		{Name: "tickets", Role: "Customer purchases, payment state, and receipt proof.", Description: "The main transaction table."},
-		{Name: "cash_movements", Role: "Opening float, sales, deposits, payouts, counts, and closing.", Description: "Tied back to shifts."},
-		{Name: "activity_log", Role: "Audit trail for plant and platform actions.", Description: "Useful for support and dispute review."},
+		{Name: "plants", Label: "Plants", Role: "Plant profile, branding, domain, and status.", Description: "One record per gas plant."},
+		{Name: "reserved_slugs", Label: "Reserved web addresses", Role: "Protected web addresses that plants cannot claim.", Description: "Keeps admin, api, support, and system from being used as a plant's web address."},
+		{Name: "users", Label: "Staff and owners", Role: "Owners, managers, cashiers, operators, and admins.", Description: "Each person can only access their own plant."},
+		{Name: "prices", Label: "Prices", Role: "Price history, kept in full and never changed once set.", Description: "Used to work out what a ticket was actually sold at."},
+		{Name: "shifts", Label: "Shifts", Role: "Cashier/operator work sessions and drawer totals.", Description: "One open shift per person per plant."},
+		{Name: "tickets", Label: "Sales", Role: "Customer purchases, payment status, and receipt proof.", Description: "Where every sale is recorded."},
+		{Name: "cash_movements", Label: "Cash movements", Role: "Opening float, sales, deposits, payouts, counts, and closing.", Description: "Tied back to shifts."},
+		{Name: "activity_log", Label: "Activity log", Role: "A record of plant and platform actions.", Description: "Useful for support and dispute review."},
 	}
 	for i := range defs {
 		defs[i].Records = countRows(ctx, db, defs[i].Name)
-		defs[i].Health = "Ready"
 	}
 	return defs
 }
@@ -1057,6 +1073,21 @@ func formatWholeNumber(n int64) string {
 		out = append(out, s[i:i+3]...)
 	}
 	return string(out)
+}
+
+// plantStatusLabel turns a plant's raw status column value into the word
+// shown in its Status badge. "provisioning" becomes "Onboarding" -- the
+// admin overview tab's own plant-count line already calls this state
+// "onboarding" (OnboardingCount), so the badge said something different
+// from the count that led an admin to look for it. Every other status
+// (active/suspended/closed) is genuine plain English already and is
+// left as its own uppercase word.
+func plantStatusLabel(rawStatus string) string {
+	resolved := strings.ToLower(fallbackString(rawStatus, "provisioning"))
+	if resolved == "provisioning" {
+		return "ONBOARDING"
+	}
+	return strings.ToUpper(resolved)
 }
 
 func badgeForStatus(status string) string {
