@@ -644,6 +644,14 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	.mkt-nav { display: none; }
 	.hero { padding: 56px 0 64px; }
 	.mkt-section { padding: 56px 0; }
+	/* .signup-layout/.article-layout (used by /get-started, /pricing,
+	   /about, /terms, /privacy) only ever get a horizontal gutter from
+	   their own max-width + margin: 0 auto centering -- which stops doing
+	   anything useful once the viewport is narrower than that max-width.
+	   Below it, with zero padding of their own, content sits flush
+	   against the screen edge instead of keeping the same gutter every
+	   other section (.wrap, .hero, .mkt-section) already gets here. */
+	.signup-layout, .article-layout { padding-left: 20px; padding-right: 20px; }
 	/* minmax(0, 1fr), not a bare 1fr -- a bare track's implicit minimum
 	   is its content's min-content size, not 0, so a wide child (the
 	   signup form's own .field-grid rows in particular, once the new
