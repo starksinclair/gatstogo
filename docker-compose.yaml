@@ -105,6 +105,12 @@ services:
       PGDATABASE: gatstogo
       GATSTOGO_APP_ROLE_PASSWORD: ${GATSTOGO_APP_ROLE_PASSWORD:?set GATSTOGO_APP_ROLE_PASSWORD in .env}
       GATSTOGO_ADMIN_ROLE_PASSWORD: ${GATSTOGO_ADMIN_ROLE_PASSWORD:?set GATSTOGO_ADMIN_ROLE_PASSWORD in .env}
+      # This compose file is the local dev/demo stack -- explicitly opts
+      # into 0002_seed_data.up.sql's known dev logins (migrate.sh's own
+      # comment has the full story on why this has to be an explicit
+      # opt-in, not the default). A real production deployment should not
+      # copy this line.
+      SEED_DEV_DATA: "true"
     entrypoint: ["/bin/sh", "/migrations/migrate.sh"]
     volumes:
       - ./migrations:/migrations

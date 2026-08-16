@@ -27,6 +27,12 @@ export PGPASSWORD="${PGPASSWORD:?PGPASSWORD is required}"
 # gatstogo_admin's password to an empty string because a var was unset.
 : "${GATSTOGO_APP_ROLE_PASSWORD:?GATSTOGO_APP_ROLE_PASSWORD is required}"
 : "${GATSTOGO_ADMIN_ROLE_PASSWORD:?GATSTOGO_ADMIN_ROLE_PASSWORD is required}"
+# Defaults to NOT seeding -- see the *_seed_data.up.sql skip below. This is
+# the fail-safe direction: any deployment that forgets to set this
+# explicitly gets a database with no demo accounts, never one with a
+# platform-admin login whose password is published in this repo's own
+# migration file.
+: "${SEED_DEV_DATA:=false}"
 
 psql_exec() {
   psql -X -q -v ON_ERROR_STOP=1 -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" "$@"
@@ -44,6 +50,24 @@ psql_exec -c "CREATE TABLE IF NOT EXISTS schema_migrations (
 
 for file in "$MIGRATIONS_DIR"/*.up.sql; do
   version=$(basename "$file")
+
+  # *_seed_data.up.sql files (currently just 0002) create known,
+  # documented dev/demo login credentials -- see that file's own header
+  # comment, which already said "never run this against a real production
+  # database" but, before this check, had no actual technical control
+  # behind that warning: this loop applied every *.up.sql file
+  # unconditionally, in every environment, including production. This is
+  # the real enforcement. Any *future* seed-only migration gets the same
+  # protection automatically by following the same *_seed_data.up.sql
+  # naming convention -- worth keeping in mind if one's ever added.
+  case "$version" in
+    *_seed_data.up.sql)
+      if [ "$SEED_DEV_DATA" != "true" ]; then
+        echo "skip $version (SEED_DEV_DATA is not \"true\" -- see this script's own comment)"
+        continue
+      fi
+      ;;
+  esac
 
   # :'version' substitution deliberately goes through stdin (a heredoc), not
   # -c "...". psql's -c sends its argument to the server close to verbatim
