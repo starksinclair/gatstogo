@@ -422,6 +422,81 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 						show(hashTarget ? hashTab : (initial ? initial.dataset.tab : "overview"));
 					});
 				});
+
+				// Confirmation modal -- replaces window.confirm() (a native,
+				// unstyleable browser popup that also freezes the whole page
+				// while open) for every action that flips something a plant
+				// or staff member depends on: suspend, close, deactivate,
+				// void. Driven entirely by data-confirm-* attributes on the
+				// triggering <form>, so nothing about what a form posts or
+				// where it posts to changes -- see plantStatusForm and the
+				// Staff/Sales tables' own forms in this file for the
+				// attributes it reads.
+				//
+				// A form's first submit is always intercepted and shown as
+				// the modal instead; only clicking the modal's own Confirm
+				// button does the real submit, via a one-time
+				// confirmBypass flag so that second, real submit doesn't
+				// loop back through this same listener.
+				document.addEventListener("DOMContentLoaded", function () {
+					var overlay = document.querySelector("[data-confirm-overlay]");
+					if (!overlay) return;
+					var modal = overlay.querySelector(".confirm-modal");
+					var titleEl = overlay.querySelector("[data-confirm-title-el]");
+					var descEl = overlay.querySelector("[data-confirm-desc-el]");
+					var okBtn = overlay.querySelector("[data-confirm-ok]");
+					var cancelBtn = overlay.querySelector("[data-confirm-cancel]");
+					var pendingForm = null;
+					var pendingTrigger = null;
+
+					function open(form, trigger) {
+						pendingForm = form;
+						pendingTrigger = trigger;
+						modal.dataset.tone = form.dataset.confirmTone || "warning";
+						titleEl.textContent = form.dataset.confirmTitle || "Are you sure?";
+						descEl.textContent = form.dataset.confirmDesc || "";
+						okBtn.textContent = form.dataset.confirmLabel || "Confirm";
+						overlay.hidden = false;
+						// rAF so the hidden -> visible transition actually
+						// animates instead of snapping (a display/visibility
+						// change and its transition can't start in the same
+						// paint frame).
+						requestAnimationFrame(function () { overlay.classList.add("open"); });
+						okBtn.focus();
+					}
+					function close() {
+						overlay.classList.remove("open");
+						if (pendingTrigger) pendingTrigger.focus();
+						pendingForm = null;
+						pendingTrigger = null;
+						setTimeout(function () { overlay.hidden = true; }, 150);
+					}
+
+					document.querySelectorAll("form[data-confirm-title]").forEach(function (form) {
+						form.addEventListener("submit", function (event) {
+							if (form.dataset.confirmBypass === "1") {
+								delete form.dataset.confirmBypass;
+								return; // the real, confirmed submit -- let it through
+							}
+							event.preventDefault();
+							open(form, event.submitter || form.querySelector('button[type="submit"]'));
+						});
+					});
+					okBtn.addEventListener("click", function () {
+						if (!pendingForm) return;
+						var form = pendingForm;
+						close();
+						form.dataset.confirmBypass = "1";
+						if (form.requestSubmit) { form.requestSubmit(); } else { form.submit(); }
+					});
+					cancelBtn.addEventListener("click", close);
+					overlay.addEventListener("click", function (event) {
+						if (event.target === overlay) close();
+					});
+					document.addEventListener("keydown", function (event) {
+						if (event.key === "Escape" && !overlay.hidden) close();
+					});
+				});
 			</script>
 		</head>
 		<body>
@@ -460,6 +535,24 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 				<main class="main">
 					@content
 				</main>
+			</div>
+			<div class="confirm-overlay" data-confirm-overlay hidden>
+				<div class="confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-desc">
+					<div class="confirm-icon">
+						<span class="confirm-icon-warn">
+							@components.Icon("warning-circle")
+						</span>
+						<span class="confirm-icon-ok">
+							@components.Icon("check-circle")
+						</span>
+					</div>
+					<h2 id="confirm-modal-title" data-confirm-title-el></h2>
+					<p id="confirm-modal-desc" data-confirm-desc-el></p>
+					<div class="confirm-actions">
+						<button type="button" class="btn" data-confirm-cancel>Cancel</button>
+						<button type="button" class="btn primary" data-confirm-ok></button>
+					</div>
+				</div>
 			</div>
 		</body>
 	</html>
@@ -580,7 +673,14 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 									<td class="mono" title={ row.Reference }>{ shortTicketRef(row.Reference, data.PlantSlug) }</td><td>{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="num">{ row.Kg }</td><td class="num">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td>
 									<td>
 										if row.Status == "PENDING" || row.Status == "PAID" {
-											<form method="post" action={ templ.SafeURL("/tickets/" + row.Reference + "/void") } onsubmit="return confirm('Void this ticket? This cannot be undone.')">
+											<form
+												method="post"
+												action={ templ.SafeURL("/tickets/" + row.Reference + "/void") }
+												data-confirm-title="Void this ticket?"
+												data-confirm-desc="The code stops working right away and this sale won't count anymore. This can't be undone."
+												data-confirm-label="Void ticket"
+												data-confirm-tone="danger"
+											>
 												<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 												<button class="btn" type="submit">Void</button>
 											</form>
@@ -682,16 +782,33 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 									<td><strong>{ row.Name }</strong></td><td class="mono">{ row.Phone }</td><td>{ row.Role }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td class="num">{ row.SalesCount }</td><td class="num">{ row.ShiftsCount }</td><td>{ row.Joined }</td>
 									<td>
 										if row.CanToggleActive {
-											<form method="post" action={ templ.SafeURL("/owner/staff/" + row.ID + "/status") }>
-												<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-												if row.Active {
+											if row.Active {
+												<form
+													method="post"
+													action={ templ.SafeURL("/owner/staff/" + row.ID + "/status") }
+													data-confirm-title={ "Deactivate " + row.Name + "?" }
+													data-confirm-desc="They won't be able to log in or use the terminal until you reactivate them."
+													data-confirm-label="Deactivate"
+													data-confirm-tone="warning"
+												>
+													<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 													<input type="hidden" name="active" value="false"/>
 													<button class="btn" type="submit">Deactivate</button>
-												} else {
+												</form>
+											} else {
+												<form
+													method="post"
+													action={ templ.SafeURL("/owner/staff/" + row.ID + "/status") }
+													data-confirm-title={ "Reactivate " + row.Name + "?" }
+													data-confirm-desc="They'll be able to log in and use the terminal again right away."
+													data-confirm-label="Activate"
+													data-confirm-tone="ok"
+												>
+													<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 													<input type="hidden" name="active" value="true"/>
 													<button class="btn" type="submit">Activate</button>
-												}
-											</form>
+												</form>
+											}
 										}
 									</td>
 								</tr>
@@ -778,13 +895,30 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 	</section>
 }
 
+// statusConfirm is the confirmation modal's content for one
+// plantStatusForm/staff-status transition -- see the shared script in
+// opsShell for how the data-confirm-* attributes it becomes drive the
+// actual modal.
+type statusConfirm struct {
+	Title string
+	Desc  string
+	Tone  string // "warning" | "danger" | "ok"
+}
+
 // plantStatusForm is a single small "change this plant's status" button,
 // used once per applicable transition in the Plants table -- e.g. an
 // active plant gets one Suspend form, a suspended plant gets both
 // Reactivate and Close. Kept as its own component since the same
 // three-line form shape repeats per row per available transition.
-templ plantStatusForm(plantID string, newStatus string, label string, csrfToken string) {
-	<form method="post" action={ templ.SafeURL("/admin/plants/" + plantID + "/status") }>
+templ plantStatusForm(plantID string, newStatus string, label string, csrfToken string, confirm statusConfirm) {
+	<form
+		method="post"
+		action={ templ.SafeURL("/admin/plants/" + plantID + "/status") }
+		data-confirm-title={ confirm.Title }
+		data-confirm-desc={ confirm.Desc }
+		data-confirm-label={ label }
+		data-confirm-tone={ confirm.Tone }
+	>
 		<input type="hidden" name="csrf_token" value={ csrfToken }/>
 		<input type="hidden" name="status" value={ newStatus }/>
 		<button class="btn" type="submit">{ label }</button>
@@ -864,12 +998,28 @@ templ adminConsoleContent(data AdminConsoleData) {
 							<td class="action-strip">
 								switch row.RawStatus {
 									case "active":
-										@plantStatusForm(row.ID, "suspended", "Suspend", data.CSRFToken)
+										@plantStatusForm(row.ID, "suspended", "Suspend", data.CSRFToken, statusConfirm{
+											Title: "Suspend " + row.Name + "?",
+											Desc:  "Its customer page, staff terminal, and owner login all go offline immediately. You can reactivate it any time.",
+											Tone:  "warning",
+										})
 									case "suspended":
-										@plantStatusForm(row.ID, "active", "Reactivate", data.CSRFToken)
-										@plantStatusForm(row.ID, "closed", "Close", data.CSRFToken)
+										@plantStatusForm(row.ID, "active", "Reactivate", data.CSRFToken, statusConfirm{
+											Title: "Reactivate " + row.Name + "?",
+											Desc:  "Its customer page, staff terminal, and owner login all come back online immediately.",
+											Tone:  "ok",
+										})
+										@plantStatusForm(row.ID, "closed", "Close", data.CSRFToken, statusConfirm{
+											Title: "Close " + row.Name + "?",
+											Desc:  "Like suspending, this takes everything offline immediately. Unlike suspending, there's no reactivate button for a closed plant in this console.",
+											Tone:  "danger",
+										})
 									case "provisioning":
-										@plantStatusForm(row.ID, "active", "Activate", data.CSRFToken)
+										@plantStatusForm(row.ID, "active", "Activate", data.CSRFToken, statusConfirm{
+											Title: "Activate " + row.Name + "?",
+											Desc:  "Its customer page, staff terminal, and owner login all go live immediately.",
+											Tone:  "ok",
+										})
 								}
 							</td>
 						</tr>

@@ -532,6 +532,75 @@ td {
 .select-list li:hover,
 .select-list li.highlighted { background: var(--soft); }
 .select-list li.selected { color: var(--green); font-weight: 800; }
+
+/* ==========================================================================
+   Confirmation modal -- replaces window.confirm() for every action that
+   flips something a plant or staff member depends on (Suspend, Close,
+   Deactivate, Void, ...). A genuine floating overlay, so -- like
+   .select-list above -- a shadow and a solid background are correct
+   here, not the "card" this app avoids elsewhere: this is meant to
+   visually separate itself from the page, not decorate ordinary content
+   sitting flush against it. See the shared script (opsShell) for how a
+   form's data-confirm-* attributes drive this.
+   ========================================================================== */
+.confirm-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	background: rgba(16, 24, 32, 0.55);
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+.confirm-overlay.open { opacity: 1; }
+.confirm-overlay[hidden] { display: none; }
+.confirm-modal {
+	width: 100%;
+	max-width: 380px;
+	border-radius: var(--radius-md, 8px);
+	background: #FFFFFF;
+	box-shadow: var(--shadow-md, 0 16px 40px rgba(16, 24, 32, 0.08));
+	padding: 28px;
+	text-align: center;
+	transform: scale(0.96) translateY(4px);
+	transition: transform 0.15s ease;
+}
+.confirm-overlay.open .confirm-modal { transform: scale(1) translateY(0); }
+.confirm-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	margin: 0 auto 16px;
+	border-radius: var(--radius-full, 999px);
+	background: var(--soft);
+	color: var(--amber);
+	font-size: 22px;
+}
+.confirm-modal[data-tone="danger"] .confirm-icon { color: var(--red); }
+.confirm-modal[data-tone="ok"] .confirm-icon { color: var(--green); }
+.confirm-icon-warn, .confirm-icon-ok { display: inline-flex; }
+.confirm-icon-ok { display: none; }
+.confirm-modal[data-tone="ok"] .confirm-icon-warn { display: none; }
+.confirm-modal[data-tone="ok"] .confirm-icon-ok { display: inline-flex; }
+.confirm-modal h2 {
+	margin: 0 0 8px;
+	font-family: var(--font-display, Archivo, sans-serif);
+	font-size: 19px;
+	font-weight: 800;
+}
+.confirm-modal p { margin: 0 0 24px; color: var(--muted); line-height: 1.5; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions .btn { flex: 1; }
+.confirm-modal[data-tone="danger"] [data-confirm-ok] { border-color: var(--red); background: var(--red); }
+.confirm-modal[data-tone="danger"] [data-confirm-ok]:hover { background: #8F1E18; }
+.confirm-modal[data-tone="warning"] [data-confirm-ok] { border-color: var(--amber); background: var(--amber); }
+.confirm-modal[data-tone="warning"] [data-confirm-ok]:hover { background: #744709; }
+
 .action-strip {
 	display: flex;
 	gap: 10px;
@@ -658,6 +727,9 @@ td {
 	.kpi-item:first-child { border-top: 0; padding-top: 0; }
 	.info-row { grid-template-columns: 1fr; gap: 4px; }
 	.receipt-code { font-size: 36px; }
+	/* Keep Cancel/Confirm side by side (flex: 1 each) rather than the
+	   general .btn { width: 100% } rule above stacking them full-width. */
+	.confirm-actions .btn { width: auto; }
 }
 
 /* ---- Auth (owner + admin login) ---- */
