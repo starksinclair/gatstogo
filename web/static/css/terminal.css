@@ -382,30 +382,37 @@ h1 {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 10px;
-	min-height: 96px;
+	gap: 12px;
+	min-height: 108px;
 	border: 1px solid var(--line);
-	border-radius: var(--radius-sm, 6px);
+	border-radius: var(--radius-lg, 12px);
 	background: var(--surface);
-	padding: 14px;
+	padding: 16px;
 	text-align: left;
 }
 .staff-tile:hover { border-color: var(--line-strong); }
-.staff-tile.active { border-color: var(--ink); background: var(--brand-tint); }
+.staff-tile.active { border-color: var(--brand); background: var(--brand-tint); }
 
-.staff-tile .initial {
+/* Circular initials badge -- who this is, at a glance, the same
+   avatar-chip pattern used for an assignee anywhere people get picked
+   from a list. Role is still its own line below (em.staff-tile), so
+   nothing about "what this person does" is lost by dropping the old
+   role-icon-in-a-square-box treatment this replaces. */
+.staff-tile .avatar {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 26px;
-	height: 26px;
-	border: 1px solid var(--line-strong);
-	border-radius: var(--radius-sm, 6px);
-	font-size: 14px;
-	font-weight: 700;
+	width: 40px;
+	height: 40px;
+	border-radius: var(--radius-full, 999px);
+	background: var(--line);
 	color: var(--muted);
+	font-family: var(--font-display, Archivo, sans-serif);
+	font-size: 14px;
+	font-weight: 800;
+	flex: none;
 }
-.staff-tile.active .initial { border-color: var(--brand); color: var(--brand); }
+.staff-tile.active .avatar { background: var(--brand); color: #FFFFFF; }
 
 .staff-tile strong { font-size: 15px; font-weight: 700; }
 .staff-tile em {
@@ -450,7 +457,7 @@ h1 {
 	gap: 1px;
 	background: var(--line);
 	border: 1px solid var(--line);
-	border-radius: var(--radius-sm, 6px);
+	border-radius: var(--radius-lg, 12px);
 	overflow: hidden;
 }
 .keypad.small { max-width: 320px; }
@@ -485,7 +492,7 @@ h1 {
 	margin: 4px 0 28px;
 	background: var(--line-strong);
 	border: 1px solid var(--line-strong);
-	border-radius: var(--radius-sm, 6px);
+	border-radius: var(--radius-lg, 12px);
 	overflow: hidden;
 }
 .code-boxes span {
@@ -507,17 +514,20 @@ h1 {
 .state-message {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 12px;
 	margin: 0 0 20px;
-	padding: 13px 16px;
-	border-left: 3px solid var(--warning);
-	border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
+	padding: 14px 18px;
+	border-radius: var(--radius-lg, 12px);
 	background: var(--warning-bg);
 	color: var(--warning);
 	font-size: 14px;
 	font-weight: 700;
 }
-.state-message .icon { flex: none; font-size: 17px; }
+.state-message .icon {
+	width: 20px;
+	height: 20px;
+	flex: none;
+}
 .state-message.confirmed { border-color: var(--success); background: var(--success-bg); color: var(--success); }
 .state-message.wrong { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
 .state-message.used,
@@ -589,7 +599,7 @@ h1 {
 .cylinder-grid button {
 	min-height: 60px;
 	border: 1px solid var(--line);
-	border-radius: var(--radius-sm, 6px);
+	border-radius: var(--radius-lg, 12px);
 	background: var(--surface);
 	color: var(--ink);
 	font-family: var(--font-mono, monospace);

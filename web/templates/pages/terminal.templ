@@ -118,14 +118,15 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						if (role === "manager") return "Manager";
 						return role;
 					}
-					// The staff-tile icon: what the role actually does, not who the
-					// person is (there's no per-person avatar/photo in this app) --
-					// a gas pump for operator (fill only), cash for cashier, and an
-					// ID badge for manager (the one role with full access).
-					function roleIcon(role) {
-						if (role === "cashier") return "money";
-						if (role === "operator") return "gas-pump";
-						return "identification-badge"; // manager
+					// Two-letter initials for the staff-tile avatar chip (there's no
+					// per-person photo in this app) -- "Amaka Obi" -> "AO", a
+					// single-word name -> its first two letters, falls back to "?"
+					// for an empty/missing name rather than rendering blank.
+					function initialsOf(name) {
+						var parts = (name || "").trim().split(/\s+/).filter(Boolean);
+						if (parts.length === 0) return "?";
+						if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+						return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 					}
 
 					// A small, hand-copied subset of the same Phosphor icon path
@@ -140,10 +141,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						"x-circle": '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>',
 						"warning-circle": '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z"/></svg>',
 						"sign-out": '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></svg>',
-						"shield-check": '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg>',
-						"gas-pump": '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M241,69.66,221.66,50.34a8,8,0,0,0-11.32,11.32L229.66,81A8,8,0,0,1,232,86.63V168a8,8,0,0,1-16,0V128a24,24,0,0,0-24-24H176V56a24,24,0,0,0-24-24H72A24,24,0,0,0,48,56V208H32a8,8,0,0,0,0,16H192a8,8,0,0,0,0-16H176V120h16a8,8,0,0,1,8,8v40a24,24,0,0,0,48,0V86.63A23.85,23.85,0,0,0,241,69.66ZM64,208V56a8,8,0,0,1,8-8h80a8,8,0,0,1,8,8V208Zm80-96a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h48A8,8,0,0,1,144,112Z"/></svg>',
-						"money": '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128,88a40,40,0,1,0,40,40A40,40,0,0,0,128,88Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,152ZM240,56H16a8,8,0,0,0-8,8V192a8,8,0,0,0,8,8H240a8,8,0,0,0,8-8V64A8,8,0,0,0,240,56ZM193.65,184H62.35A56.78,56.78,0,0,0,24,145.65v-35.3A56.78,56.78,0,0,0,62.35,72h131.3A56.78,56.78,0,0,0,232,110.35v35.3A56.78,56.78,0,0,0,193.65,184ZM232,93.37A40.81,40.81,0,0,1,210.63,72H232ZM45.37,72A40.81,40.81,0,0,1,24,93.37V72ZM24,162.63A40.81,40.81,0,0,1,45.37,184H24ZM210.63,184A40.81,40.81,0,0,1,232,162.63V184Z"/></svg>',
-						"identification-badge": '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M75.19,198.4a8,8,0,0,0,11.21-1.6,52,52,0,0,1,83.2,0,8,8,0,1,0,12.8-9.6A67.88,67.88,0,0,0,155,165.51a40,40,0,1,0-53.94,0A67.88,67.88,0,0,0,73.6,187.2,8,8,0,0,0,75.19,198.4ZM128,112a24,24,0,1,1-24,24A24,24,0,0,1,128,112Zm72-88H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V40A16,16,0,0,0,200,24Zm0,192H56V40H200ZM88,64a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H96A8,8,0,0,1,88,64Z"/></svg>'
+						"shield-check": '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg>'
 					};
 					function icon(name) { return ICONS[name] || ""; }
 					// Maps a state.messageKind ("confirmed"/"wrong"/"used"/"locked")
@@ -455,7 +453,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						'<div class="term-meta">' + escapeHtml(init.plantName) + '<span class="sep"></span>' + init.todayLabel + '<span class="sep"></span>Selling at ' + naira(init.pricePerKgKobo) + '/kg today</div>';
 					}
 					function employeeButton(m) {
-						return '<button class="staff-tile ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span class="initial">' + icon(roleIcon(m.role)) + '</span><strong>' + escapeHtml(m.name) + '</strong><em>' + roleLabel(m.role) + '</em>' + (m.shiftOpenSince ? '<span class="shift-open-note">Open since ' + escapeHtml(m.shiftOpenSince) + '</span>' : '') + '</button>';
+						return '<button class="staff-tile ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span class="avatar">' + escapeHtml(initialsOf(m.name)) + '</span><strong>' + escapeHtml(m.name) + '</strong><em>' + roleLabel(m.role) + '</em>' + (m.shiftOpenSince ? '<span class="shift-open-note">Open since ' + escapeHtml(m.shiftOpenSince) + '</span>' : '') + '</button>';
 					}
 
 					function renderMain() {
