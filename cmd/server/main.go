@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	//"gatstogo/internal/config"
-	//"gatstogo/internal/handlers/attendant"
+
+	"gatstogo/internal/config"
 	"gatstogo/internal/domain"
+	"gatstogo/internal/handlers/attendant"
 	"gatstogo/internal/middleware"
-	"gatstogo/web/templates/components"
 	"gatstogo/web/templates/pages"
 	"log"
 	"math"
@@ -20,6 +20,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alexedwards/scs/v2"
+	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,6 +32,7 @@ type Server struct {
 	Router  *chi.Mux
 	AppDB   *pgxpool.Pool // used for normal plant traffic (RLS enforced)
 	AdminDB *pgxpool.Pool // used for platform admin (bypasses RLS)
+	Deps    *config.Dependencies
 }
 
 func main() {
@@ -92,10 +95,26 @@ func CreateNewServer() (*Server, error) {
 		adminDB.Close()
 		return nil, err
 	}
+	sessionManager := scs.New()
+	sessionManager.Store = memstore.New()
+	sessionManager.Lifetime = 12 * time.Hour // roughly one shift
+	sessionManager.Cookie.HttpOnly = true
+	sessionManager.Cookie.SameSite = http.SameSiteLaxMode
+	sessionManager.Cookie.Secure = getEnv("APP_ENV", "development") == "production"
+
+	router := chi.NewRouter()
+	deps := &config.Dependencies{
+		Router:         router,
+		AppDB:          appDB,
+		AdminDB:        adminDB,
+		SessionManager: sessionManager,
+	}
+
 	s := &Server{
-		Router:  chi.NewRouter(),
+		Router:  router,
 		AppDB:   appDB,
 		AdminDB: adminDB,
+		Deps:    deps,
 	}
 	return s, nil
 }
@@ -105,13 +124,8 @@ func (s *Server) MountHandlers() {
 	s.Router.Use(chimw.Logger)
 	s.Router.Use(chimw.Recoverer)
 	s.Router.Use(chimw.Timeout(60 * time.Second))
+	s.Router.Use(s.Deps.SessionManager.LoadAndSave)
 
-	//_deps := &config.Dependencies{
-	//	AppDB:   s.AppDB,
-	//	AdminDB: s.AdminDB,
-	//}
-
-	//s.Router.Get("/", attendant.Test)
 	s.Router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
 	s.Router.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
@@ -135,17 +149,6 @@ func (s *Server) MountHandlers() {
 			}
 		})
 
-		r.Get("/home", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			if err := pages.CustomerHome(plant).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
-
 		r.Get("/receipts", func(w http.ResponseWriter, r *http.Request) {
 			plant := middleware.GetPlant(r.Context())
 			if plant == nil {
@@ -157,15 +160,24 @@ func (s *Server) MountHandlers() {
 			}
 		})
 
-		r.Get("/terminal", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			if err := pages.StaffTerminal(plant).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
+		r.Route("/terminal", func(r chi.Router) {
+			// Public: this *is* the credential check, nothing to gate it with yet.
+			r.Get("/login", attendant.LoginPage(s.Deps))
+			r.Post("/start-shift", attendant.StartShift(s.Deps))
+
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.Auth(s.Deps))
+
+				r.Get("/dashboard", attendant.Dashboard(s.Deps))
+				r.Get("/dashboard/tab/{tab}", attendant.DashboardTab(s.Deps))
+
+				r.Post("/fill-ticket", attendant.FillTicket(s.Deps))
+				r.Post("/fill-ticket/confirm", attendant.ConfirmFill(s.Deps))
+				r.Post("/cash-sale", attendant.CashSale(s.Deps))
+				r.Post("/cash-preview", attendant.CashPreview(s.Deps))
+				r.Post("/end-shift", attendant.EndShift(s.Deps))
+				r.Post("/logout", attendant.Logout(s.Deps))
+			})
 		})
 
 		r.Get("/owner", func(w http.ResponseWriter, r *http.Request) {
@@ -180,32 +192,6 @@ func (s *Server) MountHandlers() {
 			}
 		})
 
-		r.Get("/owner/dashboard", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			data := loadOwnerDashboard(r.Context(), s.AdminDB, plant)
-			if err := pages.OwnerDashboard(data).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
-
-		r.Get("/home/summary", func(w http.ResponseWriter, r *http.Request) {
-			plant := middleware.GetPlant(r.Context())
-			if plant == nil {
-				http.Error(w, "Plant not found", http.StatusNotFound)
-				return
-			}
-			if err := components.PlantSummary(plant).Render(r.Context(), w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
-
-		//r.Route("/attendant", func(r chi.Router) {
-		//	r.Post("/code", attendant.EnterCode(deps))
-		//})
 	})
 }
 
