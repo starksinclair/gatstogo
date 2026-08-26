@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/alexedwards/scs/v2"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,4 +20,10 @@ type Dependencies struct {
 	// AdminDB is a privileged connection pool reserved for platform
 	// administration that bypasses Row-Level Security (RLS).
 	AdminDB *pgxpool.Pool
+
+	// SessionManager backs staff-terminal login sessions (cookie-based).
+	// In-memory store: fine for a single app instance, would need a
+	// Postgres-backed store (scs/postgresstore) if this ever runs
+	// multi-instance.
+	SessionManager *scs.SessionManager
 }

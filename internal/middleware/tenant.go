@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -19,7 +18,6 @@ func Tenant(db *pgxpool.Pool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			host := r.Host // e.g. sunrise.gatstogo.ng or sunrise.localhost:8080
-			fmt.Print("Host: ", host, "\n")
 
 			slug := extractSubdomain(host)
 			if slug == "" || slug == "www" || slug == "admin" || slug == "api" {
