@@ -259,7 +259,7 @@ func terminalPinHandler(s *Server) http.HandlerFunc {
 			writeJSONError(w, http.StatusInternalServerError, "something went wrong")
 			return
 		}
-		session.WriteCookie(w, sessionToken, session.StaffBackstopTTL)
+		session.WriteCookie(w, session.CookieStaff, sessionToken, session.StaffBackstopTTL)
 		csrfToken, _ := csrf.Token(sessionToken)
 
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -534,7 +534,7 @@ func terminalShiftEndHandler(s *Server) http.HandlerFunc {
 		// outright rather than let it linger until StaffBackstopTTL
 		// lapses (see session.StaffBackstopTTL's doc comment).
 		_ = s.Sessions.Delete(r.Context(), actor.Token)
-		session.ClearCookie(w)
+		session.ClearCookie(w, session.CookieStaff)
 
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 	}

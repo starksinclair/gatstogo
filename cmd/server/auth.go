@@ -132,7 +132,7 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 			return
 		}
 
-		session.WriteCookie(w, token, session.OwnerTTL)
+		session.WriteCookie(w, session.CookieOwner, token, session.OwnerTTL)
 		http.Redirect(w, r, "/owner", http.StatusSeeOther)
 	}
 }
@@ -147,10 +147,10 @@ func renderOwnerLoginError(w http.ResponseWriter, r *http.Request, plantName, me
 
 func ownerLogoutHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if token, ok := session.ReadCookie(r); ok {
+		if token, ok := session.ReadCookie(r, session.CookieOwner); ok {
 			_ = s.Sessions.Delete(r.Context(), token)
 		}
-		session.ClearCookie(w)
+		session.ClearCookie(w, session.CookieOwner)
 		http.Redirect(w, r, "/owner/login", http.StatusSeeOther)
 	}
 }
@@ -481,7 +481,7 @@ func adminLoginSubmitHandler(s *Server) http.HandlerFunc {
 			return
 		}
 
-		session.WriteCookie(w, token, session.OwnerTTL)
+		session.WriteCookie(w, session.CookieAdmin, token, session.OwnerTTL)
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
@@ -496,10 +496,10 @@ func renderAdminLoginError(w http.ResponseWriter, r *http.Request, message strin
 
 func adminLogoutHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if token, ok := session.ReadCookie(r); ok {
+		if token, ok := session.ReadCookie(r, session.CookieAdmin); ok {
 			_ = s.Sessions.Delete(r.Context(), token)
 		}
-		session.ClearCookie(w)
+		session.ClearCookie(w, session.CookieAdmin)
 		http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 	}
 }

@@ -69,8 +69,9 @@ func main() {
 	}
 	defer s.Close()
 	s.MountHandlers()
+	port := listenPort()
 	srv := &http.Server{
-		Addr:    ":" + getEnv("APP_PORT", "8080"),
+		Addr:    ":" + port,
 		Handler: s.Router,
 		// None of these had any value at all before -- Go's http.Server
 		// defaults every one of them to "no limit". chimw.Timeout(60s)
@@ -92,7 +93,7 @@ func main() {
 	}
 
 	go func() {
-		log.Println("Server starting on :8080")
+		log.Println("Server starting on :" + port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(http.ErrServerClosed, err) {
 			log.Fatal(err)
 		}
@@ -462,6 +463,14 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// listenPort prefers Cloud Run's PORT, then APP_PORT (local/.env), then 8080.
+func listenPort() string {
+	if p := os.Getenv("PORT"); p != "" {
+		return p
+	}
+	return getEnv("APP_PORT", "8080")
 }
 
 // loadSessionHMACSecret reads SESSION_HMAC_SECRET (a base64-encoded value,

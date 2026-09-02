@@ -127,6 +127,9 @@ services:
     image: redis:7-alpine
     container_name: gatstogo-redis
     restart: unless-stopped
+    # AOF so login sessions survive Redis restarts (without this, every
+    # `docker compose restart redis` mass-logs everyone out).
+    command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"          # Only for local access
     volumes:

@@ -61,29 +61,37 @@ func RequireOwnerSession(store *session.Store) func(http.Handler) http.Handler {
 				return
 			}
 
-			token, ok := session.ReadCookie(r)
+			token, ok := session.ReadCookie(r, session.CookieOwner)
 			if !ok {
 				http.Redirect(w, r, "/owner/login", http.StatusSeeOther)
 				return
 			}
 			data, err := store.Load(r.Context(), token)
 			if err != nil {
+				// Stale browser cookie whose Redis entry is gone -- drop it
+				// so the client stops sending a dead token.
+				session.ClearCookie(w, session.CookieOwner)
 				http.Redirect(w, r, "/owner/login", http.StatusSeeOther)
 				return
 			}
 			if (data.Role != session.RoleOwner && data.Role != session.RoleManager) || data.PlantID != plant.ID.String() {
+				session.ClearCookie(w, session.CookieOwner)
 				http.Redirect(w, r, "/owner/login", http.StatusSeeOther)
 				return
 			}
 			userID, err := uuid.Parse(data.UserID)
 			if err != nil {
+				session.ClearCookie(w, session.CookieOwner)
 				http.Redirect(w, r, "/owner/login", http.StatusSeeOther)
 				return
 			}
 
 			// Sliding expiry: an owner actively using the dashboard should
-			// never be logged out mid-session.
+			// never be logged out mid-session. Touch refreshes Redis; also
+			// re-WriteCookie so the browser MaxAge stays aligned (cookie
+			// MaxAge is absolute from the last Set-Cookie, not from Redis).
 			_ = store.Touch(r.Context(), token, session.OwnerTTL)
+			session.WriteCookie(w, session.CookieOwner, token, session.OwnerTTL)
 
 			plantID := plant.ID
 			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, Token: token}
@@ -99,23 +107,26 @@ func RequireOwnerSession(store *session.Store) func(http.Handler) http.Handler {
 func RequireAdminSession(store *session.Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token, ok := session.ReadCookie(r)
+			token, ok := session.ReadCookie(r, session.CookieAdmin)
 			if !ok {
 				http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 				return
 			}
 			data, err := store.Load(r.Context(), token)
 			if err != nil || data.Role != session.RoleAdmin {
+				session.ClearCookie(w, session.CookieAdmin)
 				http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 				return
 			}
 			userID, err := uuid.Parse(data.UserID)
 			if err != nil {
+				session.ClearCookie(w, session.CookieAdmin)
 				http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 				return
 			}
 
 			_ = store.Touch(r.Context(), token, session.OwnerTTL)
+			session.WriteCookie(w, session.CookieAdmin, token, session.OwnerTTL)
 
 			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, Token: token}
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
@@ -140,28 +151,32 @@ func RequireStaffSession(store *session.Store) func(http.Handler) http.Handler {
 				return
 			}
 
-			token, ok := session.ReadCookie(r)
+			token, ok := session.ReadCookie(r, session.CookieStaff)
 			if !ok {
 				writeSessionError(w, http.StatusUnauthorized, "not signed in")
 				return
 			}
 			data, err := store.Load(r.Context(), token)
 			if err != nil {
+				session.ClearCookie(w, session.CookieStaff)
 				writeSessionError(w, http.StatusUnauthorized, "session expired")
 				return
 			}
 			staffRole := data.Role == session.RoleManager || data.Role == session.RoleCashier || data.Role == session.RoleOperator
 			if !staffRole || data.PlantID != plant.ID.String() || data.ShiftID == "" {
+				session.ClearCookie(w, session.CookieStaff)
 				writeSessionError(w, http.StatusUnauthorized, "not signed in")
 				return
 			}
 			userID, err := uuid.Parse(data.UserID)
 			if err != nil {
+				session.ClearCookie(w, session.CookieStaff)
 				writeSessionError(w, http.StatusUnauthorized, "session invalid")
 				return
 			}
 			shiftID, err := uuid.Parse(data.ShiftID)
 			if err != nil {
+				session.ClearCookie(w, session.CookieStaff)
 				writeSessionError(w, http.StatusUnauthorized, "session invalid")
 				return
 			}
@@ -171,6 +186,7 @@ func RequireStaffSession(store *session.Store) func(http.Handler) http.Handler {
 			// deleted outright the moment shift-close succeeds
 			// (cmd/server/terminal.go), which is the real end-of-life path.
 			_ = store.Touch(r.Context(), token, session.StaffBackstopTTL)
+			session.WriteCookie(w, session.CookieStaff, token, session.StaffBackstopTTL)
 
 			plantID := plant.ID
 			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, ShiftID: &shiftID, Token: token}
@@ -201,17 +217,19 @@ func RequireReceiptSession(store *session.Store) func(http.Handler) http.Handler
 				return
 			}
 
-			token, ok := session.ReadCookie(r)
+			token, ok := session.ReadCookie(r, session.CookieReceipts)
 			if !ok {
 				http.Redirect(w, r, "/receipts?error=session", http.StatusSeeOther)
 				return
 			}
 			data, err := store.Load(r.Context(), token)
 			if err != nil {
+				session.ClearCookie(w, session.CookieReceipts)
 				http.Redirect(w, r, "/receipts?error=session", http.StatusSeeOther)
 				return
 			}
 			if data.Role != session.RoleCustomer || data.PlantID != plant.ID.String() || data.Phone == "" {
+				session.ClearCookie(w, session.CookieReceipts)
 				http.Redirect(w, r, "/receipts?error=session", http.StatusSeeOther)
 				return
 			}
@@ -220,6 +238,7 @@ func RequireReceiptSession(store *session.Store) func(http.Handler) http.Handler
 			// a customer actively viewing/confirming receipts during one
 			// visit shouldn't be logged out mid-visit.
 			_ = store.Touch(r.Context(), token, session.ReceiptSessionTTL)
+			session.WriteCookie(w, session.CookieReceipts, token, session.ReceiptSessionTTL)
 
 			plantID := plant.ID
 			actor := &Actor{Role: data.Role, PlantID: &plantID, Phone: data.Phone, Token: token}

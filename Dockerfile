@@ -1,9 +1,21 @@
+# Production image (Cloud Run / Lightsail / any container host) is the
+# final stage so `docker build` and `gcloud run deploy --source` pick it
+# by default. Local compose still builds `--target dev`.
+#
+# Cloud Run:
+#   gcloud run deploy gatstogo \
+#     --source . \
+#     --region europe-west2 \
+#     --allow-unauthenticated \
+#     --set-env-vars APP_ENV=production,...
+# Neon: set APP_DATABASE_URL / ADMIN_DATABASE_URL to Neon URLs with
+# sslmode=require (prefer the pooled endpoint for Cloud Run).
+
 # ======================
 # Stage 1: Builder
 # ======================
 FROM golang:1.26-alpine AS builder
 
-# Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
 
 ENV GOBIN=/go/bin
@@ -11,22 +23,18 @@ ENV PATH="/go/bin:${PATH}"
 
 WORKDIR /app
 
-# Cache dependencies first
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the rest of the source code
 COPY . .
 
 RUN go install github.com/a-h/templ/cmd/templ@v0.3.1020 && templ generate
 
-# Build the binary
-# - CGO_ENABLED=0 → pure static binary
-# - -ldflags="-s -w" → smaller binary
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /app/server ./cmd/server
+# Static binary for alpine/distroless-style runtimes (Cloud Run).
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o /app/server ./cmd/server
 
 # ======================
-# Stage 2: Development image
+# Stage 2: Development image (docker compose --target dev)
 # ======================
 FROM golang:1.26-alpine AS dev
 
@@ -47,48 +55,38 @@ EXPOSE 8080
 CMD ["air", "-c", ".air.toml"]
 
 # ======================
-# Stage 3: Final image
+# Stage 3: Production / Cloud Run
 # ======================
-FROM alpine:3.20
+FROM alpine:3.20 AS production
 
-# Install only what we need at runtime
-RUN apk add --no-cache ca-certificates tzdata curl
-
-# Create non-root user
-RUN addgroup -S app && adduser -S app -G app
+# ca-certificates: Neon (TLS), Paystack, Resend, etc.
+# tzdata: correct timestamps in logs / activity
+RUN apk add --no-cache ca-certificates tzdata \
+	&& addgroup -S app && adduser -S app -G app
 
 WORKDIR /app
 
-# Copy the binary from builder
 COPY --from=builder /app/server .
 
-# cmd/server/main.go serves static assets via
-# http.FileServer(http.Dir("web/static")) -- a real filesystem read at
-# request time, relative to the working directory, not something
-# `go build` bakes into the binary the way templ's generated .go files
-# are. Without this, every stylesheet, image, and uploaded plant logo
-# 404s the moment this image runs anywhere that isn't the dev compose
-# setup's own bind mount (docker-compose.yaml's "- .:/app", which only
-# exists for the "dev" stage above, not this one).
+# Static assets are read from disk at runtime (not embedded).
 COPY --from=builder /app/web/static ./web/static
 
-# Writable at runtime: internal/uploads.SaveLogo creates
-# web/static/uploads/<slug>/ on demand. A non-root USER (below) can't
-# write into a directory it doesn't already own, so this has to be
-# created and chowned before switching users -- mkdir -p under the
-# now-root `app` user copy, matching where uploads.BaseDir expects it
-# relative to WORKDIR.
-RUN mkdir -p web/static/uploads && chown -R app:app web/static/uploads
+# Uploads dir must be writable by non-root. On Cloud Run this volume is
+# ephemeral (lost on new revisions / instances) -- use object storage
+# later for durable plant logos.
+RUN mkdir -p web/static/uploads && chown -R app:app /app
 
-# Use non-root user
 USER app
 
-# Expose the port your app listens on
+# Cloud Run injects PORT (usually 8080). The server reads PORT, then
+# APP_PORT, then defaults to 8080 -- see cmd/server/main.go.
+ENV APP_ENV=production
+ENV PORT=8080
+
 EXPOSE 8080
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -fsS http://localhost:8080/ || exit 1
+# Cloud Run ignores HEALTHCHECK; kept for local `docker run` smoke tests.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+	CMD wget -qO- "http://127.0.0.1:${PORT:-8080}/" >/dev/null || exit 1
 
-# Run the binary
 CMD ["./server"]

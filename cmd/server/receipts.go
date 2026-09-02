@@ -102,7 +102,7 @@ func receiptBadgeCSS(status string, confirmed bool) string {
 // same session-based CSRF token RequireReceiptSession's Actor.Token would
 // give the confirm form.
 func loadReceiptSession(r *http.Request, s *Server, plant *domain.Plant) (phone, token string, ok bool) {
-	tok, has := session.ReadCookie(r)
+	tok, has := session.ReadCookie(r, session.CookieReceipts)
 	if !has {
 		return "", "", false
 	}
@@ -182,6 +182,8 @@ func receiptsPageHandler(s *Server) http.HandlerFunc {
 			}
 			return
 		}
+		// Keep browser cookie MaxAge aligned with the Redis sliding TTL.
+		session.WriteCookie(w, session.CookieReceipts, sessionToken, session.ReceiptSessionTTL)
 
 		data := pages.ReceiptsViewData{Plant: plant, View: "list", CSRFToken: csrfToken, ErrorMsg: errorMsg, Phone: displayPhone(phone)}
 		err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
@@ -352,7 +354,7 @@ func receiptsVerifyHandler(s *Server) http.HandlerFunc {
 			return
 		}
 
-		session.WriteCookie(w, token, session.ReceiptSessionTTL)
+		session.WriteCookie(w, session.CookieReceipts, token, session.ReceiptSessionTTL)
 		http.Redirect(w, r, "/receipts", http.StatusSeeOther)
 	}
 }
