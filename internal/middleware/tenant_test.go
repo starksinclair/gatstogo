@@ -1,6 +1,9 @@
 package middleware
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestExtractSubdomain(t *testing.T) {
 	cases := []struct {
@@ -12,6 +15,7 @@ func TestExtractSubdomain(t *testing.T) {
 		{"localhost:8080", ""},
 		{"localhost", ""},
 		{"gatstogo.ng", "gatstogo"},
+		{"gatstogo.com", "gatstogo"},
 		{"www.gatstogo.ng", "www"},
 		{"", ""},
 	}
@@ -19,6 +23,43 @@ func TestExtractSubdomain(t *testing.T) {
 		if got := ExtractSubdomain(c.host); got != c.want {
 			t.Errorf("ExtractSubdomain(%q) = %q, want %q", c.host, got, c.want)
 		}
+	}
+}
+
+func TestIsMarketingHost(t *testing.T) {
+	const base = "gatstogo.com"
+	cases := []struct {
+		host string
+		want bool
+	}{
+		{"gatstogo.com", true},
+		{"GATSTOGO.COM", true},
+		{"www.gatstogo.com", true},
+		{"www.gatstogo.com:443", true},
+		{"sunrise.gatstogo.com", false},
+		{"gatstogo.ng", false},
+		{"localhost", true},
+		{"localhost:8080", true},
+		{"www.localhost:8080", true},
+		{"sunrise.localhost:8080", false},
+		{"", false},
+	}
+	for _, c := range cases {
+		// localhost cases use baseDomain "localhost"; production-shaped
+		// hosts use "gatstogo.com".
+		bd := base
+		if strings.Contains(c.host, "localhost") || c.host == "" {
+			bd = "localhost"
+		}
+		if got := IsMarketingHost(c.host, bd); got != c.want {
+			t.Errorf("IsMarketingHost(%q, %q) = %v, want %v", c.host, bd, got, c.want)
+		}
+	}
+	// Apex must match the configured base even when ExtractSubdomain
+	// returns the first label ("gatstogo"), which is what broke
+	// https://gatstogo.com before IsMarketingHost existed.
+	if !IsMarketingHost("gatstogo.com", "gatstogo.com") {
+		t.Fatal("apex gatstogo.com must be marketing for APP_BASE_DOMAIN=gatstogo.com")
 	}
 }
 

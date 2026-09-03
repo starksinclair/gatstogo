@@ -116,17 +116,45 @@ func renderNotFound(w http.ResponseWriter, r *http.Request) {
 // Exported so cmd/server's own routing can ask the same question Tenant
 // asks internally -- "is this a real tenant subdomain, or the bare/www
 // marketing host?" -- without duplicating the parsing logic.
+//
+// Note: the bare production apex ("gatstogo.com") yields "gatstogo", not
+// "". Callers that need "is this the marketing host?" must use
+// IsMarketingHost, not `ExtractSubdomain(host) == ""`.
 func ExtractSubdomain(host string) string {
-	// Remove port if present
-	if colonIndex := strings.Index(host, ":"); colonIndex != -1 {
-		host = host[:colonIndex]
-	}
+	host = stripHostPort(host)
 
 	parts := strings.Split(host, ".")
 	if len(parts) < 2 {
 		return ""
 	}
 	return parts[0]
+}
+
+// IsMarketingHost reports whether host is GatsToGo's own public site
+// (landing / pricing / signup), not a plant subdomain. True for:
+//   - the configured apex (APP_BASE_DOMAIN), e.g. gatstogo.com
+//   - www.<APP_BASE_DOMAIN>
+//   - single-label hosts like "localhost" (local dev)
+//   - any host whose leftmost label is "www" (legacy / www.localhost)
+func IsMarketingHost(host, baseDomain string) bool {
+	host = stripHostPort(host)
+	if host == "" {
+		return false
+	}
+	if baseDomain != "" {
+		if strings.EqualFold(host, baseDomain) || strings.EqualFold(host, "www."+baseDomain) {
+			return true
+		}
+	}
+	slug := ExtractSubdomain(host)
+	return slug == "" || slug == "www"
+}
+
+func stripHostPort(host string) string {
+	if colonIndex := strings.Index(host, ":"); colonIndex != -1 {
+		host = host[:colonIndex]
+	}
+	return host
 }
 
 // hasBaseDomainSuffix reports whether host is a direct subdomain of
@@ -139,8 +167,6 @@ func hasBaseDomainSuffix(host, baseDomain string) bool {
 	if baseDomain == "" {
 		return false
 	}
-	if colonIndex := strings.Index(host, ":"); colonIndex != -1 {
-		host = host[:colonIndex]
-	}
+	host = stripHostPort(host)
 	return strings.HasSuffix(host, "."+baseDomain)
 }

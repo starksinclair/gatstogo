@@ -23,13 +23,12 @@ import (
 // rootOrTenant is what "/" and "/home" are actually registered against
 // (see MountHandlers in main.go) instead of sitting inside the
 // tenant-scoped route group like every other customer route does. A bare
-// or "www" host has no tenant to resolve at all -- there's nothing for
-// middleware.Tenant to do there but 404, which is exactly the gap this
-// closes: those hosts now get the real marketing site instead.
+// apex (APP_BASE_DOMAIN), "www", or local single-label host has no tenant
+// to resolve -- middleware.Tenant would 404 there. Those hosts get the
+// marketing landing instead.
 func rootOrTenant(s *Server, tenantHandler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		slug := middleware.ExtractSubdomain(r.Host)
-		if slug == "" || slug == "www" {
+		if middleware.IsMarketingHost(r.Host, middleware.BaseDomain) {
 			marketingLandingHandler(s)(w, r)
 			return
 		}
