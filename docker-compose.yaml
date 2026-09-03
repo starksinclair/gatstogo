@@ -26,6 +26,9 @@ services:
     environment:
       APP_ENV: development
       APP_PORT: 8080
+      # Tenant host shape: sunrise.localhost:8080 (see APP_BASE_DOMAIN).
+      APP_BASE_DOMAIN: ${APP_BASE_DOMAIN:-localhost}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
       # Normal tenant traffic: the restricted gatstogo_app role, subject to
       # Row Level Security. Its password is set by
       # migrations/0003_role_credentials.up.sql (run by the migrate service
@@ -42,6 +45,11 @@ services:
       # https://dashboard.paystack.com/#/settings/developers -- use a test
       # secret key for local development. Also verifies webhook signatures.
       PAYSTACK_SECRET_KEY: "${PAYSTACK_SECRET_KEY:?set PAYSTACK_SECRET_KEY in .env}"
+      PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY:-}
+      TICKET_NOTIFICATION_EMAIL: ${TICKET_NOTIFICATION_EMAIL:-gatstogofficial@gmail.com}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-}
+      SMS_PROVIDER: ${SMS_PROVIDER:-logging}
     command: ["air", "-c", ".air.toml"]
     depends_on:
       postgres:
@@ -88,32 +96,33 @@ services:
   # ======================
   # Migrations
   # ======================
-  # Applies migrations/*.up.sql (tracked in a schema_migrations table, so
-  # re-running this against an already-migrated volume is a safe no-op --
-  # see migrations/migrate.sh) and, via 0003_role_credentials.up.sql, sets
-  # the gatstogo_app/gatstogo_admin role passwords the app connects with.
+  # Same `gtg migrate` binary teammates use against Neon. Tracks versions
+  # in schema_migrations, sets gatstogo_app/gatstogo_admin passwords from
+  # GATSTOGO_*_ROLE_PASSWORD, and seeds demo logins (local compose only).
+  # Re-running is a safe no-op. See docs/DATABASE.md.
   migrate:
-    image: postgres:16-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrate
     container_name: gatstogo-migrate
     restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      <<: *postgres-superuser
-      PGHOST: postgres
-      PGDATABASE: gatstogo
+      # Bootstrap superuser (initdb), not gatstogo_app -- DDL + CREATE ROLE.
+      MIGRATE_DATABASE_URL: postgres://gatstogo:gatstogo_secret@postgres:5432/gatstogo?sslmode=disable
+      MIGRATIONS_DIR: /migrations
       GATSTOGO_APP_ROLE_PASSWORD: ${GATSTOGO_APP_ROLE_PASSWORD:?set GATSTOGO_APP_ROLE_PASSWORD in .env}
       GATSTOGO_ADMIN_ROLE_PASSWORD: ${GATSTOGO_ADMIN_ROLE_PASSWORD:?set GATSTOGO_ADMIN_ROLE_PASSWORD in .env}
-      # This compose file is the local dev/demo stack -- explicitly opts
-      # into 0002_seed_data.up.sql's known dev logins (migrate.sh's own
-      # comment has the full story on why this has to be an explicit
-      # opt-in, not the default). A real production deployment should not
-      # copy this line.
+      APP_ENV: development
+      # Local demo stack: seed sunrise plant + known logins.
       SEED_DEV_DATA: "true"
-    entrypoint: ["/bin/sh", "/migrations/migrate.sh"]
+    command: ["migrate", "--seed"]
     volumes:
-      - ./migrations:/migrations
+      # Live-mount so editing SQL does not require rebuilding the migrate image.
+      - ./migrations:/migrations:ro
     networks:
       - gatstogo-network
 

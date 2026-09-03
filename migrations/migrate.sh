@@ -1,4 +1,9 @@
 #!/bin/sh
+# Legacy shell migrator. Prefer the Go CLI (same behaviour):
+#   go run ./cmd/gtg migrate [--seed]
+#   docker compose up   # uses Dockerfile `migrate` stage → gtg
+# See docs/DATABASE.md.
+#
 # Applies every migrations/*.up.sql file, in filename order, that hasn't
 # been applied yet -- tracked in a schema_migrations table this script
 # creates on first run.

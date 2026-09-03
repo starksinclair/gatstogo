@@ -148,15 +148,26 @@ SMS_PROVIDER=logging
 
 ## Run With Docker
 
-From the project root, copy the env template and fill in real values (at minimum: role passwords, `SESSION_HMAC_SECRET`, `PAYSTACK_SECRET_KEY`):
+Teammates: one command after clone. Details (Neon, Cloud Run secrets): [docs/DATABASE.md](docs/DATABASE.md).
 
 ```bash
-cp .env.example .env
-# edit .env
-docker compose up --build
+make env          # creates .env from .env.example if missing
+# set PAYSTACK_SECRET_KEY in .env to a Paystack test key (buy-gas)
+make up           # postgres → gtg migrate --seed → redis → app
 ```
 
-This brings up Postgres, an idempotent `migrate` service (applies `migrations/*.up.sql`, tracked in a `schema_migrations` table, and sets the `gatstogo_app`/`gatstogo_admin` role passwords), Redis, and the app -- `app` waits on `postgres` (healthy), `migrate` (completed), and `redis` (healthy) before starting.
+Or: `cp .env.example .env` then `docker compose up --build`.
+
+This brings up Postgres, an idempotent **`gtg migrate --seed`** service (schema + role passwords + demo sunrise plant), Redis, and the app. The app waits on `postgres` (healthy), `migrate` (completed), and `redis` (healthy) before starting.
+
+Against Neon (staging/prod), migrate from your laptop instead:
+
+```bash
+export MIGRATE_DATABASE_URL='postgres://…@ep-xxxx.…neon.tech/gatstogo?sslmode=require'  # direct, not pooler
+export GATSTOGO_APP_ROLE_PASSWORD=…
+export GATSTOGO_ADMIN_ROLE_PASSWORD=…
+make migrate      # no seed on production
+```
 
 The app listens on:
 

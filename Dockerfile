@@ -32,6 +32,23 @@ RUN go install github.com/a-h/templ/cmd/templ@v0.3.1020 && templ generate
 
 # Static binary for alpine/distroless-style runtimes (Cloud Run).
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o /app/server ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o /app/gtg ./cmd/gtg
+
+# ======================
+# Stage 1b: Migrate CLI (docker compose `migrate` service + Neon ops)
+# ======================
+FROM alpine:3.20 AS migrate
+
+RUN apk add --no-cache ca-certificates tzdata \
+	&& addgroup -S app && adduser -S app -G app
+
+WORKDIR /migrations
+COPY --from=builder /app/gtg /gtg
+COPY migrations/ /migrations/
+
+USER app
+ENTRYPOINT ["/gtg"]
+CMD ["migrate", "--seed"]
 
 # ======================
 # Stage 2: Development image (docker compose --target dev)
