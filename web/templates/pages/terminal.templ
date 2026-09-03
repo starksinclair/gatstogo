@@ -2,15 +2,8 @@ package pages
 
 import (
 	"gatstogo/internal/domain"
-	"strings"
+	"gatstogo/web/templates/components"
 )
-
-func terminalPlantName(plant *domain.Plant) string {
-	if plant == nil || strings.TrimSpace(plant.Name) == "" {
-		return "Gas plant"
-	}
-	return strings.TrimSpace(plant.Name)
-}
 
 // init is passed through to templ.JSONScript untyped (any) rather than a
 // named pages type -- cmd/server/terminal.go's terminalInitPayload is the
@@ -24,7 +17,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ terminalPlantName(plant) } staff terminal</title>
-			<link rel="icon" type="image/png" href="/static/images/gatstogo.png"/>
+			@components.BrandFavicons()
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
@@ -35,6 +28,8 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					var init = JSON.parse(document.getElementById("terminal-init").textContent);
 					var staff = init.staff || [];
 					var pricePerKgNaira = init.pricePerKgKobo / 100;
+					// Keep in sync with components.BrandMarkReversed (dark terminal chrome).
+					var brandMarkReversed = "/static/images/gatstogo-logo/svg/gatstogo-mark-reversed.svg";
 
 					// This whole screen is built by concatenating strings into HTML
 					// and assigning it via .innerHTML (see render()/root.innerHTML
@@ -458,7 +453,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 
 					function renderMain() {
 						return '<header class="terminal-top">' +
-							'<div class="brand-row"><img class="brand-mark" src="/static/images/gatstogo.png" alt="GatsToGo"><strong>GATSTOGO</strong><span class="plant-name">' + escapeHtml(init.plantName) + '</span></div>' +
+							'<div class="brand-row"><img class="brand-mark" src="' + brandMarkReversed + '" alt="GatsToGo"><strong>GATSTOGO</strong><span class="plant-name">' + escapeHtml(init.plantName) + '</span></div>' +
 							'<div class="shift-strip">' +
 								'<div class="stat"><span>Staff</span><strong>' + escapeHtml(state.name) + '</strong></div>' +
 								'<div class="stat"><span>Fills</span><strong class="mono">' + state.fills + '</strong></div>' +

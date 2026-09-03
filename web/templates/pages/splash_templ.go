@@ -8,6 +8,8 @@ package pages
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "gatstogo/web/templates/components"
+
 // splashOverlay is a full-screen branded loading moment shown only for
 // specific, genuinely slow actions (signing in -- bcrypt is deliberately
 // slow -- and creating a plant), not on every navigation. Shared between
@@ -44,7 +46,15 @@ func splashOverlay() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"splash-overlay\" data-splash-overlay hidden><img class=\"splash-mark\" src=\"/static/images/gatstogo.png\" alt=\"\"><p class=\"splash-message\" data-splash-message role=\"status\" aria-live=\"polite\">Loading</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"splash-overlay\" data-splash-overlay hidden>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.BrandMark("splash-mark", "dark-container", "").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"splash-message\" data-splash-message role=\"status\" aria-live=\"polite\">Loading</p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

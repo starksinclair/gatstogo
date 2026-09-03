@@ -325,7 +325,7 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ title }</title>
-			<link rel="icon" type="image/png" href="/static/images/gatstogo.png"/>
+			@components.BrandFavicons()
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/static/css/tokens.css"/>
@@ -641,12 +641,12 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 					<button class="rail-toggle" type="button" data-rail-toggle aria-label="Open menu" aria-expanded="false" aria-controls="mobile-rail">
 						<span class="burger" aria-hidden="true"><span></span><span></span><span></span></span>
 					</button>
-					<div class="brand"><img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/><span>{ railLabel } workspace</span></div>
+					<div class="brand">@components.BrandMark("mark", "dark-container", "GatsToGo")<span>{ railLabel } workspace</span></div>
 				</div>
 				<div class="rail-backdrop" data-rail-backdrop></div>
 				<aside class="rail" id="mobile-rail">
 					<div class="brand">
-						<img class="mark" src="/static/images/gatstogo.png" alt="GatsToGo"/>
+						@components.BrandMark("mark", "dark-container", "GatsToGo")
 						<span>GATSTOGO</span>
 					</div>
 					<div class="rail-label">{ railLabel } workspace</div>

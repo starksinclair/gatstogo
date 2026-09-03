@@ -1,0 +1,34 @@
+package components
+
+// BrandFavicons is the standard <head> icon set for every GatsToGo-
+// branded HTML page (marketing, auth, ops, terminal, 404).
+//
+//   - favicon.ico     — 16/32/48 multi-res for legacy browsers
+//   - primary SVG     — crisp mark in modern browsers
+//   - 192 PNG         — apple-touch / home-screen
+templ BrandFavicons() {
+	<link rel="icon" href={ BrandFaviconICO } sizes="any"/>
+	<link rel="icon" href={ BrandMarkPrimary } type="image/svg+xml"/>
+	<link rel="apple-touch-icon" href={ BrandMarkPNG192 }/>
+}
+
+// BrandMark renders the square mark at a CSS-controlled size.
+// variant: "primary" | "reversed" | "dark-container" | "standalone" | "alert"
+templ BrandMark(className string, variant string, alt string) {
+	<img class={ className } src={ brandMarkSrc(variant) } alt={ alt } decoding="async"/>
+}
+
+func brandMarkSrc(variant string) string {
+	switch variant {
+	case "reversed":
+		return BrandMarkReversed
+	case "dark-container":
+		return BrandMarkDarkContainer
+	case "standalone":
+		return BrandMarkStandalone
+	case "alert":
+		return BrandMarkAlert
+	default:
+		return BrandMarkPrimary
+	}
+}

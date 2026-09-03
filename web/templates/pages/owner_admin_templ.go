@@ -567,20 +567,44 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</title><link rel=\"icon\" type=\"image/png\" href=\"/static/images/gatstogo.png\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/owner-admin.css\"><script src=\"https://cdn.jsdelivr.net/npm/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js\" defer></script><script>\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-tabs]\").forEach(function (root) {\n\t\t\t\t\t\tfunction show(tab) {\n\t\t\t\t\t\t\troot.querySelectorAll(\"[data-tab]\").forEach(function (button) {\n\t\t\t\t\t\t\t\tbutton.classList.toggle(\"active\", button.dataset.tab === tab);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\troot.querySelectorAll(\"[data-tab-panel]\").forEach(function (panel) {\n\t\t\t\t\t\t\t\tpanel.classList.toggle(\"active\", panel.dataset.tabPanel === tab);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\t// Mobile off-canvas drawer -- the exact same .rail markup\n\t\t\t\t\t\t// used on desktop, just toggled via a fixed-position\n\t\t\t\t\t\t// transform below the 1020px breakpoint (see owner-\n\t\t\t\t\t\t// admin.css). Replaces what used to be a <select>\n\t\t\t\t\t\t// dropdown standing in for the whole sidebar on mobile.\n\t\t\t\t\t\t//\n\t\t\t\t\t\t// body.rail-locked's own overflow:hidden (owner-admin.css)\n\t\t\t\t\t\t// isn't enough on its own on real mobile browsers -- iOS\n\t\t\t\t\t\t// Safari in particular still lets the page scroll behind a\n\t\t\t\t\t\t// fixed element despite overflow:hidden on <body>. The\n\t\t\t\t\t\t// robust fix is to also pin <body> itself with\n\t\t\t\t\t\t// position:fixed and a negative top offset equal to the\n\t\t\t\t\t\t// current scroll position while the drawer is open, then\n\t\t\t\t\t\t// undo that and restore the exact scroll position on\n\t\t\t\t\t\t// close -- the standard technique for this, not a novel\n\t\t\t\t\t\t// one. Without it, a page scrolled down before opening the\n\t\t\t\t\t\t// drawer leaves the (still torso still scrollable)\n\t\t\t\t\t\t// background moving underneath a supposedly-fixed drawer,\n\t\t\t\t\t\t// which is exactly the \"sidebar drifts away while\n\t\t\t\t\t\t// scrolling\" bug this replaces.\n\t\t\t\t\t\tvar lockedScrollY = 0;\n\t\t\t\t\t\tvar toggleButtons = root.querySelectorAll(\"[data-rail-toggle]\");\n\t\t\t\t\t\tfunction setExpanded(expanded) {\n\t\t\t\t\t\t\t// Drives the toggle button's hamburger<->X morph\n\t\t\t\t\t\t\t// (owner-admin.css's .rail-toggle[aria-expanded]\n\t\t\t\t\t\t\t// rules) off the same attribute a screen reader\n\t\t\t\t\t\t\t// needs anyway, rather than a separate class.\n\t\t\t\t\t\t\ttoggleButtons.forEach(function (btn) {\n\t\t\t\t\t\t\t\tbtn.setAttribute(\"aria-expanded\", expanded ? \"true\" : \"false\");\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction openDrawer() {\n\t\t\t\t\t\t\tlockedScrollY = window.scrollY;\n\t\t\t\t\t\t\tdocument.body.classList.add(\"rail-locked\");\n\t\t\t\t\t\t\tdocument.body.style.top = (-lockedScrollY) + \"px\";\n\t\t\t\t\t\t\troot.classList.add(\"rail-open\");\n\t\t\t\t\t\t\tsetExpanded(true);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction closeDrawer() {\n\t\t\t\t\t\t\troot.classList.remove(\"rail-open\");\n\t\t\t\t\t\t\tdocument.body.classList.remove(\"rail-locked\");\n\t\t\t\t\t\t\tdocument.body.style.top = \"\";\n\t\t\t\t\t\t\twindow.scrollTo(0, lockedScrollY);\n\t\t\t\t\t\t\tsetExpanded(false);\n\t\t\t\t\t\t}\n\t\t\t\t\t\ttoggleButtons.forEach(function (button) {\n\t\t\t\t\t\t\tbutton.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\t\troot.classList.contains(\"rail-open\") ? closeDrawer() : openDrawer();\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t});\n\t\t\t\t\t\tvar backdrop = root.querySelector(\"[data-rail-backdrop]\");\n\t\t\t\t\t\tif (backdrop) backdrop.addEventListener(\"click\", closeDrawer);\n\t\t\t\t\t\tdocument.addEventListener(\"keydown\", function (event) {\n\t\t\t\t\t\t\tif (event.key === \"Escape\") closeDrawer();\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\troot.querySelectorAll(\"[data-tab]\").forEach(function (button) {\n\t\t\t\t\t\t\tbutton.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\t\tshow(button.dataset.tab);\n\t\t\t\t\t\t\t\t// A nav click on mobile is navigation, not just a\n\t\t\t\t\t\t\t\t// state change -- close the drawer the same way\n\t\t\t\t\t\t\t\t// tapping a link in any mobile nav drawer would.\n\t\t\t\t\t\t\t\tcloseDrawer();\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// Themed <select> replacement (see themedSelect in\n\t\t\t\t\t\t// owner_admin.templ for the markup this wires up and why:\n\t\t\t\t\t\t// CSS alone can restyle a <select>'s closed box but never\n\t\t\t\t\t\t// its open dropdown list cross-browser). Progressive\n\t\t\t\t\t\t// enhancement -- the real <select name=\"...\"> stays in\n\t\t\t\t\t\t// the DOM and is still exactly what actually gets\n\t\t\t\t\t\t// submitted with the form; owner-admin.css only hides it\n\t\t\t\t\t\t// (in favor of the custom trigger+listbox) once a shell\n\t\t\t\t\t\t// has the js-ready class this loop adds, so a page where\n\t\t\t\t\t\t// this script fails to run still has a fully working,\n\t\t\t\t\t\t// if plainer, native dropdown instead of nothing.\n\t\t\t\t\t\troot.querySelectorAll(\"[data-select]\").forEach(function (shell) {\n\t\t\t\t\t\t\tvar nativeSelect = shell.querySelector(\".select-native\");\n\t\t\t\t\t\t\tvar trigger = shell.querySelector(\".select-trigger\");\n\t\t\t\t\t\t\tvar valueLabel = shell.querySelector(\".select-value\");\n\t\t\t\t\t\t\tvar list = shell.querySelector(\".select-list\");\n\t\t\t\t\t\t\tvar items = Array.prototype.slice.call(list ? list.querySelectorAll('[role=\"option\"]') : []);\n\t\t\t\t\t\t\tif (!nativeSelect || !trigger || !list || !items.length) return;\n\n\t\t\t\t\t\t\tvar highlighted = 0;\n\n\t\t\t\t\t\t\tfunction syncFromNative() {\n\t\t\t\t\t\t\t\titems.forEach(function (li, i) {\n\t\t\t\t\t\t\t\t\tvar isSelected = li.dataset.value === nativeSelect.value;\n\t\t\t\t\t\t\t\t\tli.setAttribute(\"aria-selected\", isSelected ? \"true\" : \"false\");\n\t\t\t\t\t\t\t\t\tli.classList.toggle(\"selected\", isSelected);\n\t\t\t\t\t\t\t\t\tif (isSelected) {\n\t\t\t\t\t\t\t\t\t\tvalueLabel.textContent = li.textContent;\n\t\t\t\t\t\t\t\t\t\thighlighted = i;\n\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tfunction highlightItem(index) {\n\t\t\t\t\t\t\t\titems.forEach(function (li, i) { li.classList.toggle(\"highlighted\", i === index); });\n\t\t\t\t\t\t\t\tif (items[index].scrollIntoView) items[index].scrollIntoView({ block: \"nearest\" });\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tfunction openList() {\n\t\t\t\t\t\t\t\tdocument.querySelectorAll(\".select-shell.open\").forEach(function (openShell) {\n\t\t\t\t\t\t\t\t\tif (openShell !== shell) closeList(openShell);\n\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t\tshell.classList.add(\"open\");\n\t\t\t\t\t\t\t\ttrigger.setAttribute(\"aria-expanded\", \"true\");\n\t\t\t\t\t\t\t\tlist.hidden = false;\n\t\t\t\t\t\t\t\thighlightItem(highlighted);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tfunction closeList(target) {\n\t\t\t\t\t\t\t\ttarget = target || shell;\n\t\t\t\t\t\t\t\ttarget.classList.remove(\"open\");\n\t\t\t\t\t\t\t\ttarget.querySelector(\".select-trigger\").setAttribute(\"aria-expanded\", \"false\");\n\t\t\t\t\t\t\t\ttarget.querySelector(\".select-list\").hidden = true;\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tfunction selectItem(index) {\n\t\t\t\t\t\t\t\tvar li = items[index];\n\t\t\t\t\t\t\t\tif (!li) return;\n\t\t\t\t\t\t\t\tnativeSelect.value = li.dataset.value;\n\t\t\t\t\t\t\t\tnativeSelect.dispatchEvent(new Event(\"change\", { bubbles: true }));\n\t\t\t\t\t\t\t\tsyncFromNative();\n\t\t\t\t\t\t\t\tcloseList();\n\t\t\t\t\t\t\t\ttrigger.focus();\n\t\t\t\t\t\t\t}\n\n\t\t\t\t\t\t\ttrigger.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\t\tshell.classList.contains(\"open\") ? closeList() : openList();\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\ttrigger.addEventListener(\"keydown\", function (event) {\n\t\t\t\t\t\t\t\tif (event.key === \"ArrowDown\" || event.key === \"ArrowUp\") {\n\t\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\t\tif (!shell.classList.contains(\"open\")) { openList(); return; }\n\t\t\t\t\t\t\t\t\tvar dir = event.key === \"ArrowDown\" ? 1 : -1;\n\t\t\t\t\t\t\t\t\thighlighted = (highlighted + dir + items.length) % items.length;\n\t\t\t\t\t\t\t\t\thighlightItem(highlighted);\n\t\t\t\t\t\t\t\t} else if (event.key === \"Enter\" || event.key === \" \") {\n\t\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\t\tshell.classList.contains(\"open\") ? selectItem(highlighted) : openList();\n\t\t\t\t\t\t\t\t} else if (event.key === \"Escape\" && shell.classList.contains(\"open\")) {\n\t\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\t\tevent.stopPropagation(); // don't also close the mobile drawer\n\t\t\t\t\t\t\t\t\tcloseList();\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\titems.forEach(function (li, i) {\n\t\t\t\t\t\t\t\tli.addEventListener(\"click\", function () { selectItem(i); });\n\t\t\t\t\t\t\t\tli.addEventListener(\"mouseenter\", function () { highlighted = i; highlightItem(i); });\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\tdocument.addEventListener(\"click\", function (event) {\n\t\t\t\t\t\t\t\tif (shell.classList.contains(\"open\") && !shell.contains(event.target)) closeList();\n\t\t\t\t\t\t\t});\n\n\t\t\t\t\t\t\tsyncFromNative();\n\t\t\t\t\t\t\t// Only once the custom trigger+listbox is actually\n\t\t\t\t\t\t\t// wired up and taking over does the native select\n\t\t\t\t\t\t\t// get pulled out of the tab order and accessibility\n\t\t\t\t\t\t\t// tree -- it's still what's found first (and works\n\t\t\t\t\t\t\t// fully natively) if this script never runs at all.\n\t\t\t\t\t\t\tnativeSelect.setAttribute(\"tabindex\", \"-1\");\n\t\t\t\t\t\t\tnativeSelect.setAttribute(\"aria-hidden\", \"true\");\n\t\t\t\t\t\t\tshell.classList.add(\"js-ready\");\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// A write action (set price, add staff, ...) redirects back\n\t\t\t\t\t\t// to #<tab> so the owner lands back where they were, not on\n\t\t\t\t\t\t// Overview -- see cmd/server/owner_write.go.\n\t\t\t\t\t\tvar hashTab = location.hash.replace(\"#\", \"\");\n\t\t\t\t\t\tvar hashTarget = hashTab && root.querySelector('[data-tab-panel=\"' + hashTab + '\"]');\n\t\t\t\t\t\tvar initial = root.querySelector(\"[data-tab].active\");\n\t\t\t\t\t\tshow(hashTarget ? hashTab : (initial ? initial.dataset.tab : \"overview\"));\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\t// Confirmation modal -- replaces window.confirm() (a native,\n\t\t\t\t// unstyleable browser popup that also freezes the whole page\n\t\t\t\t// while open) for every action that flips something a plant\n\t\t\t\t// or staff member depends on: suspend, close, deactivate,\n\t\t\t\t// void. Driven entirely by data-confirm-* attributes on the\n\t\t\t\t// triggering <form>, so nothing about what a form posts or\n\t\t\t\t// where it posts to changes -- see plantStatusForm and the\n\t\t\t\t// Staff/Sales tables' own forms in this file for the\n\t\t\t\t// attributes it reads.\n\t\t\t\t//\n\t\t\t\t// A form's first submit is always intercepted and shown as\n\t\t\t\t// the modal instead; only clicking the modal's own Confirm\n\t\t\t\t// button does the real submit, via a one-time\n\t\t\t\t// confirmBypass flag so that second, real submit doesn't\n\t\t\t\t// loop back through this same listener.\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tvar overlay = document.querySelector(\"[data-confirm-overlay]\");\n\t\t\t\t\tif (!overlay) return;\n\t\t\t\t\tvar modal = overlay.querySelector(\".confirm-modal\");\n\t\t\t\t\tvar titleEl = overlay.querySelector(\"[data-confirm-title-el]\");\n\t\t\t\t\tvar descEl = overlay.querySelector(\"[data-confirm-desc-el]\");\n\t\t\t\t\tvar okBtn = overlay.querySelector(\"[data-confirm-ok]\");\n\t\t\t\t\tvar cancelBtn = overlay.querySelector(\"[data-confirm-cancel]\");\n\t\t\t\t\tvar pendingForm = null;\n\t\t\t\t\tvar pendingTrigger = null;\n\n\t\t\t\t\tfunction open(form, trigger) {\n\t\t\t\t\t\tpendingForm = form;\n\t\t\t\t\t\tpendingTrigger = trigger;\n\t\t\t\t\t\tmodal.dataset.tone = form.dataset.confirmTone || \"warning\";\n\t\t\t\t\t\ttitleEl.textContent = form.dataset.confirmTitle || \"Are you sure?\";\n\t\t\t\t\t\tdescEl.textContent = form.dataset.confirmDesc || \"\";\n\t\t\t\t\t\tokBtn.textContent = form.dataset.confirmLabel || \"Confirm\";\n\t\t\t\t\t\toverlay.hidden = false;\n\t\t\t\t\t\t// rAF so the hidden -> visible transition actually\n\t\t\t\t\t\t// animates instead of snapping (a display/visibility\n\t\t\t\t\t\t// change and its transition can't start in the same\n\t\t\t\t\t\t// paint frame).\n\t\t\t\t\t\trequestAnimationFrame(function () { overlay.classList.add(\"open\"); });\n\t\t\t\t\t\tokBtn.focus();\n\t\t\t\t\t}\n\t\t\t\t\tfunction close() {\n\t\t\t\t\t\toverlay.classList.remove(\"open\");\n\t\t\t\t\t\tif (pendingTrigger) pendingTrigger.focus();\n\t\t\t\t\t\tpendingForm = null;\n\t\t\t\t\t\tpendingTrigger = null;\n\t\t\t\t\t\tsetTimeout(function () { overlay.hidden = true; }, 150);\n\t\t\t\t\t}\n\n\t\t\t\t\tdocument.querySelectorAll(\"form[data-confirm-title]\").forEach(function (form) {\n\t\t\t\t\t\tform.addEventListener(\"submit\", function (event) {\n\t\t\t\t\t\t\tif (form.dataset.confirmBypass === \"1\") {\n\t\t\t\t\t\t\t\tdelete form.dataset.confirmBypass;\n\t\t\t\t\t\t\t\treturn; // the real, confirmed submit -- let it through\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\topen(form, event.submitter || form.querySelector('button[type=\"submit\"]'));\n\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t\tokBtn.addEventListener(\"click\", function () {\n\t\t\t\t\t\tif (!pendingForm) return;\n\t\t\t\t\t\tvar form = pendingForm;\n\t\t\t\t\t\tclose();\n\t\t\t\t\t\tform.dataset.confirmBypass = \"1\";\n\t\t\t\t\t\tif (form.requestSubmit) { form.requestSubmit(); } else { form.submit(); }\n\t\t\t\t\t});\n\t\t\t\t\tcancelBtn.addEventListener(\"click\", close);\n\t\t\t\t\toverlay.addEventListener(\"click\", function (event) {\n\t\t\t\t\t\tif (event.target === overlay) close();\n\t\t\t\t\t});\n\t\t\t\t\tdocument.addEventListener(\"keydown\", function (event) {\n\t\t\t\t\t\tif (event.key === \"Escape\" && !overlay.hidden) close();\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\t// Full-screen branded splash for the couple of forms in this\n\t\t\t\t// console carrying data-splash (Create plant -- see\n\t\t\t\t// splash.templ's own comment for why there's no matching\n\t\t\t\t// \"hide\" call anywhere: the real POST this triggers either\n\t\t\t\t// redirects into the new plant's own console or back to this\n\t\t\t\t// same form with an error, and either way this whole document\n\t\t\t\t// gets replaced). If a confirm-modal form also ever needs\n\t\t\t\t// this, it composes for free -- the modal's own Confirm\n\t\t\t\t// button calls form.requestSubmit(), which fires this exact\n\t\t\t\t// listener same as a direct submit would.\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tvar splashOverlay = document.querySelector(\"[data-splash-overlay]\");\n\t\t\t\t\tif (!splashOverlay) return;\n\t\t\t\t\tvar splashMessage = splashOverlay.querySelector(\"[data-splash-message]\");\n\t\t\t\t\tdocument.querySelectorAll(\"form[data-splash]\").forEach(function (form) {\n\t\t\t\t\t\tform.addEventListener(\"submit\", function () {\n\t\t\t\t\t\t\tif (splashMessage) splashMessage.textContent = form.dataset.splash;\n\t\t\t\t\t\t\tsplashOverlay.hidden = false;\n\t\t\t\t\t\t\trequestAnimationFrame(function () { splashOverlay.classList.add(\"open\"); });\n\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\t// File input filename display -- see .file-field/.file-native\n\t\t\t\t// (owner-admin.css) for why the real <input type=\"file\"> is\n\t\t\t\t// visually hidden and a <label for=\"...\"> styled as .btn is\n\t\t\t\t// the actual clickable trigger (a label click natively opens\n\t\t\t\t// the file picker with zero JS needed, so choosing and\n\t\t\t\t// submitting a file both still work even if this never runs\n\t\t\t\t// -- only the filename text stays \"No file chosen\").\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-file-input]\").forEach(function (shell) {\n\t\t\t\t\t\tvar input = shell.querySelector(\".file-native\");\n\t\t\t\t\t\tvar nameEl = shell.querySelector(\"[data-file-name]\");\n\t\t\t\t\t\tif (!input || !nameEl) return;\n\t\t\t\t\t\tinput.addEventListener(\"change\", function () {\n\t\t\t\t\t\t\tnameEl.textContent = input.files && input.files.length ? input.files[0].name : \"No file chosen\";\n\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t</script></head><body><div class=\"shell\" data-tabs><div class=\"mobile-topbar\"><button class=\"rail-toggle\" type=\"button\" data-rail-toggle aria-label=\"Open menu\" aria-expanded=\"false\" aria-controls=\"mobile-rail\"><span class=\"burger\" aria-hidden=\"true\"><span></span><span></span><span></span></span></button><div class=\"brand\"><img class=\"mark\" src=\"/static/images/gatstogo.png\" alt=\"GatsToGo\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</title>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.BrandFavicons().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/owner-admin.css\"><script src=\"https://cdn.jsdelivr.net/npm/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js\" defer></script><script>\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-tabs]\").forEach(function (root) {\n\t\t\t\t\t\tfunction show(tab) {\n\t\t\t\t\t\t\troot.querySelectorAll(\"[data-tab]\").forEach(function (button) {\n\t\t\t\t\t\t\t\tbutton.classList.toggle(\"active\", button.dataset.tab === tab);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\troot.querySelectorAll(\"[data-tab-panel]\").forEach(function (panel) {\n\t\t\t\t\t\t\t\tpanel.classList.toggle(\"active\", panel.dataset.tabPanel === tab);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\t// Mobile off-canvas drawer -- the exact same .rail markup\n\t\t\t\t\t\t// used on desktop, just toggled via a fixed-position\n\t\t\t\t\t\t// transform below the 1020px breakpoint (see owner-\n\t\t\t\t\t\t// admin.css). Replaces what used to be a <select>\n\t\t\t\t\t\t// dropdown standing in for the whole sidebar on mobile.\n\t\t\t\t\t\t//\n\t\t\t\t\t\t// body.rail-locked's own overflow:hidden (owner-admin.css)\n\t\t\t\t\t\t// isn't enough on its own on real mobile browsers -- iOS\n\t\t\t\t\t\t// Safari in particular still lets the page scroll behind a\n\t\t\t\t\t\t// fixed element despite overflow:hidden on <body>. The\n\t\t\t\t\t\t// robust fix is to also pin <body> itself with\n\t\t\t\t\t\t// position:fixed and a negative top offset equal to the\n\t\t\t\t\t\t// current scroll position while the drawer is open, then\n\t\t\t\t\t\t// undo that and restore the exact scroll position on\n\t\t\t\t\t\t// close -- the standard technique for this, not a novel\n\t\t\t\t\t\t// one. Without it, a page scrolled down before opening the\n\t\t\t\t\t\t// drawer leaves the (still torso still scrollable)\n\t\t\t\t\t\t// background moving underneath a supposedly-fixed drawer,\n\t\t\t\t\t\t// which is exactly the \"sidebar drifts away while\n\t\t\t\t\t\t// scrolling\" bug this replaces.\n\t\t\t\t\t\tvar lockedScrollY = 0;\n\t\t\t\t\t\tvar toggleButtons = root.querySelectorAll(\"[data-rail-toggle]\");\n\t\t\t\t\t\tfunction setExpanded(expanded) {\n\t\t\t\t\t\t\t// Drives the toggle button's hamburger<->X morph\n\t\t\t\t\t\t\t// (owner-admin.css's .rail-toggle[aria-expanded]\n\t\t\t\t\t\t\t// rules) off the same attribute a screen reader\n\t\t\t\t\t\t\t// needs anyway, rather than a separate class.\n\t\t\t\t\t\t\ttoggleButtons.forEach(function (btn) {\n\t\t\t\t\t\t\t\tbtn.setAttribute(\"aria-expanded\", expanded ? \"true\" : \"false\");\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction openDrawer() {\n\t\t\t\t\t\t\tlockedScrollY = window.scrollY;\n\t\t\t\t\t\t\tdocument.body.classList.add(\"rail-locked\");\n\t\t\t\t\t\t\tdocument.body.style.top = (-lockedScrollY) + \"px\";\n\t\t\t\t\t\t\troot.classList.add(\"rail-open\");\n\t\t\t\t\t\t\tsetExpanded(true);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction closeDrawer() {\n\t\t\t\t\t\t\troot.classList.remove(\"rail-open\");\n\t\t\t\t\t\t\tdocument.body.classList.remove(\"rail-locked\");\n\t\t\t\t\t\t\tdocument.body.style.top = \"\";\n\t\t\t\t\t\t\twindow.scrollTo(0, lockedScrollY);\n\t\t\t\t\t\t\tsetExpanded(false);\n\t\t\t\t\t\t}\n\t\t\t\t\t\ttoggleButtons.forEach(function (button) {\n\t\t\t\t\t\t\tbutton.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\t\troot.classList.contains(\"rail-open\") ? closeDrawer() : openDrawer();\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t});\n\t\t\t\t\t\tvar backdrop = root.querySelector(\"[data-rail-backdrop]\");\n\t\t\t\t\t\tif (backdrop) backdrop.addEventListener(\"click\", closeDrawer);\n\t\t\t\t\t\tdocument.addEventListener(\"keydown\", function (event) {\n\t\t\t\t\t\t\tif (event.key === \"Escape\") closeDrawer();\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\troot.querySelectorAll(\"[data-tab]\").forEach(function (button) {\n\t\t\t\t\t\t\tbutton.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\t\tshow(button.dataset.tab);\n\t\t\t\t\t\t\t\t// A nav click on mobile is navigation, not just a\n\t\t\t\t\t\t\t\t// state change -- close the drawer the same way\n\t\t\t\t\t\t\t\t// tapping a link in any mobile nav drawer would.\n\t\t\t\t\t\t\t\tcloseDrawer();\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// Themed <select> replacement (see themedSelect in\n\t\t\t\t\t\t// owner_admin.templ for the markup this wires up and why:\n\t\t\t\t\t\t// CSS alone can restyle a <select>'s closed box but never\n\t\t\t\t\t\t// its open dropdown list cross-browser). Progressive\n\t\t\t\t\t\t// enhancement -- the real <select name=\"...\"> stays in\n\t\t\t\t\t\t// the DOM and is still exactly what actually gets\n\t\t\t\t\t\t// submitted with the form; owner-admin.css only hides it\n\t\t\t\t\t\t// (in favor of the custom trigger+listbox) once a shell\n\t\t\t\t\t\t// has the js-ready class this loop adds, so a page where\n\t\t\t\t\t\t// this script fails to run still has a fully working,\n\t\t\t\t\t\t// if plainer, native dropdown instead of nothing.\n\t\t\t\t\t\troot.querySelectorAll(\"[data-select]\").forEach(function (shell) {\n\t\t\t\t\t\t\tvar nativeSelect = shell.querySelector(\".select-native\");\n\t\t\t\t\t\t\tvar trigger = shell.querySelector(\".select-trigger\");\n\t\t\t\t\t\t\tvar valueLabel = shell.querySelector(\".select-value\");\n\t\t\t\t\t\t\tvar list = shell.querySelector(\".select-list\");\n\t\t\t\t\t\t\tvar items = Array.prototype.slice.call(list ? list.querySelectorAll('[role=\"option\"]') : []);\n\t\t\t\t\t\t\tif (!nativeSelect || !trigger || !list || !items.length) return;\n\n\t\t\t\t\t\t\tvar highlighted = 0;\n\n\t\t\t\t\t\t\tfunction syncFromNative() {\n\t\t\t\t\t\t\t\titems.forEach(function (li, i) {\n\t\t\t\t\t\t\t\t\tvar isSelected = li.dataset.value === nativeSelect.value;\n\t\t\t\t\t\t\t\t\tli.setAttribute(\"aria-selected\", isSelected ? \"true\" : \"false\");\n\t\t\t\t\t\t\t\t\tli.classList.toggle(\"selected\", isSelected);\n\t\t\t\t\t\t\t\t\tif (isSelected) {\n\t\t\t\t\t\t\t\t\t\tvalueLabel.textContent = li.textContent;\n\t\t\t\t\t\t\t\t\t\thighlighted = i;\n\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tfunction highlightItem(index) {\n\t\t\t\t\t\t\t\titems.forEach(function (li, i) { li.classList.toggle(\"highlighted\", i === index); });\n\t\t\t\t\t\t\t\tif (items[index].scrollIntoView) items[index].scrollIntoView({ block: \"nearest\" });\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tfunction openList() {\n\t\t\t\t\t\t\t\tdocument.querySelectorAll(\".select-shell.open\").forEach(function (openShell) {\n\t\t\t\t\t\t\t\t\tif (openShell !== shell) closeList(openShell);\n\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t\tshell.classList.add(\"open\");\n\t\t\t\t\t\t\t\ttrigger.setAttribute(\"aria-expanded\", \"true\");\n\t\t\t\t\t\t\t\tlist.hidden = false;\n\t\t\t\t\t\t\t\thighlightItem(highlighted);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tfunction closeList(target) {\n\t\t\t\t\t\t\t\ttarget = target || shell;\n\t\t\t\t\t\t\t\ttarget.classList.remove(\"open\");\n\t\t\t\t\t\t\t\ttarget.querySelector(\".select-trigger\").setAttribute(\"aria-expanded\", \"false\");\n\t\t\t\t\t\t\t\ttarget.querySelector(\".select-list\").hidden = true;\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tfunction selectItem(index) {\n\t\t\t\t\t\t\t\tvar li = items[index];\n\t\t\t\t\t\t\t\tif (!li) return;\n\t\t\t\t\t\t\t\tnativeSelect.value = li.dataset.value;\n\t\t\t\t\t\t\t\tnativeSelect.dispatchEvent(new Event(\"change\", { bubbles: true }));\n\t\t\t\t\t\t\t\tsyncFromNative();\n\t\t\t\t\t\t\t\tcloseList();\n\t\t\t\t\t\t\t\ttrigger.focus();\n\t\t\t\t\t\t\t}\n\n\t\t\t\t\t\t\ttrigger.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\t\tshell.classList.contains(\"open\") ? closeList() : openList();\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\ttrigger.addEventListener(\"keydown\", function (event) {\n\t\t\t\t\t\t\t\tif (event.key === \"ArrowDown\" || event.key === \"ArrowUp\") {\n\t\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\t\tif (!shell.classList.contains(\"open\")) { openList(); return; }\n\t\t\t\t\t\t\t\t\tvar dir = event.key === \"ArrowDown\" ? 1 : -1;\n\t\t\t\t\t\t\t\t\thighlighted = (highlighted + dir + items.length) % items.length;\n\t\t\t\t\t\t\t\t\thighlightItem(highlighted);\n\t\t\t\t\t\t\t\t} else if (event.key === \"Enter\" || event.key === \" \") {\n\t\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\t\tshell.classList.contains(\"open\") ? selectItem(highlighted) : openList();\n\t\t\t\t\t\t\t\t} else if (event.key === \"Escape\" && shell.classList.contains(\"open\")) {\n\t\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\t\tevent.stopPropagation(); // don't also close the mobile drawer\n\t\t\t\t\t\t\t\t\tcloseList();\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\titems.forEach(function (li, i) {\n\t\t\t\t\t\t\t\tli.addEventListener(\"click\", function () { selectItem(i); });\n\t\t\t\t\t\t\t\tli.addEventListener(\"mouseenter\", function () { highlighted = i; highlightItem(i); });\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\tdocument.addEventListener(\"click\", function (event) {\n\t\t\t\t\t\t\t\tif (shell.classList.contains(\"open\") && !shell.contains(event.target)) closeList();\n\t\t\t\t\t\t\t});\n\n\t\t\t\t\t\t\tsyncFromNative();\n\t\t\t\t\t\t\t// Only once the custom trigger+listbox is actually\n\t\t\t\t\t\t\t// wired up and taking over does the native select\n\t\t\t\t\t\t\t// get pulled out of the tab order and accessibility\n\t\t\t\t\t\t\t// tree -- it's still what's found first (and works\n\t\t\t\t\t\t\t// fully natively) if this script never runs at all.\n\t\t\t\t\t\t\tnativeSelect.setAttribute(\"tabindex\", \"-1\");\n\t\t\t\t\t\t\tnativeSelect.setAttribute(\"aria-hidden\", \"true\");\n\t\t\t\t\t\t\tshell.classList.add(\"js-ready\");\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// A write action (set price, add staff, ...) redirects back\n\t\t\t\t\t\t// to #<tab> so the owner lands back where they were, not on\n\t\t\t\t\t\t// Overview -- see cmd/server/owner_write.go.\n\t\t\t\t\t\tvar hashTab = location.hash.replace(\"#\", \"\");\n\t\t\t\t\t\tvar hashTarget = hashTab && root.querySelector('[data-tab-panel=\"' + hashTab + '\"]');\n\t\t\t\t\t\tvar initial = root.querySelector(\"[data-tab].active\");\n\t\t\t\t\t\tshow(hashTarget ? hashTab : (initial ? initial.dataset.tab : \"overview\"));\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\t// Confirmation modal -- replaces window.confirm() (a native,\n\t\t\t\t// unstyleable browser popup that also freezes the whole page\n\t\t\t\t// while open) for every action that flips something a plant\n\t\t\t\t// or staff member depends on: suspend, close, deactivate,\n\t\t\t\t// void. Driven entirely by data-confirm-* attributes on the\n\t\t\t\t// triggering <form>, so nothing about what a form posts or\n\t\t\t\t// where it posts to changes -- see plantStatusForm and the\n\t\t\t\t// Staff/Sales tables' own forms in this file for the\n\t\t\t\t// attributes it reads.\n\t\t\t\t//\n\t\t\t\t// A form's first submit is always intercepted and shown as\n\t\t\t\t// the modal instead; only clicking the modal's own Confirm\n\t\t\t\t// button does the real submit, via a one-time\n\t\t\t\t// confirmBypass flag so that second, real submit doesn't\n\t\t\t\t// loop back through this same listener.\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tvar overlay = document.querySelector(\"[data-confirm-overlay]\");\n\t\t\t\t\tif (!overlay) return;\n\t\t\t\t\tvar modal = overlay.querySelector(\".confirm-modal\");\n\t\t\t\t\tvar titleEl = overlay.querySelector(\"[data-confirm-title-el]\");\n\t\t\t\t\tvar descEl = overlay.querySelector(\"[data-confirm-desc-el]\");\n\t\t\t\t\tvar okBtn = overlay.querySelector(\"[data-confirm-ok]\");\n\t\t\t\t\tvar cancelBtn = overlay.querySelector(\"[data-confirm-cancel]\");\n\t\t\t\t\tvar pendingForm = null;\n\t\t\t\t\tvar pendingTrigger = null;\n\n\t\t\t\t\tfunction open(form, trigger) {\n\t\t\t\t\t\tpendingForm = form;\n\t\t\t\t\t\tpendingTrigger = trigger;\n\t\t\t\t\t\tmodal.dataset.tone = form.dataset.confirmTone || \"warning\";\n\t\t\t\t\t\ttitleEl.textContent = form.dataset.confirmTitle || \"Are you sure?\";\n\t\t\t\t\t\tdescEl.textContent = form.dataset.confirmDesc || \"\";\n\t\t\t\t\t\tokBtn.textContent = form.dataset.confirmLabel || \"Confirm\";\n\t\t\t\t\t\toverlay.hidden = false;\n\t\t\t\t\t\t// rAF so the hidden -> visible transition actually\n\t\t\t\t\t\t// animates instead of snapping (a display/visibility\n\t\t\t\t\t\t// change and its transition can't start in the same\n\t\t\t\t\t\t// paint frame).\n\t\t\t\t\t\trequestAnimationFrame(function () { overlay.classList.add(\"open\"); });\n\t\t\t\t\t\tokBtn.focus();\n\t\t\t\t\t}\n\t\t\t\t\tfunction close() {\n\t\t\t\t\t\toverlay.classList.remove(\"open\");\n\t\t\t\t\t\tif (pendingTrigger) pendingTrigger.focus();\n\t\t\t\t\t\tpendingForm = null;\n\t\t\t\t\t\tpendingTrigger = null;\n\t\t\t\t\t\tsetTimeout(function () { overlay.hidden = true; }, 150);\n\t\t\t\t\t}\n\n\t\t\t\t\tdocument.querySelectorAll(\"form[data-confirm-title]\").forEach(function (form) {\n\t\t\t\t\t\tform.addEventListener(\"submit\", function (event) {\n\t\t\t\t\t\t\tif (form.dataset.confirmBypass === \"1\") {\n\t\t\t\t\t\t\t\tdelete form.dataset.confirmBypass;\n\t\t\t\t\t\t\t\treturn; // the real, confirmed submit -- let it through\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\topen(form, event.submitter || form.querySelector('button[type=\"submit\"]'));\n\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t\tokBtn.addEventListener(\"click\", function () {\n\t\t\t\t\t\tif (!pendingForm) return;\n\t\t\t\t\t\tvar form = pendingForm;\n\t\t\t\t\t\tclose();\n\t\t\t\t\t\tform.dataset.confirmBypass = \"1\";\n\t\t\t\t\t\tif (form.requestSubmit) { form.requestSubmit(); } else { form.submit(); }\n\t\t\t\t\t});\n\t\t\t\t\tcancelBtn.addEventListener(\"click\", close);\n\t\t\t\t\toverlay.addEventListener(\"click\", function (event) {\n\t\t\t\t\t\tif (event.target === overlay) close();\n\t\t\t\t\t});\n\t\t\t\t\tdocument.addEventListener(\"keydown\", function (event) {\n\t\t\t\t\t\tif (event.key === \"Escape\" && !overlay.hidden) close();\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\t// Full-screen branded splash for the couple of forms in this\n\t\t\t\t// console carrying data-splash (Create plant -- see\n\t\t\t\t// splash.templ's own comment for why there's no matching\n\t\t\t\t// \"hide\" call anywhere: the real POST this triggers either\n\t\t\t\t// redirects into the new plant's own console or back to this\n\t\t\t\t// same form with an error, and either way this whole document\n\t\t\t\t// gets replaced). If a confirm-modal form also ever needs\n\t\t\t\t// this, it composes for free -- the modal's own Confirm\n\t\t\t\t// button calls form.requestSubmit(), which fires this exact\n\t\t\t\t// listener same as a direct submit would.\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tvar splashOverlay = document.querySelector(\"[data-splash-overlay]\");\n\t\t\t\t\tif (!splashOverlay) return;\n\t\t\t\t\tvar splashMessage = splashOverlay.querySelector(\"[data-splash-message]\");\n\t\t\t\t\tdocument.querySelectorAll(\"form[data-splash]\").forEach(function (form) {\n\t\t\t\t\t\tform.addEventListener(\"submit\", function () {\n\t\t\t\t\t\t\tif (splashMessage) splashMessage.textContent = form.dataset.splash;\n\t\t\t\t\t\t\tsplashOverlay.hidden = false;\n\t\t\t\t\t\t\trequestAnimationFrame(function () { splashOverlay.classList.add(\"open\"); });\n\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\t// File input filename display -- see .file-field/.file-native\n\t\t\t\t// (owner-admin.css) for why the real <input type=\"file\"> is\n\t\t\t\t// visually hidden and a <label for=\"...\"> styled as .btn is\n\t\t\t\t// the actual clickable trigger (a label click natively opens\n\t\t\t\t// the file picker with zero JS needed, so choosing and\n\t\t\t\t// submitting a file both still work even if this never runs\n\t\t\t\t// -- only the filename text stays \"No file chosen\").\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-file-input]\").forEach(function (shell) {\n\t\t\t\t\t\tvar input = shell.querySelector(\".file-native\");\n\t\t\t\t\t\tvar nameEl = shell.querySelector(\"[data-file-name]\");\n\t\t\t\t\t\tif (!input || !nameEl) return;\n\t\t\t\t\t\tinput.addEventListener(\"change\", function () {\n\t\t\t\t\t\t\tnameEl.textContent = input.files && input.files.length ? input.files[0].name : \"No file chosen\";\n\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t</script></head><body><div class=\"shell\" data-tabs><div class=\"mobile-topbar\"><button class=\"rail-toggle\" type=\"button\" data-rail-toggle aria-label=\"Open menu\" aria-expanded=\"false\" aria-controls=\"mobile-rail\"><span class=\"burger\" aria-hidden=\"true\"><span></span><span></span><span></span></span></button><div class=\"brand\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.BrandMark("mark", "dark-container", "GatsToGo").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(railLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 644, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/owner_admin.templ`, Line: 644, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, " workspace</span></div></div><div class=\"rail-backdrop\" data-rail-backdrop></div><aside class=\"rail\" id=\"mobile-rail\"><div class=\"brand\"><img class=\"mark\" src=\"/static/images/gatstogo.png\" alt=\"GatsToGo\"> <span>GATSTOGO</span></div><div class=\"rail-label\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, " workspace</span></div></div><div class=\"rail-backdrop\" data-rail-backdrop></div><aside class=\"rail\" id=\"mobile-rail\"><div class=\"brand\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.BrandMark("mark", "dark-container", "GatsToGo").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<span>GATSTOGO</span></div><div class=\"rail-label\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -593,7 +617,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " workspace</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " workspace</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -601,7 +625,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div class=\"rail-note\"><strong>Real numbers only.</strong> Everything on this dashboard reflects what's actually happened. Sections stay empty until there's something real to show.</div><form method=\"post\" action=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"rail-note\"><strong>Real numbers only.</strong> Everything on this dashboard reflects what's actually happened. Sections stay empty until there's something real to show.</div><form method=\"post\" action=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -614,7 +638,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" class=\"rail-signout\" data-confirm-title=\"Sign out?\" data-confirm-desc=\"You'll need to sign in again to get back to this dashboard.\" data-confirm-label=\"Sign out\" data-confirm-tone=\"warning\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" class=\"rail-signout\" data-confirm-title=\"Sign out?\" data-confirm-desc=\"You'll need to sign in again to get back to this dashboard.\" data-confirm-label=\"Sign out\" data-confirm-tone=\"warning\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -627,7 +651,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"> <button class=\"nav-button\" type=\"submit\"><span class=\"nav-button-label\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"> <button class=\"nav-button\" type=\"submit\"><span class=\"nav-button-label\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -635,7 +659,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "Sign out</span></button></form></aside><main class=\"main\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "Sign out</span></button></form></aside><main class=\"main\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -643,7 +667,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</main></div><div class=\"confirm-overlay\" data-confirm-overlay hidden><div class=\"confirm-modal\" role=\"alertdialog\" aria-modal=\"true\" aria-labelledby=\"confirm-modal-title\" aria-describedby=\"confirm-modal-desc\"><div class=\"confirm-icon\"><span class=\"confirm-icon-warn\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</main></div><div class=\"confirm-overlay\" data-confirm-overlay hidden><div class=\"confirm-modal\" role=\"alertdialog\" aria-modal=\"true\" aria-labelledby=\"confirm-modal-title\" aria-describedby=\"confirm-modal-desc\"><div class=\"confirm-icon\"><span class=\"confirm-icon-warn\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -651,7 +675,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</span> <span class=\"confirm-icon-ok\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</span> <span class=\"confirm-icon-ok\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -659,7 +683,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</span></div><h2 id=\"confirm-modal-title\" data-confirm-title-el></h2><p id=\"confirm-modal-desc\" data-confirm-desc-el></p><div class=\"confirm-actions\"><button type=\"button\" class=\"btn\" data-confirm-cancel>Cancel</button> <button type=\"button\" class=\"btn primary\" data-confirm-ok></button></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</span></div><h2 id=\"confirm-modal-title\" data-confirm-title-el></h2><p id=\"confirm-modal-desc\" data-confirm-desc-el></p><div class=\"confirm-actions\"><button type=\"button\" class=\"btn\" data-confirm-cancel>Cancel</button> <button type=\"button\" class=\"btn primary\" data-confirm-ok></button></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -667,7 +691,7 @@ func opsShell(title string, railLabel string, nav templ.Component, content templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -696,7 +720,7 @@ func kpiLabel(icon string, label string) templ.Component {
 			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"kpi-label\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div class=\"kpi-label\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -713,7 +737,7 @@ func kpiLabel(icon string, label string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -749,7 +773,7 @@ func emptyState(lottie string, message string) templ.Component {
 			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<div class=\"empty\"><lottie-player class=\"empty-lottie\" src=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<div class=\"empty\"><lottie-player class=\"empty-lottie\" src=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -762,7 +786,7 @@ func emptyState(lottie string, message string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" autoplay loop></lottie-player> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\" autoplay loop></lottie-player> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -775,7 +799,7 @@ func emptyState(lottie string, message string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -809,7 +833,7 @@ func navButton(active bool, tab string, icon string, label string) templ.Compone
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<button class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<button class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -822,7 +846,7 @@ func navButton(active bool, tab string, icon string, label string) templ.Compone
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\" type=\"button\" data-tab=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\" type=\"button\" data-tab=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -835,7 +859,7 @@ func navButton(active bool, tab string, icon string, label string) templ.Compone
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\"><span class=\"nav-button-label\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\"><span class=\"nav-button-label\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -852,7 +876,7 @@ func navButton(active bool, tab string, icon string, label string) templ.Compone
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</span></button>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</span></button>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -881,7 +905,7 @@ func ownerNav() templ.Component {
 			templ_7745c5c3_Var29 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<nav class=\"rail-nav\" aria-label=\"Owner sections\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<nav class=\"rail-nav\" aria-label=\"Owner sections\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -917,7 +941,7 @@ func ownerNav() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -946,7 +970,7 @@ func adminNav() templ.Component {
 			templ_7745c5c3_Var30 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<nav class=\"rail-nav\" aria-label=\"Admin sections\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<nav class=\"rail-nav\" aria-label=\"Admin sections\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -974,7 +998,7 @@ func adminNav() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1014,7 +1038,7 @@ func navLink(tab string, icon string, label string) templ.Component {
 			templ_7745c5c3_Var31 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<a class=\"nav-button\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<a class=\"nav-button\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1027,7 +1051,7 @@ func navLink(tab string, icon string, label string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\"><span class=\"nav-button-label\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"><span class=\"nav-button-label\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1044,7 +1068,7 @@ func navLink(tab string, icon string, label string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</span></a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</span></a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1077,7 +1101,7 @@ func adminNavLinks() templ.Component {
 			templ_7745c5c3_Var34 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<nav class=\"rail-nav\" aria-label=\"Admin sections\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<nav class=\"rail-nav\" aria-label=\"Admin sections\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1105,7 +1129,7 @@ func adminNavLinks() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1134,7 +1158,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			templ_7745c5c3_Var35 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<div class=\"topline\"><div><div class=\"eyebrow\">Plant owner console</div><h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<div class=\"topline\"><div><div class=\"eyebrow\">Plant owner console</div><h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1147,7 +1171,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</h1><div class=\"meta-row\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</h1><div class=\"meta-row\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1160,7 +1184,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</span> <span class=\"sep\"></span> <span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</span> <span class=\"sep\"></span> <span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1173,7 +1197,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</span> <span class=\"sep\"></span> <span class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</span> <span class=\"sep\"></span> <span class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1186,7 +1210,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</span> <span class=\"sep\"></span> <span>Domain ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</span> <span class=\"sep\"></span> <span>Domain ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1199,7 +1223,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</span></div></div><div class=\"toolbar\"><button class=\"btn primary\" type=\"button\" data-tab=\"prices\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</span></div></div><div class=\"toolbar\"><button class=\"btn primary\" type=\"button\" data-tab=\"prices\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1207,12 +1231,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "Set price</button></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "Set price</button></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if data.ErrorMessage != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<div class=\"owner-error\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<div class=\"owner-error\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1229,12 +1253,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<section class=\"tab-panel active\" data-tab-panel=\"overview\"><div class=\"kpi-row\"><div class=\"kpi-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "<section class=\"tab-panel active\" data-tab-panel=\"overview\"><div class=\"kpi-row\"><div class=\"kpi-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1242,7 +1266,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<div class=\"kpi\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<div class=\"kpi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1255,7 +1279,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div><div class=\"kpi-small\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div><div class=\"kpi-small\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1268,7 +1292,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, " sales recorded</div></div><div class=\"kpi-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, " sales recorded</div></div><div class=\"kpi-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1276,7 +1300,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<div class=\"kpi\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "<div class=\"kpi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1289,7 +1313,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</div><div class=\"kpi-small\">Paid ticket size</div></div><div class=\"kpi-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</div><div class=\"kpi-small\">Paid ticket size</div></div><div class=\"kpi-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1297,7 +1321,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"kpi\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "<div class=\"kpi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1310,7 +1334,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</div><div class=\"kpi-small\">Snapshot used for new tickets</div></div><div class=\"kpi-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div><div class=\"kpi-small\">Snapshot used for new tickets</div></div><div class=\"kpi-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1318,7 +1342,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "<div class=\"kpi\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "<div class=\"kpi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1331,7 +1355,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div><div class=\"kpi-small\">Electronic ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div><div class=\"kpi-small\">Electronic ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1344,7 +1368,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</div></div></div><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Reconciliation board</h2></div><div class=\"stat-line\"><div><div class=\"kpi-label\">Gas paid for</div><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div></div></div><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Reconciliation board</h2></div><div class=\"stat-line\"><div><div class=\"kpi-label\">Gas paid for</div><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1357,7 +1381,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "</strong></div><div><div class=\"kpi-label\">Gas filled</div><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</strong></div><div><div class=\"kpi-label\">Gas filled</div><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1370,7 +1394,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</strong></div><div><div class=\"kpi-label\">Difference</div><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</strong></div><div><div class=\"kpi-label\">Difference</div><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1383,7 +1407,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, " · ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, " · ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1396,7 +1420,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</strong></div></div><div class=\"meter\"><div class=\"section-title\"><h3>Daily control check</h3><span class=\"muted\">Example only</span></div><div class=\"meter-track\"><div class=\"meter-fill\"></div></div><div class=\"muted\">When live tank data is added, this line can compare expected gas against actual dispensing.</div></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Plant profile</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>Address</span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</strong></div></div><div class=\"meter\"><div class=\"section-title\"><h3>Daily control check</h3><span class=\"muted\">Example only</span></div><div class=\"meter-track\"><div class=\"meter-fill\"></div></div><div class=\"muted\">When live tank data is added, this line can compare expected gas against actual dispensing.</div></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Plant profile</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>Address</span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1409,7 +1433,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</strong></div><div class=\"info-row\"><span>State</span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</strong></div><div class=\"info-row\"><span>State</span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1422,7 +1446,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</strong></div><div class=\"info-row\"><span>Phone</span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</strong></div><div class=\"info-row\"><span>Phone</span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1435,7 +1459,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</strong></div><div class=\"info-row\"><span>Web address</span><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</strong></div><div class=\"info-row\"><span>Web address</span><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1448,7 +1472,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "</strong></div><div class=\"info-row\"><span>Domain status</span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</strong></div><div class=\"info-row\"><span>Domain status</span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1461,7 +1485,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</strong></div><div class=\"info-row\"><span>Legal business name</span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</strong></div><div class=\"info-row\"><span>Legal business name</span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1474,7 +1498,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</strong></div><div class=\"info-row\"><span>CAC number</span><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</strong></div><div class=\"info-row\"><span>CAC number</span><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1487,7 +1511,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "</strong></div><div class=\"info-row\"><span>NMDPRA license</span><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</strong></div><div class=\"info-row\"><span>NMDPRA license</span><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1500,7 +1524,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</strong></div><div class=\"info-row\"><span>Settlement account</span><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</strong></div><div class=\"info-row\"><span>Settlement account</span><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1513,7 +1537,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</strong></div><div class=\"info-row\"><span>Account name</span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</strong></div><div class=\"info-row\"><span>Account name</span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1526,12 +1550,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</strong></div></div><div class=\"section-title\" style=\"margin-top:28px;\"><h2>Brand kit</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>Logo</span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</strong></div></div><div class=\"section-title\" style=\"margin-top:28px;\"><h2>Brand kit</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>Logo</span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if data.PlantLogoPath != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<img class=\"brand-logo-preview\" src=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "<img class=\"brand-logo-preview\" src=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1544,17 +1568,17 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "\" alt=\"Plant logo\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "\" alt=\"Plant logo\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "Not yet provided")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "Not yet provided")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</strong></div><div class=\"info-row\"><span>Primary color</span><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</strong></div><div class=\"info-row\"><span>Primary color</span><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1567,7 +1591,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "</strong></div><div class=\"info-row\"><span>Button color</span><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</strong></div><div class=\"info-row\"><span>Button color</span><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1580,7 +1604,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</strong></div><div class=\"info-row\"><span>Secondary color</span><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</strong></div><div class=\"info-row\"><span>Secondary color</span><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1593,7 +1617,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</strong></div><div class=\"info-row\"><span>Button text color</span><strong class=\"mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</strong></div><div class=\"info-row\"><span>Button text color</span><strong class=\"mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1606,12 +1630,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "</strong></div></div></div></div></section><section class=\"tab-panel\" data-tab-panel=\"sales\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Sales and receipts</h2></div><div class=\"table-wrap\"><table style=\"min-width:1240px\"><thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th class=\"num\">Paid kg</th><th class=\"num\">Filled kg</th><th class=\"num\">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "</strong></div></div></div></div></section><section class=\"tab-panel\" data-tab-panel=\"sales\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Sales and receipts</h2></div><div class=\"table-wrap\"><table style=\"min-width:1240px\"><thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th class=\"num\">Paid kg</th><th class=\"num\">Filled kg</th><th class=\"num\">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.RecentTickets) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "<tr><td colspan=\"10\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "<tr><td colspan=\"10\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1619,13 +1643,13 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.RecentTickets {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "<tr><td class=\"mono\" title=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "<tr><td class=\"mono\" title=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1638,7 +1662,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1651,7 +1675,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1664,7 +1688,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "<div class=\"muted mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "<div class=\"muted mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1677,7 +1701,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "</div></td><td class=\"mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "</div></td><td class=\"mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1690,7 +1714,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1703,7 +1727,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1716,7 +1740,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1729,7 +1753,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1742,7 +1766,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1751,7 +1775,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "<span class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "<span class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1764,7 +1788,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1777,7 +1801,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "</span></td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "</span></td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1790,12 +1814,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if row.Status == "PENDING" || row.Status == "PAID" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "<form method=\"post\" action=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "<form method=\"post\" action=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1808,7 +1832,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "\" data-confirm-title=\"Void this ticket?\" data-confirm-desc=\"The code stops working right away and this sale won't count anymore. This can't be undone.\" data-confirm-label=\"Void ticket\" data-confirm-tone=\"danger\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "\" data-confirm-title=\"Void this ticket?\" data-confirm-desc=\"The code stops working right away and this sale won't count anymore. This can't be undone.\" data-confirm-label=\"Void ticket\" data-confirm-tone=\"danger\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1821,17 +1845,17 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "\"> <button class=\"btn\" type=\"submit\">Void</button></form>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "\"> <button class=\"btn\" type=\"submit\">Void</button></form>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Receipt preview</h2></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Receipt preview</h2></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1841,7 +1865,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "<div class=\"receipt-code\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "<div class=\"receipt-code\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1854,7 +1878,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "</div><div><strong>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "</div><div><strong>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1867,7 +1891,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</strong> paid at ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "</strong> paid at ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1880,7 +1904,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, " by ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, " by ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1893,7 +1917,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, ".</div><div class=\"muted\">Paid ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, ".</div><div class=\"muted\">Paid ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1906,7 +1930,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, " · Filled ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, " · Filled ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1919,17 +1943,17 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "</div></div></section><section class=\"tab-panel\" data-tab-panel=\"cash\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Cash drawer</h2></div><div class=\"table-wrap\"><table style=\"min-width:860px\"><thead><tr><th>When</th><th>Kind</th><th class=\"num\">Amount</th><th class=\"num\">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "</div></div></section><section class=\"tab-panel\" data-tab-panel=\"cash\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Cash drawer</h2></div><div class=\"table-wrap\"><table style=\"min-width:860px\"><thead><tr><th>When</th><th>Kind</th><th class=\"num\">Amount</th><th class=\"num\">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.CashMovements) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "<tr><td colspan=\"7\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "<tr><td colspan=\"7\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1937,13 +1961,13 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.CashMovements {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "<tr><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "<tr><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1956,7 +1980,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1969,7 +1993,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1982,7 +2006,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1995,7 +2019,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2008,7 +2032,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "</td><td class=\"mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "</td><td class=\"mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2021,7 +2045,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2034,17 +2058,17 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 130, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Record cash count</h2></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 131, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Record cash count</h2></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if data.HasOpenShift {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "<form method=\"post\" action=\"/owner/cash-movements\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "<form method=\"post\" action=\"/owner/cash-movements\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2057,7 +2081,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 130, "\"><div class=\"form-grid\"><div class=\"field\"><label>Counted cash</label><input type=\"text\" name=\"amount\" placeholder=\"0\" inputmode=\"decimal\" required></div><div class=\"field\"><label>Kind</label>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 133, "\"><div class=\"form-grid\"><div class=\"field\"><label>Counted cash</label><input type=\"text\" name=\"amount\" placeholder=\"0\" inputmode=\"decimal\" required></div><div class=\"field\"><label>Kind</label>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2069,7 +2093,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 131, "</div><div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Note</label><textarea name=\"note\" placeholder=\"Optional note for the owner\"></textarea></div></div><div class=\"action-strip\"><button class=\"btn primary\" type=\"submit\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 134, "</div><div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Note</label><textarea name=\"note\" placeholder=\"Optional note for the owner\"></textarea></div></div><div class=\"action-strip\"><button class=\"btn primary\" type=\"submit\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2077,22 +2101,22 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "Save count</button></div></form>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "Save count</button></div></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 133, "<p class=\"muted\">No shift is open right now. A cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 136, "<p class=\"muted\">No shift is open right now. A cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 134, "</div></div></section><section class=\"tab-panel\" data-tab-panel=\"shifts\"><div class=\"section-title\"><h2>Shift register</h2></div><div class=\"table-wrap\"><table style=\"min-width:980px\"><thead><tr><th>Staff</th><th>Device</th><th>Opened</th><th>Closed</th><th class=\"num\">Tickets</th><th class=\"num\">Tokens</th><th class=\"num\">Opening</th><th class=\"num\">Closing</th><th>Status</th><th>Notes</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 137, "</div></div></section><section class=\"tab-panel\" data-tab-panel=\"shifts\"><div class=\"section-title\"><h2>Shift register</h2></div><div class=\"table-wrap\"><table style=\"min-width:980px\"><thead><tr><th>Staff</th><th>Device</th><th>Opened</th><th>Closed</th><th class=\"num\">Tickets</th><th class=\"num\">Tokens</th><th class=\"num\">Opening</th><th class=\"num\">Closing</th><th>Status</th><th>Notes</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.Shifts) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "<tr><td colspan=\"10\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "<tr><td colspan=\"10\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2100,13 +2124,13 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 136, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.Shifts {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 137, "<tr><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "<tr><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2119,7 +2143,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "</td><td class=\"mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "</td><td class=\"mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2132,7 +2156,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2145,7 +2169,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2158,7 +2182,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2171,7 +2195,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2184,7 +2208,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, " / ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, " / ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2197,7 +2221,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2210,7 +2234,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2223,7 +2247,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2232,7 +2256,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, "<span class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "<span class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2245,7 +2269,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2258,7 +2282,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "</span></td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, "</span></td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2271,17 +2295,17 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "</tbody></table></div></section><section class=\"tab-panel\" data-tab-panel=\"staff\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Staff access</h2></div><div class=\"table-wrap\"><table style=\"min-width:760px\"><thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class=\"num\">Sales</th><th class=\"num\">Shifts</th><th>Joined</th><th></th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, "</tbody></table></div></section><section class=\"tab-panel\" data-tab-panel=\"staff\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Staff access</h2></div><div class=\"table-wrap\"><table style=\"min-width:760px\"><thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class=\"num\">Sales</th><th class=\"num\">Shifts</th><th>Joined</th><th></th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.Staff) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, "<tr><td colspan=\"8\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "<tr><td colspan=\"8\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2289,13 +2313,13 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 156, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.Staff {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, "<tr><td><strong>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 157, "<tr><td><strong>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2308,7 +2332,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "</strong></td><td class=\"mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "</strong></td><td class=\"mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2321,7 +2345,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 156, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2334,7 +2358,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 157, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2343,7 +2367,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "<span class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 161, "<span class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2356,7 +2380,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 162, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2369,7 +2393,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "</span></td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "</span></td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2382,7 +2406,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 161, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2395,7 +2419,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 162, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2408,13 +2432,13 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if row.CanToggleActive {
 				if row.Active {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "<form method=\"post\" action=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "<form method=\"post\" action=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -2427,7 +2451,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "\" data-confirm-title=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 168, "\" data-confirm-title=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -2440,7 +2464,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "\" data-confirm-desc=\"They won't be able to log in or use the terminal until you reactivate them.\" data-confirm-label=\"Deactivate\" data-confirm-tone=\"warning\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 169, "\" data-confirm-desc=\"They won't be able to log in or use the terminal until you reactivate them.\" data-confirm-label=\"Deactivate\" data-confirm-tone=\"warning\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -2453,12 +2477,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "\"> <input type=\"hidden\" name=\"active\" value=\"false\"> <button class=\"btn\" type=\"submit\">Deactivate</button></form>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "\"> <input type=\"hidden\" name=\"active\" value=\"false\"> <button class=\"btn\" type=\"submit\">Deactivate</button></form>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 168, "<form method=\"post\" action=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "<form method=\"post\" action=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -2471,7 +2495,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 169, "\" data-confirm-title=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "\" data-confirm-title=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -2484,7 +2508,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "\" data-confirm-desc=\"They'll be able to log in and use the terminal again right away.\" data-confirm-label=\"Activate\" data-confirm-tone=\"ok\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 173, "\" data-confirm-desc=\"They'll be able to log in and use the terminal again right away.\" data-confirm-label=\"Activate\" data-confirm-tone=\"ok\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -2497,18 +2521,18 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "\"> <input type=\"hidden\" name=\"active\" value=\"true\"> <button class=\"btn\" type=\"submit\">Activate</button></form>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 174, "\"> <input type=\"hidden\" name=\"active\" value=\"true\"> <button class=\"btn\" type=\"submit\">Activate</button></form>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 173, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Add staff</h2></div><form method=\"post\" action=\"/owner/staff\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Add staff</h2></div><form method=\"post\" action=\"/owner/staff\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2521,7 +2545,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 174, "\"><div class=\"form-grid\"><div class=\"field\"><label>Name</label><input type=\"text\" name=\"name\" placeholder=\"Full name\" required></div><div class=\"field\"><label>Phone</label><input type=\"tel\" name=\"phone\" placeholder=\"0803 000 0000\" required></div><div class=\"field\"><label>Role</label>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "\"><div class=\"form-grid\"><div class=\"field\"><label>Name</label><input type=\"text\" name=\"name\" placeholder=\"Full name\" required></div><div class=\"field\"><label>Phone</label><input type=\"tel\" name=\"phone\" placeholder=\"0803 000 0000\" required></div><div class=\"field\"><label>Role</label>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2533,7 +2557,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "</div><div class=\"field\"><label>PIN</label><input type=\"text\" name=\"pin\" placeholder=\"4-digit PIN\" inputmode=\"numeric\" pattern=\"[0-9]{4}\" maxlength=\"4\" required></div></div><div class=\"action-strip\"><button class=\"btn primary\" type=\"submit\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 178, "</div><div class=\"field\"><label>PIN</label><input type=\"text\" name=\"pin\" placeholder=\"4-digit PIN\" inputmode=\"numeric\" pattern=\"[0-9]{4}\" maxlength=\"4\" required></div></div><div class=\"action-strip\"><button class=\"btn primary\" type=\"submit\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2541,12 +2565,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "Create staff</button></div></form></div></div></section><section class=\"tab-panel\" data-tab-panel=\"prices\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Price history</h2></div><div class=\"table-wrap\"><table style=\"min-width:560px\"><thead><tr><th>Effective from</th><th class=\"num\">Price</th><th>Set by</th><th>Created</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 179, "Create staff</button></div></form></div></div></section><section class=\"tab-panel\" data-tab-panel=\"prices\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Price history</h2></div><div class=\"table-wrap\"><table style=\"min-width:560px\"><thead><tr><th>Effective from</th><th class=\"num\">Price</th><th>Set by</th><th>Created</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.PriceHistory) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "<tr><td colspan=\"4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 180, "<tr><td colspan=\"4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2554,13 +2578,13 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 178, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 181, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.PriceHistory {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 179, "<tr><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 182, "<tr><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2573,7 +2597,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 180, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 183, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2586,7 +2610,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 181, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 184, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2599,7 +2623,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 182, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 185, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2612,12 +2636,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 183, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 186, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 184, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Set new rate</h2></div><form method=\"post\" action=\"/owner/prices\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 187, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Set new rate</h2></div><form method=\"post\" action=\"/owner/prices\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2630,7 +2654,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 185, "\"><div class=\"form-grid\"><div class=\"field\"><label>Price per kg</label><input type=\"text\" name=\"price_per_kg\" placeholder=\"1150\" inputmode=\"decimal\" required></div><div class=\"field\"><label>Effective from</label><input type=\"text\" value=\"Immediately\" disabled></div></div><div class=\"action-strip\"><button class=\"btn primary\" type=\"submit\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 188, "\"><div class=\"form-grid\"><div class=\"field\"><label>Price per kg</label><input type=\"text\" name=\"price_per_kg\" placeholder=\"1150\" inputmode=\"decimal\" required></div><div class=\"field\"><label>Effective from</label><input type=\"text\" value=\"Immediately\" disabled></div></div><div class=\"action-strip\"><button class=\"btn primary\" type=\"submit\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2638,7 +2662,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 186, "Save new price</button></div></form></div></div></section><section class=\"tab-panel\" data-tab-panel=\"activity\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Activity trail</h2></div><div class=\"timeline\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "Save new price</button></div></form></div></div></section><section class=\"tab-panel\" data-tab-panel=\"activity\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Activity trail</h2></div><div class=\"timeline\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2649,7 +2673,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			}
 		}
 		for _, item := range data.Activity {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 187, "<div class=\"timeline-item\"><strong>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 190, "<div class=\"timeline-item\"><strong>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2662,7 +2686,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 188, "</strong><span class=\"muted\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 191, "</strong><span class=\"muted\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2675,12 +2699,12 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 192, "</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 190, "</div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Audit guide</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>Tickets</span><strong>Check customer proof and voids first.</strong></div><div class=\"info-row\"><span>Cash</span><strong>Match movements against shift close.</strong></div><div class=\"info-row\"><span>Prices</span><strong>Confirm the rate used at sale time.</strong></div></div></div></div></section><section class=\"tab-panel\" data-tab-panel=\"account\"><div class=\"section-title\"><h2>Account security</h2></div><p class=\"muted\">Change the password you use to sign in to this dashboard.</p><form method=\"post\" action=\"/owner/password\" data-splash=\"Updating password\" style=\"max-width:420px;\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 193, "</div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Audit guide</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>Tickets</span><strong>Check customer proof and voids first.</strong></div><div class=\"info-row\"><span>Cash</span><strong>Match movements against shift close.</strong></div><div class=\"info-row\"><span>Prices</span><strong>Confirm the rate used at sale time.</strong></div></div></div></div></section><section class=\"tab-panel\" data-tab-panel=\"account\"><div class=\"section-title\"><h2>Account security</h2></div><p class=\"muted\">Change the password you use to sign in to this dashboard.</p><form method=\"post\" action=\"/owner/password\" data-splash=\"Updating password\" style=\"max-width:420px;\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2693,7 +2717,7 @@ func ownerDashboardContent(data OwnerDashboardData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 191, "\"><div class=\"field\"><label>Current password</label><input type=\"password\" name=\"current_password\" autocomplete=\"current-password\" required></div><div class=\"field\" style=\"margin-top:10px;\"><label>New password</label><input type=\"password\" name=\"new_password\" autocomplete=\"new-password\" required></div><div class=\"field\" style=\"margin-top:10px;\"><label>Confirm new password</label><input type=\"password\" name=\"new_password_confirm\" autocomplete=\"new-password\" required></div><div class=\"action-strip\" style=\"margin-top:16px; justify-content:flex-start;\"><button class=\"btn primary\" type=\"submit\">Update password</button></div></form></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 194, "\"><div class=\"field\"><label>Current password</label><input type=\"password\" name=\"current_password\" autocomplete=\"current-password\" required></div><div class=\"field\" style=\"margin-top:10px;\"><label>New password</label><input type=\"password\" name=\"new_password\" autocomplete=\"new-password\" required></div><div class=\"field\" style=\"margin-top:10px;\"><label>Confirm new password</label><input type=\"password\" name=\"new_password_confirm\" autocomplete=\"new-password\" required></div><div class=\"action-strip\" style=\"margin-top:16px; justify-content:flex-start;\"><button class=\"btn primary\" type=\"submit\">Update password</button></div></form></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2737,7 +2761,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 			templ_7745c5c3_Var133 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 192, "<form method=\"post\" action=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 195, "<form method=\"post\" action=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2750,7 +2774,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 193, "\" data-confirm-title=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 196, "\" data-confirm-title=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2763,7 +2787,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 194, "\" data-confirm-desc=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 197, "\" data-confirm-desc=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2776,7 +2800,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 195, "\" data-confirm-label=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 198, "\" data-confirm-label=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2789,7 +2813,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 196, "\" data-confirm-tone=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 199, "\" data-confirm-tone=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2802,7 +2826,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 197, "\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 200, "\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2815,7 +2839,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 198, "\"> <input type=\"hidden\" name=\"status\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 201, "\"> <input type=\"hidden\" name=\"status\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2828,7 +2852,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 199, "\"> <button class=\"btn\" type=\"submit\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 202, "\"> <button class=\"btn\" type=\"submit\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2841,7 +2865,7 @@ func plantStatusForm(plantID string, newStatus string, label string, csrfToken s
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 200, "</button></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 203, "</button></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2870,7 +2894,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			templ_7745c5c3_Var142 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 201, "<div class=\"topline\"><div><div class=\"eyebrow\">Platform admin console</div><h1>Plant network</h1><div class=\"meta-row\"><span class=\"meta-ok\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 204, "<div class=\"topline\"><div><div class=\"eyebrow\">Platform admin console</div><h1>Plant network</h1><div class=\"meta-row\"><span class=\"meta-ok\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2883,7 +2907,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 202, " active</span> <span class=\"sep\"></span> <span class=\"meta-warn\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 205, " active</span> <span class=\"sep\"></span> <span class=\"meta-warn\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2896,7 +2920,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 203, " onboarding</span> <span class=\"sep\"></span> <span class=\"meta-danger\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 206, " onboarding</span> <span class=\"sep\"></span> <span class=\"meta-danger\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2909,7 +2933,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 204, " suspended</span> <span class=\"sep\"></span> <span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 207, " suspended</span> <span class=\"sep\"></span> <span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2922,7 +2946,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 205, " closed</span></div></div><div class=\"toolbar\"><button class=\"btn primary\" type=\"button\" data-tab=\"onboarding\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 208, " closed</span></div></div><div class=\"toolbar\"><button class=\"btn primary\" type=\"button\" data-tab=\"onboarding\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2930,12 +2954,12 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 206, "Onboard a plant</button></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 209, "Onboard a plant</button></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if data.ErrorMessage != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 207, "<div class=\"owner-error\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 210, "<div class=\"owner-error\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2952,12 +2976,12 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 208, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 211, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 209, "<section class=\"tab-panel active\" data-tab-panel=\"overview\"><div class=\"kpi-row\"><div class=\"kpi-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 212, "<section class=\"tab-panel active\" data-tab-panel=\"overview\"><div class=\"kpi-row\"><div class=\"kpi-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2965,7 +2989,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 210, "<div class=\"kpi\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 213, "<div class=\"kpi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2978,7 +3002,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 211, "</div><div class=\"kpi-small\">All plants on GatsToGo</div></div><div class=\"kpi-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 214, "</div><div class=\"kpi-small\">All plants on GatsToGo</div></div><div class=\"kpi-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2986,7 +3010,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 212, "<div class=\"kpi\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 215, "<div class=\"kpi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2999,7 +3023,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 213, "</div><div class=\"kpi-small\">Across all plants</div></div><div class=\"kpi-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 216, "</div><div class=\"kpi-small\">Across all plants</div></div><div class=\"kpi-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3007,7 +3031,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 214, "<div class=\"kpi\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 217, "<div class=\"kpi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3020,7 +3044,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 215, "</div><div class=\"kpi-small\">Paid ticket weight</div></div><div class=\"kpi-item\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 218, "</div><div class=\"kpi-small\">Paid ticket weight</div></div><div class=\"kpi-item\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3028,7 +3052,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 216, "<div class=\"kpi\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 219, "<div class=\"kpi\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3041,7 +3065,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 217, "</div><div class=\"kpi-small\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 220, "</div><div class=\"kpi-small\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3054,7 +3078,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 218, " pending checks</div></div></div><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Launch queue</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>Plant record</span><strong>Name, web address, location, status, colors, and domain.</strong></div><div class=\"info-row\"><span>Owner access</span><strong>Create the first owner user and verify phone.</strong></div><div class=\"info-row\"><span>Opening price</span><strong>Add a price row before the customer page goes live.</strong></div><div class=\"info-row\"><span>First sale</span><strong>Watch ticket, cash, shift, and activity records arrive.</strong></div></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Platform staff</h2></div><div class=\"timeline\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 221, " pending checks</div></div></div><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Launch queue</h2></div><div class=\"split-list\"><div class=\"info-row\"><span>Plant record</span><strong>Name, web address, location, status, colors, and domain.</strong></div><div class=\"info-row\"><span>Owner access</span><strong>Create the first owner user and verify phone.</strong></div><div class=\"info-row\"><span>Opening price</span><strong>Add a price row before the customer page goes live.</strong></div><div class=\"info-row\"><span>First sale</span><strong>Watch ticket, cash, shift, and activity records arrive.</strong></div></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Platform staff</h2></div><div class=\"timeline\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3065,7 +3089,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			}
 		}
 		for _, row := range data.PlatformStaff {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 219, "<div class=\"timeline-item\"><strong>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 222, "<div class=\"timeline-item\"><strong>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3078,7 +3102,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 220, "</strong><span class=\"muted\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 223, "</strong><span class=\"muted\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3091,7 +3115,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 221, " · ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 224, " · ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3104,7 +3128,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 222, " · ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 225, " · ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3117,17 +3141,17 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 223, " plant links</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 226, " plant links</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 224, "</div></div></div></section><section class=\"tab-panel\" data-tab-panel=\"plants\"><div class=\"section-title\"><h2>Plants</h2></div><div class=\"table-wrap\"><table style=\"min-width:1300px\"><thead><tr><th>Plant</th><th>Location</th><th>Web address</th><th>Status</th><th>Domain</th><th class=\"num\">Staff</th><th class=\"num\">Prices</th><th class=\"num\">Open shifts</th><th class=\"num\">Txns 7d</th><th class=\"num\">Volume 30d</th><th>Last txn</th><th></th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 227, "</div></div></div></section><section class=\"tab-panel\" data-tab-panel=\"plants\"><div class=\"section-title\"><h2>Plants</h2></div><div class=\"table-wrap\"><table style=\"min-width:1300px\"><thead><tr><th>Plant</th><th>Location</th><th>Web address</th><th>Status</th><th>Domain</th><th class=\"num\">Staff</th><th class=\"num\">Prices</th><th class=\"num\">Open shifts</th><th class=\"num\">Txns 7d</th><th class=\"num\">Volume 30d</th><th>Last txn</th><th></th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.Plants) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 225, "<tr><td colspan=\"12\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 228, "<tr><td colspan=\"12\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3135,13 +3159,13 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 226, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 229, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.Plants {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 227, "<tr><td><strong><a class=\"plant-name-link\" href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 230, "<tr><td><strong><a class=\"plant-name-link\" href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3154,7 +3178,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 228, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 231, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3167,7 +3191,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 229, "</a></strong><div class=\"muted mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 232, "</a></strong><div class=\"muted mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3180,7 +3204,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 230, "</div></td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 233, "</div></td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3193,7 +3217,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 231, "<div class=\"muted\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 234, "<div class=\"muted\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3206,7 +3230,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 232, "</div></td><td class=\"mono\" title=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 235, "</div></td><td class=\"mono\" title=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3219,7 +3243,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 233, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 236, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3232,7 +3256,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 234, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 237, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3241,7 +3265,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 235, "<span class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 238, "<span class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3254,7 +3278,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 236, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 239, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3267,7 +3291,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 237, "</span></td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 240, "</span></td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3280,7 +3304,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 238, "<div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 241, "<div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3289,7 +3313,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 239, "<span class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 242, "<span class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3302,7 +3326,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 240, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 243, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3315,7 +3339,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 241, "</span></div></td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 244, "</span></div></td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3328,7 +3352,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 242, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 245, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3341,7 +3365,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 243, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 246, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3354,7 +3378,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 244, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 247, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3367,7 +3391,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 245, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 248, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3380,7 +3404,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 246, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 249, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3393,7 +3417,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 247, "</td><td class=\"action-strip\"><a class=\"btn\" href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 250, "</td><td class=\"action-strip\"><a class=\"btn\" href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3406,7 +3430,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 248, "\">View</a> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 251, "\">View</a> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3429,7 +3453,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 249, " ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 252, " ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -3451,12 +3475,12 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 250, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 253, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 251, "</tbody></table></div></section><section class=\"tab-panel\" data-tab-panel=\"onboarding\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Create plant</h2></div><form method=\"post\" action=\"/admin/plants\" enctype=\"multipart/form-data\" data-splash=\"Setting up your plant\" data-account-resolve><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 254, "</tbody></table></div></section><section class=\"tab-panel\" data-tab-panel=\"onboarding\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Create plant</h2></div><form method=\"post\" action=\"/admin/plants\" enctype=\"multipart/form-data\" data-splash=\"Setting up your plant\" data-account-resolve><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3469,7 +3493,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 252, "\"><div class=\"form-grid\"><div class=\"field\"><label>Plant name</label><input type=\"text\" name=\"name\" placeholder=\"Sunrise Gas Plant\" required></div><div class=\"field\"><label>Web address</label><input type=\"text\" name=\"slug\" placeholder=\"sunrise\" pattern=\"[a-z0-9-]+\" required></div><div class=\"field\"><label>City</label><input type=\"text\" name=\"city\" placeholder=\"Owerri\"></div><div class=\"field\"><label>Phone</label><input type=\"tel\" name=\"phone\" placeholder=\"0803 000 0000\"></div><div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Address</label><input type=\"text\" name=\"address\" placeholder=\"Plant address\"></div><div class=\"field\"><label>Starting price per kg</label><input type=\"text\" name=\"starting_price\" placeholder=\"1150\" inputmode=\"decimal\" required></div></div><div class=\"section-title\" style=\"margin-top:20px;\"><h3>Brand kit</h3></div><p class=\"muted\">Everything here is optional and can be changed later -- a plant works fine with none of it set.</p><div class=\"form-grid\"><div class=\"field\"><label>Primary color</label><input type=\"text\" name=\"primary_color\" placeholder=\"#006B4D\"></div><div class=\"field\"><label>Button color</label><input type=\"text\" name=\"button_color\" placeholder=\"#006B4D\"></div><div class=\"field\"><label>Secondary color</label><input type=\"text\" name=\"secondary_color\" placeholder=\"#10B981\"></div><div class=\"field\"><label>Button text color</label><input type=\"text\" name=\"button_text_color\" placeholder=\"#F8FAFC\"></div><div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Logo</label><div class=\"file-field\" data-file-input><input type=\"file\" id=\"logo-input\" name=\"logo\" accept=\"image/png,image/jpeg,image/webp\" class=\"file-native\"> <label class=\"btn file-trigger\" for=\"logo-input\">Choose file</label> <span class=\"file-name\" data-file-name>No file chosen</span></div><p class=\"muted\" style=\"margin-top:6px;\">PNG, JPEG, or WebP, up to 2MB.</p></div></div><div class=\"section-title\" style=\"margin-top:20px;\"><h3>Business details</h3></div><div class=\"form-grid\"><div class=\"field\"><label>Legal business name</label><input type=\"text\" name=\"legal_business_name\" placeholder=\"As registered with CAC\" required></div><div class=\"field\"><label>CAC registration number</label><input type=\"text\" name=\"cac_number\" placeholder=\"RC 1234567\" required></div><div class=\"field\"><label>State</label>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 255, "\"><div class=\"form-grid\"><div class=\"field\"><label>Plant name</label><input type=\"text\" name=\"name\" placeholder=\"Sunrise Gas Plant\" required></div><div class=\"field\"><label>Web address</label><input type=\"text\" name=\"slug\" placeholder=\"sunrise\" pattern=\"[a-z0-9-]+\" required></div><div class=\"field\"><label>City</label><input type=\"text\" name=\"city\" placeholder=\"Owerri\"></div><div class=\"field\"><label>Phone</label><input type=\"tel\" name=\"phone\" placeholder=\"0803 000 0000\"></div><div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Address</label><input type=\"text\" name=\"address\" placeholder=\"Plant address\"></div><div class=\"field\"><label>Starting price per kg</label><input type=\"text\" name=\"starting_price\" placeholder=\"1150\" inputmode=\"decimal\" required></div></div><div class=\"section-title\" style=\"margin-top:20px;\"><h3>Brand kit</h3></div><p class=\"muted\">Everything here is optional and can be changed later -- a plant works fine with none of it set.</p><div class=\"form-grid\"><div class=\"field\"><label>Primary color</label><input type=\"text\" name=\"primary_color\" placeholder=\"#006B4D\"></div><div class=\"field\"><label>Button color</label><input type=\"text\" name=\"button_color\" placeholder=\"#006B4D\"></div><div class=\"field\"><label>Secondary color</label><input type=\"text\" name=\"secondary_color\" placeholder=\"#10B981\"></div><div class=\"field\"><label>Button text color</label><input type=\"text\" name=\"button_text_color\" placeholder=\"#F8FAFC\"></div><div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Logo</label><div class=\"file-field\" data-file-input><input type=\"file\" id=\"logo-input\" name=\"logo\" accept=\"image/png,image/jpeg,image/webp\" class=\"file-native\"> <label class=\"btn file-trigger\" for=\"logo-input\">Choose file</label> <span class=\"file-name\" data-file-name>No file chosen</span></div><p class=\"muted\" style=\"margin-top:6px;\">PNG, JPEG, or WebP, up to 2MB.</p></div></div><div class=\"section-title\" style=\"margin-top:20px;\"><h3>Business details</h3></div><div class=\"form-grid\"><div class=\"field\"><label>Legal business name</label><input type=\"text\" name=\"legal_business_name\" placeholder=\"As registered with CAC\" required></div><div class=\"field\"><label>CAC registration number</label><input type=\"text\" name=\"cac_number\" placeholder=\"RC 1234567\" required></div><div class=\"field\"><label>State</label>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3477,7 +3501,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 253, "</div><div class=\"field\"><label>NMDPRA license number</label><input type=\"text\" name=\"nmdpra_license_number\" placeholder=\"License number\" required></div></div><div class=\"section-title\" style=\"margin-top:20px;\"><h3>Payout details</h3></div><p class=\"muted\">Customer payments settle straight to this account. GatsToGo keeps a 1.5% fee automatically, no manual payout ever needed.</p><div class=\"form-grid\"><div class=\"field\"><label>Bank</label>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 256, "</div><div class=\"field\"><label>NMDPRA license number</label><input type=\"text\" name=\"nmdpra_license_number\" placeholder=\"License number\" required></div></div><div class=\"section-title\" style=\"margin-top:20px;\"><h3>Payout details</h3></div><p class=\"muted\">Customer payments settle straight to this account. GatsToGo keeps a 1.5% fee automatically, no manual payout ever needed.</p><div class=\"form-grid\"><div class=\"field\"><label>Bank</label>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3485,7 +3509,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 254, "</div><div class=\"field\"><label>Account number</label><input type=\"text\" name=\"bank_account_number\" placeholder=\"0123456789\" inputmode=\"numeric\" pattern=\"[0-9]{10}\" maxlength=\"10\" required></div><div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Account name</label><div class=\"account-readout\" data-account-name data-state=\"idle\">Enter your account number and bank to verify.</div></div></div><div class=\"section-title\" style=\"margin-top:20px;\"><h3>Owner login</h3></div><div class=\"form-grid\"><div class=\"field\"><label>Owner name</label><input type=\"text\" name=\"owner_name\" placeholder=\"Full name\" required></div><div class=\"field\"><label>Owner phone</label><input type=\"tel\" name=\"owner_phone\" placeholder=\"0803 000 0000\" required></div><div class=\"field\"><label>Owner email</label><input type=\"email\" name=\"owner_email\" placeholder=\"owner@email.com\" required></div><div class=\"field\"><label>Owner temporary password</label><input type=\"text\" name=\"owner_password\" placeholder=\"Set a temporary password\" required></div></div><div class=\"action-strip\"><button class=\"btn primary\" type=\"submit\" disabled>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 257, "</div><div class=\"field\"><label>Account number</label><input type=\"text\" name=\"bank_account_number\" placeholder=\"0123456789\" inputmode=\"numeric\" pattern=\"[0-9]{10}\" maxlength=\"10\" required></div><div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Account name</label><div class=\"account-readout\" data-account-name data-state=\"idle\">Enter your account number and bank to verify.</div></div></div><div class=\"section-title\" style=\"margin-top:20px;\"><h3>Owner login</h3></div><div class=\"form-grid\"><div class=\"field\"><label>Owner name</label><input type=\"text\" name=\"owner_name\" placeholder=\"Full name\" required></div><div class=\"field\"><label>Owner phone</label><input type=\"tel\" name=\"owner_phone\" placeholder=\"0803 000 0000\" required></div><div class=\"field\"><label>Owner email</label><input type=\"email\" name=\"owner_email\" placeholder=\"owner@email.com\" required></div><div class=\"field\"><label>Owner temporary password</label><input type=\"text\" name=\"owner_password\" placeholder=\"Set a temporary password\" required></div></div><div class=\"action-strip\"><button class=\"btn primary\" type=\"submit\" disabled>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3493,7 +3517,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 255, "Create plant</button></div></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 258, "Create plant</button></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3501,12 +3525,12 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 256, "</div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Onboarding checklist</h2></div><div class=\"split-list split-list-steps\"><div class=\"info-row\"><span>1</span><strong>Reserve the web address and create the plant record.</strong></div><div class=\"info-row\"><span>2</span><strong>Add owner user and temporary password.</strong></div><div class=\"info-row\"><span>3</span><strong>Set starting price per kg.</strong></div><div class=\"info-row\"><span>4</span><strong>Test customer site, receipt page, and staff terminal.</strong></div></div><p class=\"muted\" style=\"margin-top: 12px;\">Steps 1-3 all happen from the one \"Create plant\" form. Step 4 is still on you.</p></div></div></section><section class=\"tab-panel\" data-tab-panel=\"domains\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Domain health</h2></div><div class=\"table-wrap\"><table style=\"min-width:800px\"><thead><tr><th>Plant</th><th>Web address</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 259, "</div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Onboarding checklist</h2></div><div class=\"split-list split-list-steps\"><div class=\"info-row\"><span>1</span><strong>Reserve the web address and create the plant record.</strong></div><div class=\"info-row\"><span>2</span><strong>Add owner user and temporary password.</strong></div><div class=\"info-row\"><span>3</span><strong>Set starting price per kg.</strong></div><div class=\"info-row\"><span>4</span><strong>Test customer site, receipt page, and staff terminal.</strong></div></div><p class=\"muted\" style=\"margin-top: 12px;\">Steps 1-3 all happen from the one \"Create plant\" form. Step 4 is still on you.</p></div></div></section><section class=\"tab-panel\" data-tab-panel=\"domains\"><div class=\"dashboard-grid\"><div><div class=\"section-title\"><h2>Domain health</h2></div><div class=\"table-wrap\"><table style=\"min-width:800px\"><thead><tr><th>Plant</th><th>Web address</th><th>Custom domain</th><th>Domain status</th><th>Created</th><th>Updated</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.Plants) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 257, "<tr><td colspan=\"6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 260, "<tr><td colspan=\"6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3514,13 +3538,13 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 258, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 261, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.Plants {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 259, "<tr><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 262, "<tr><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3533,7 +3557,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 260, "</td><td class=\"mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 263, "</td><td class=\"mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3546,7 +3570,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 261, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 264, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3559,7 +3583,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 262, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 265, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3568,7 +3592,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 263, "<span class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 266, "<span class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3581,7 +3605,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 264, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 267, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3594,7 +3618,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 265, "</span></td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 268, "</span></td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3607,7 +3631,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 266, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 269, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3620,12 +3644,12 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 267, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 270, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 268, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Reserved web addresses</h2></div><div class=\"timeline\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 271, "</tbody></table></div></div><div class=\"dash-aside\"><div class=\"section-title\"><h2>Reserved web addresses</h2></div><div class=\"timeline\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3636,7 +3660,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			}
 		}
 		for _, slug := range data.ReservedSlugs {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 269, "<div class=\"timeline-item\"><strong class=\"mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 272, "<div class=\"timeline-item\"><strong class=\"mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3649,12 +3673,12 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 270, "</strong><span class=\"muted\">Protected web address</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 273, "</strong><span class=\"muted\">Protected web address</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 271, "</div></div></div></section><section class=\"tab-panel\" data-tab-panel=\"activity\"><div style=\"max-width: 640px;\"><div class=\"section-title\"><h2>Platform activity</h2></div><div class=\"timeline\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 274, "</div></div></div></section><section class=\"tab-panel\" data-tab-panel=\"activity\"><div style=\"max-width: 640px;\"><div class=\"section-title\"><h2>Platform activity</h2></div><div class=\"timeline\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3665,7 +3689,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			}
 		}
 		for _, item := range data.RecentActivity {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 272, "<div class=\"timeline-item\"><strong>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 275, "<div class=\"timeline-item\"><strong>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3678,7 +3702,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 273, "</strong><span class=\"muted\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 276, "</strong><span class=\"muted\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3691,23 +3715,23 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 274, "</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 277, "</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 275, "</div></div></section><section class=\"tab-panel\" data-tab-panel=\"system\"><div class=\"section-title\"><h2>System overview</h2></div><div class=\"table-wrap\"><table style=\"min-width:720px\"><thead><tr><th>Data area</th><th>What it controls</th><th class=\"num\">Entries</th><th>Notes</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 278, "</div></div></section><section class=\"tab-panel\" data-tab-panel=\"system\"><div class=\"section-title\"><h2>System overview</h2></div><div class=\"table-wrap\"><table style=\"min-width:720px\"><thead><tr><th>Data area</th><th>What it controls</th><th class=\"num\">Entries</th><th>Notes</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(data.SystemTables) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 276, "<tr><td colspan=\"4\"><div class=\"empty\">No table stats available yet.</div></td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 279, "<tr><td colspan=\"4\"><div class=\"empty\">No table stats available yet.</div></td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		for _, row := range data.SystemTables {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 277, "<tr><td><strong>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 280, "<tr><td><strong>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3720,7 +3744,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 278, "</strong></td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 281, "</strong></td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3733,7 +3757,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 279, "</td><td class=\"num\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 282, "</td><td class=\"num\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3746,7 +3770,7 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 280, "</td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 283, "</td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -3759,12 +3783,12 @@ func adminConsoleContent(data AdminConsoleData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 281, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 284, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 282, "</tbody></table></div></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 285, "</tbody></table></div></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

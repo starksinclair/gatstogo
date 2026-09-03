@@ -1,5 +1,7 @@
 package pages
 
+import "gatstogo/web/templates/components"
+
 // splashOverlay is a full-screen branded loading moment shown only for
 // specific, genuinely slow actions (signing in -- bcrypt is deliberately
 // slow -- and creating a plant), not on every navigation. Shared between
@@ -17,7 +19,7 @@ package pages
 // validation.
 templ splashOverlay() {
 	<div class="splash-overlay" data-splash-overlay hidden>
-		<img class="splash-mark" src="/static/images/gatstogo.png" alt=""/>
+		@components.BrandMark("splash-mark", "dark-container", "")
 		<p class="splash-message" data-splash-message role="status" aria-live="polite">Loading</p>
 	</div>
 }

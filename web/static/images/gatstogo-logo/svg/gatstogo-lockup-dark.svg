@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="96" viewBox="0 0 360 96" role="img" aria-label="GatsToGo horizontal lockup, reversed">
+  <title>GatsToGo horizontal lockup, reversed</title>
+  <rect width="360" height="96" fill="#0F172A"/>
+  <g transform="translate(10,10) scale(0.633)">
+    <rect x="36" y="34" width="48" height="14" rx="5" fill="#FFFFFF"/>
+  <rect x="30" y="50" width="60" height="52" rx="16" fill="#FFFFFF"/>
+  <rect id="bar-gas" x="42" y="64" width="36" height="8" rx="4" fill="#0F172A"/>
+  <rect id="bar-money" x="42" y="80" width="36" height="8" rx="4" fill="#10B981"/>
+  </g>
+  <text x="104" y="60" font-family="Archivo, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="38" font-weight="600" letter-spacing="-1" fill="#FFFFFF">GatsToGo</text>
+</svg>

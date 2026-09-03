@@ -100,7 +100,7 @@ a { color: inherit; text-decoration: none; }
 	display: block;
 	width: 32px;
 	height: 32px;
-	object-fit: cover;
+	object-fit: contain;
 	border-radius: 0;
 	flex: none;
 }
@@ -753,7 +753,7 @@ td {
 	display: block;
 	width: 48px;
 	height: 48px;
-	object-fit: cover;
+	object-fit: contain;
 	animation: splash-pulse 1400ms ease-in-out infinite;
 }
 @keyframes splash-pulse {

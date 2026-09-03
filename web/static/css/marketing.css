@@ -69,7 +69,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	display: block;
 	width: 26px;
 	height: 26px;
-	object-fit: cover;
+	object-fit: contain;
 	border-radius: 0;
 	flex: none;
 }
