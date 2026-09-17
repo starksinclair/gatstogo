@@ -57,6 +57,7 @@ type Server struct {
 	// (see ticketEmail in tickets.go). Configurable via
 	// TICKET_NOTIFICATION_EMAIL; defaults to the address actually in use.
 	NotificationEmail string
+	AppBaseURL        string
 }
 
 func main() {
@@ -211,6 +212,10 @@ func CreateNewServer() (*Server, error) {
 		SMS:               sms.NewLoggingSender(),
 		Email:             emailSender,
 		NotificationEmail: getEnv("TICKET_NOTIFICATION_EMAIL", "gatstogofficial@gmail.com"),
+		AppBaseURL:        strings.TrimRight(getEnv("APP_BASE_URL", "/"), "/"),
+	}
+	if s.AppBaseURL == "" {
+		s.AppBaseURL = "/"
 	}
 	return s, nil
 }
@@ -235,8 +240,11 @@ func (s *Server) MountHandlers() {
 	// X-Paystack-Signature HMAC check inside the handler itself.
 	s.Router.Post("/webhooks/paystack", paystackWebhookHandler(s))
 
-	s.Router.Get("/admin/login", adminLoginPageHandler(s))
-	s.Router.With(middleware.CSRF).Post("/admin/login", adminLoginSubmitHandler(s))
+	s.Router.Group(func(r chi.Router) {
+		r.Use(marketingHostOnly)
+		r.Get("/admin/login", adminLoginPageHandler(s))
+		r.With(middleware.CSRF).Post("/admin/login", adminLoginSubmitHandler(s))
+	})
 
 	// GatsToGo's own public marketing site (cmd/server/marketing.go) --
 	// registered here rather than inside the tenant group below because
@@ -253,6 +261,13 @@ func (s *Server) MountHandlers() {
 	s.Router.Get("/get-started", signupPageHandler(s))
 	s.Router.With(middleware.CSRF).Post("/get-started", signupSubmitHandler(s))
 
+	// Human-facing tenant entry pages should explain "under review" for
+	// self-serve plants that exist but are not active yet. Their POST/API
+	// counterparts remain in the tenant group below, which only resolves
+	// active plants and therefore refuses mutations for provisioning ones.
+	s.Router.Get("/terminal", tenantOrReview(s, terminalPageHandler(s)))
+	s.Router.Get("/owner/login", tenantOrReview(s, ownerLoginPageHandler(s)))
+
 	// GET, not a mutation -- no CSRF needed. Used by both onboarding
 	// forms' JS (see cmd/server/accounts.go's own doc comment) to preview
 	// a bank account holder's name before submission.
@@ -264,6 +279,7 @@ func (s *Server) MountHandlers() {
 	s.Router.NotFound(func(w http.ResponseWriter, r *http.Request) { renderNotFound(w, r) })
 
 	s.Router.Group(func(r chi.Router) {
+		r.Use(marketingHostOnly)
 		r.Use(middleware.RequireAdminSession(s.Sessions))
 		// Mounted *after* RequireAdminSession so GetActor(ctx) is already
 		// populated when a POST reaches it -- CSRF then uses the
@@ -325,8 +341,6 @@ func (s *Server) MountHandlers() {
 			r.Post("/tickets/{reference}/confirm", receiptsConfirmHandler(s))
 		})
 
-		r.Get("/terminal", terminalPageHandler(s))
-
 		// Staff terminal backend. JSON, not HTML -- see cmd/server/terminal.go.
 		// /terminal/pin is public (no staff session exists yet, so CSRF here
 		// uses the double-submit cookie check); everything after it requires
@@ -345,7 +359,6 @@ func (s *Server) MountHandlers() {
 			r.Post("/terminal/shift/end", terminalShiftEndHandler(s))
 		})
 
-		r.Get("/owner/login", ownerLoginPageHandler(s))
 		r.With(middleware.CSRF).Post("/owner/login", ownerLoginSubmitHandler(s))
 
 		// Forgot/reset password -- deliberately public, no session: this
@@ -1026,10 +1039,12 @@ func loadAdminConsole(ctx context.Context, db tenantdb.Querier) pages.AdminConso
 	`).Scan(&data.TotalTickets7d, &volume30d)
 	data.TotalVolume30d = formatKg(volume30d)
 	data.Plants = loadAdminPlants(ctx, db)
-	data.RecentActivity = loadActivity(ctx, db, nil, 8)
-	data.ReservedSlugs = loadReservedSlugs(ctx, db)
-	data.PlatformStaff = loadPlatformStaff(ctx, db)
-	data.SystemTables = loadSystemTables(ctx, db)
+	for _, row := range data.Plants {
+		if row.RawStatus == "provisioning" {
+			data.Applications = append(data.Applications, row)
+		}
+	}
+	data.RecentActivity = loadAdminActivity(ctx, db, 12)
 	return data
 }
 
@@ -1037,6 +1052,8 @@ func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlan
 	rows, err := db.Query(ctx, `
 		SELECT p.id, p.name, COALESCE(p.city, ''), COALESCE(p.address, ''), COALESCE(p.phone, ''),
 		       p.slug, p.status, COALESCE(p.custom_domain, ''), p.domain_status,
+		       COALESCE(owner.name, ''), COALESCE(owner.phone, ''), COALESCE(owner.email, ''),
+		       COALESCE(p.legal_business_name, ''), COALESCE(p.cac_number, ''), COALESCE(p.nmdpra_license_number, ''),
 		       (SELECT MIN(t.created_at) FROM tickets t WHERE t.plant_id = p.id),
 		       (SELECT COUNT(*) FROM tickets t WHERE t.plant_id = p.id AND t.created_at >= now() - interval '7 days'),
 		       (SELECT COALESCE(SUM(t.size_grams), 0) FROM tickets t WHERE t.plant_id = p.id AND t.created_at >= now() - interval '30 days' AND t.status <> 'voided'),
@@ -1047,6 +1064,13 @@ func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlan
 		       (SELECT COUNT(*) FROM activity_log a WHERE a.plant_id = p.id),
 		       p.created_at, p.updated_at
 		FROM plants p
+		LEFT JOIN LATERAL (
+			SELECT name, phone, email
+			FROM users u
+			WHERE u.plant_id = p.id AND u.role = 'owner'
+			ORDER BY u.created_at ASC
+			LIMIT 1
+		) owner ON true
 		ORDER BY p.created_at DESC
 		LIMIT 40
 	`)
@@ -1062,7 +1086,11 @@ func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlan
 		var firstTxn, lastTxn sql.NullTime
 		var created, updated time.Time
 		var volume int64
-		if err := rows.Scan(&id, &row.Name, &row.City, &row.Address, &row.Phone, &row.Slug, &row.Status, &row.Domain, &row.DomainStatus, &firstTxn, &row.Txns7d, &volume, &lastTxn, &row.StaffCount, &row.PriceCount, &row.OpenShifts, &row.ActivityCount, &created, &updated); err != nil {
+		if err := rows.Scan(
+			&id, &row.Name, &row.City, &row.Address, &row.Phone, &row.Slug, &row.Status, &row.Domain, &row.DomainStatus,
+			&row.OwnerName, &row.OwnerPhone, &row.OwnerEmail, &row.LegalName, &row.CACNumber, &row.NMDPRALicense,
+			&firstTxn, &row.Txns7d, &volume, &lastTxn, &row.StaffCount, &row.PriceCount, &row.OpenShifts, &row.ActivityCount, &created, &updated,
+		); err != nil {
 			continue
 		}
 		row.ID = id.String()
@@ -1077,6 +1105,12 @@ func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlan
 		if row.Phone == "" {
 			row.Phone = "Phone coming soon"
 		}
+		row.OwnerName = fallbackString(row.OwnerName, "Owner name coming soon")
+		row.OwnerPhone = fallbackString(row.OwnerPhone, "Owner phone coming soon")
+		row.OwnerEmail = fallbackString(row.OwnerEmail, "Owner email coming soon")
+		row.LegalName = fallbackString(row.LegalName, "Legal name coming soon")
+		row.CACNumber = fallbackString(row.CACNumber, "CAC number coming soon")
+		row.NMDPRALicense = fallbackString(row.NMDPRALicense, "NMDPRA license coming soon")
 		if row.Domain == "" {
 			row.Domain = row.Slug + ".gatstogo.local"
 		}
@@ -1099,6 +1133,41 @@ func loadAdminPlants(ctx context.Context, db tenantdb.Querier) []pages.AdminPlan
 		// word the overview tab's own count already uses for this state.
 		row.BadgeCSS = badgeForStatus(row.RawStatus)
 		row.DomainBadge = badgeForDomain(row.DomainStatus)
+		out = append(out, row)
+	}
+	return out
+}
+
+func loadAdminActivity(ctx context.Context, db tenantdb.Querier, limit int) []pages.OwnerActivityRow {
+	rows, err := db.Query(ctx, `
+		SELECT al.action, COALESCE(al.subject, ''), al.created_at, COALESCE(act.name, ''), COALESCE(p.name, '')
+		FROM activity_log al
+		JOIN users act ON act.id = al.actor_id AND act.role = 'admin'
+		LEFT JOIN plants p ON p.id = al.plant_id
+		ORDER BY al.created_at DESC
+		LIMIT $1
+	`, limit)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	out := []pages.OwnerActivityRow{}
+	for rows.Next() {
+		var row pages.OwnerActivityRow
+		var rawAction, subject, actorName, plantName string
+		var created time.Time
+		if err := rows.Scan(&rawAction, &subject, &created, &actorName, &plantName); err != nil {
+			continue
+		}
+		row.Action = humanizeActivityAction(rawAction)
+		actor := fallbackString(actorName, "Admin")
+		when := created.Format("2 Jan, 15:04")
+		what := fallbackString(plantName, subject)
+		row.Detail = actor + " · " + when
+		if what != "" {
+			row.Detail = actor + " · " + what + " · " + when
+		}
 		out = append(out, row)
 	}
 	return out
@@ -1380,16 +1449,13 @@ func formatWholeNumber(n int64) string {
 }
 
 // plantStatusLabel turns a plant's raw status column value into the word
-// shown in its Status badge. "provisioning" becomes "Onboarding" -- the
-// admin overview tab's own plant-count line already calls this state
-// "onboarding" (OnboardingCount), so the badge said something different
-// from the count that led an admin to look for it. Every other status
-// (active/suspended/closed) is genuine plain English already and is
-// left as its own uppercase word.
+// shown in its Status badge. "provisioning" is the persisted status for
+// submitted-but-not-approved plants, but the admin-facing language is
+// "under review" so it matches what applicants see on their plant page.
 func plantStatusLabel(rawStatus string) string {
 	resolved := strings.ToLower(fallbackString(rawStatus, "provisioning"))
 	if resolved == "provisioning" {
-		return "ONBOARDING"
+		return "UNDER REVIEW"
 	}
 	return strings.ToUpper(resolved)
 }

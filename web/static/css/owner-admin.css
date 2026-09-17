@@ -370,6 +370,7 @@ h3 { font-size: 14px; }
 	gap: 12px;
 	margin-bottom: 16px;
 }
+.section-spaced { margin-top: 40px; }
 .split-list { display: grid; gap: 0; }
 .info-row {
 	display: grid;
@@ -764,20 +765,43 @@ td {
 
 .action-strip {
 	display: flex;
+	align-items: center;
 	gap: 10px;
 	flex-wrap: wrap;
 	margin-top: 16px;
 }
-.receipt-code {
-	font-family: var(--font-mono, "IBM Plex Mono", monospace);
-	font-size: 44px;
-	font-weight: 700;
-	line-height: 1;
-	letter-spacing: 0.03em;
+.action-strip form { margin: 0; }
+.table-actions {
+	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+	margin-top: 0;
+	white-space: nowrap;
 }
+.table-actions .btn {
+	min-width: 84px;
+	white-space: nowrap;
+}
+.table-actions form { display: flex; }
 .timeline { display: grid; gap: 14px; }
 .timeline-item { border-left: 1px solid var(--line); padding-left: 12px; }
 .timeline-item strong { display: block; }
+.application-item { display: grid; gap: 8px; }
+.application-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 2px;
+}
+.application-actions form {
+	display: flex;
+	margin: 0;
+}
+.application-actions .btn {
+	min-width: 84px;
+	white-space: nowrap;
+}
 .stat-line {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -785,9 +809,6 @@ td {
 }
 .stat-line > div { padding: 0 20px; border-left: 1px solid var(--line); }
 .stat-line > div:first-child { padding-left: 0; border-left: 0; }
-.meter { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.meter-track { height: 8px; border-radius: var(--radius-full, 999px); background: var(--soft); overflow: hidden; }
-.meter-fill { height: 100%; background: var(--green); width: 68%; }
 
 /* ==========================================================================
    Mobile: sticky top bar + off-canvas drawer (replaces the old <select>
@@ -922,6 +943,8 @@ td {
 	.topline { display: block; }
 	.toolbar { justify-content: stretch; margin-top: 14px; }
 	.btn { width: 100%; }
+	.table-actions .btn,
+	.application-actions .btn { width: auto; }
 	.form-grid, .stat-line { grid-template-columns: minmax(0, 1fr); }
 	.stat-line > div { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
 	.stat-line > div:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
@@ -929,7 +952,6 @@ td {
 	.kpi-item { border-left: 0; padding-left: 0; padding-top: 20px; border-top: 1px solid var(--line); }
 	.kpi-item:first-child { border-top: 0; padding-top: 0; }
 	.info-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
-	.receipt-code { font-size: 36px; }
 	/* Keep Cancel/Confirm side by side (flex: 1 each) rather than the
 	   general .btn { width: 100% } rule above stacking them full-width. */
 	.confirm-actions .btn { width: auto; }

@@ -481,6 +481,44 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .select-list li.highlighted { background: var(--surface-muted); }
 .select-list li.selected { color: var(--brand); font-weight: 800; }
 .field-hint { margin: 6px 0 0; color: var(--faint); font-size: 12px; }
+.advanced-group {
+	margin: -8px 0 40px;
+	border-top: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+}
+.advanced-group summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 18px;
+	padding: 18px 0;
+	list-style: none;
+	cursor: pointer;
+}
+.advanced-group summary::-webkit-details-marker { display: none; }
+.advanced-group summary span {
+	color: var(--ink);
+	font-size: 13px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.advanced-group summary small {
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 600;
+	text-align: right;
+}
+.advanced-group summary:after {
+	content: "+";
+	flex: none;
+	color: var(--brand);
+	font-family: var(--font-mono, monospace);
+	font-size: 20px;
+	font-weight: 700;
+}
+.advanced-group[open] summary:after { content: "-"; }
+.advanced-body { padding: 6px 0 18px; }
 /* Live account-name readout (web/templates/pages/account_resolve.templ) --
    see owner-admin.css's own .account-readout for the full rationale;
    duplicated rather than shared since these two stylesheets already never
@@ -528,6 +566,55 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	font-size: clamp(26px, 3.4vw, 34px);
 }
 .signup-submitted p { margin: 0 0 32px; color: var(--muted); font-size: 16px; line-height: 1.6; }
+.review-state { max-width: 680px; }
+.review-panel {
+	border-top: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+	padding: 48px 0;
+}
+.signup-submitted.review-state .icon-badge {
+	border-color: var(--brand);
+	color: var(--brand);
+}
+.review-steps {
+	display: grid;
+	gap: 0;
+	max-width: 440px;
+	margin: 0 auto 32px;
+	text-align: left;
+}
+.review-step {
+	display: grid;
+	grid-template-columns: 34px minmax(0, 1fr);
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	border-top: 1px solid var(--line);
+	color: var(--muted);
+}
+.review-step:first-child { border-top: 0; }
+.review-step span {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
+	font-family: var(--font-mono, monospace);
+	font-size: 13px;
+	font-weight: 700;
+}
+.review-step strong { color: var(--ink); font-size: 15px; }
+.review-step.is-done span {
+	border-color: var(--success);
+	background: var(--success);
+	color: #FFFFFF;
+}
+.review-step.is-current span {
+	border-color: var(--brand);
+	color: var(--brand);
+}
 
 /* ==========================================================================
    Pricing / About / Legal -- simple single-column article layouts

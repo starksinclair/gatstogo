@@ -35,6 +35,11 @@ type SignupViewData struct {
 	OwnerPhone    string
 	OwnerEmail    string
 	StartingPrice string
+
+	PrimaryColor    string
+	ButtonColor     string
+	SecondaryColor  string
+	ButtonTextColor string
 }
 
 templ Signup(data SignupViewData) {
@@ -49,7 +54,7 @@ templ signupContent(data SignupViewData) {
 					@components.Icon("check-circle")
 				</div>
 				<h1>We've got your application</h1>
-				<p>Thanks for telling us about your plant. Our team reviews every new plant before it goes live. We'll be in touch to activate your page and confirm your login details.</p>
+				<p>Thanks for telling us about your plant. Your page is now under review, so it will not go live yet. Look out for our email and SMS: once we verify your information, we'll contact you and confirm your platform login details.</p>
 				<a class="button-primary" href="/">Back to homepage</a>
 			</div>
 		} else {
@@ -97,6 +102,36 @@ templ signupContent(data SignupViewData) {
 							<p class="field-hint">You can change this any time from your dashboard once you're live.</p>
 						</div>
 					</div>
+
+					<details class="advanced-group">
+						<summary>
+							<span>Brand kit</span>
+							<small>Optional. Use our default look now, or set yours up later.</small>
+						</summary>
+						<div class="advanced-body">
+							<div class="field-grid">
+								<div class="field-underline">
+									<label for="primary_color">Primary color</label>
+									<input id="primary_color" type="text" name="primary_color" value={ data.PrimaryColor } placeholder="#006B4D"/>
+								</div>
+								<div class="field-underline">
+									<label for="button_color">Button color</label>
+									<input id="button_color" type="text" name="button_color" value={ data.ButtonColor } placeholder="#006B4D"/>
+								</div>
+							</div>
+							<div class="field-grid">
+								<div class="field-underline">
+									<label for="secondary_color">Secondary color</label>
+									<input id="secondary_color" type="text" name="secondary_color" value={ data.SecondaryColor } placeholder="#10B981"/>
+								</div>
+								<div class="field-underline">
+									<label for="button_text_color">Button text color</label>
+									<input id="button_text_color" type="text" name="button_text_color" value={ data.ButtonTextColor } placeholder="#F8FAFC"/>
+								</div>
+							</div>
+							<p class="field-hint">Leave these blank to use the GatsToGo default customer-site look. Invalid colors are ignored safely.</p>
+						</div>
+					</details>
 
 					<div class="field-group">
 						<div class="field-group-heading">Business details</div>
@@ -183,4 +218,29 @@ func slugOrPlaceholder(slug string) string {
 		return "yourslug"
 	}
 	return slug
+}
+
+templ PlantUnderReview(name string, appBaseURL string) {
+	@marketingPageShell(name+" is under review | GatsToGo", plantUnderReviewContent(name, appBaseURL))
+}
+
+templ plantUnderReviewContent(name string, appBaseURL string) {
+	<main>
+		<div class="signup-submitted review-state">
+			<div class="review-panel">
+				<div class="icon-badge">
+					@components.Icon("clock-counter-clockwise")
+				</div>
+				<div class="section-eyebrow">Application under review</div>
+				<h1>{ name } is not live yet</h1>
+				<p>We are verifying this plant before customers can buy gas from it. Once approved, the owner will receive an email and SMS with the next steps for using the platform.</p>
+				<div class="review-steps" aria-label="Application progress">
+					<div class="review-step is-done"><span>1</span><strong>Application received</strong></div>
+					<div class="review-step is-current"><span>2</span><strong>Verification in progress</strong></div>
+					<div class="review-step"><span>3</span><strong>Plant page goes live after approval</strong></div>
+				</div>
+				<a class="button-primary" href={ templ.SafeURL(appBaseURL) }>Back to GatsToGo</a>
+			</div>
+		</div>
+	</main>
 }

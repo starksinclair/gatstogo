@@ -32,8 +32,49 @@ func rootOrTenant(s *Server, tenantHandler http.HandlerFunc) http.HandlerFunc {
 			marketingLandingHandler(s)(w, r)
 			return
 		}
-		middleware.Tenant(s.AdminDB)(tenantHandler).ServeHTTP(w, r)
+		serveTenantOrReview(s, tenantHandler, w, r)
 	}
+}
+
+// tenantOrReview serves tenant pages that should still explain the
+// application's status before a plant is activated. It is intentionally
+// only used for human-facing GET pages such as /owner/login and
+// /terminal; write/API routes stay inside middleware.Tenant so inactive
+// plants cannot mutate anything.
+func tenantOrReview(s *Server, tenantHandler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		serveTenantOrReview(s, tenantHandler, w, r)
+	}
+}
+
+func serveTenantOrReview(s *Server, tenantHandler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
+	if !middleware.IsTenantHost(r.Host, middleware.BaseDomain) {
+		renderNotFound(w, r)
+		return
+	}
+
+	slug := middleware.ExtractSubdomain(r.Host)
+	var name, status string
+	err := s.AdminDB.QueryRow(r.Context(), `
+		SELECT name, status
+		FROM plants
+		WHERE slug = $1
+	`, slug).Scan(&name, &status)
+	if err != nil {
+		renderNotFound(w, r)
+		return
+	}
+	if strings.EqualFold(status, "provisioning") {
+		if err := pages.PlantUnderReview(name, s.AppBaseURL).Render(r.Context(), w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+	if !strings.EqualFold(status, "active") {
+		renderNotFound(w, r)
+		return
+	}
+	middleware.Tenant(s.AdminDB)(tenantHandler).ServeHTTP(w, r)
 }
 
 // renderNotFound is cmd/server's own copy of the same one-line render
@@ -46,6 +87,20 @@ func renderNotFound(w http.ResponseWriter, r *http.Request) {
 	if err := pages.NotFound().Render(r.Context(), w); err != nil {
 		log.Println("render not-found page:", err)
 	}
+}
+
+// marketingHostOnly gates GatsToGo platform routes such as /admin to the
+// marketing/base host. A plant subdomain like sportygas.localhost must not
+// reach platform-admin auth at all; it should look exactly like an unknown
+// tenant route and render the branded 404.
+func marketingHostOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !middleware.IsMarketingHost(r.Host, middleware.BaseDomain) {
+			renderNotFound(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // ---- GET / (and /home) on the marketing host ----
@@ -154,6 +209,10 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			NMDPRALicenseNumber: r.FormValue("nmdpra_license_number"),
 			BankCode:            r.FormValue("bank_code"),
 			BankAccountNumber:   r.FormValue("bank_account_number"),
+			PrimaryColor:        r.FormValue("primary_color"),
+			ButtonColor:         r.FormValue("button_color"),
+			SecondaryColor:      r.FormValue("secondary_color"),
+			ButtonTextColor:     r.FormValue("button_text_color"),
 			OwnerName:           r.FormValue("owner_name"),
 			OwnerPhone:          r.FormValue("owner_phone"),
 			OwnerEmail:          r.FormValue("owner_email"),
@@ -164,12 +223,10 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			params.StartingPriceKobo = startingPriceKobo
 		}
 
-		// No logo/brand-color fields on this form -- see admin_write.go's
-		// adminCreatePlantHandler for where those actually live. A public,
-		// unreviewed applicant sets their business/identity/bank details
-		// here; branding stays an admin-managed step, the same boundary
-		// this form already drew for PrimaryColor/ButtonColor before this
-		// build-out, now extended consistently to the rest of the kit.
+		// Logo upload stays admin-only for now because the public form is
+		// a normal URL-encoded submission. Brand colors are safe to accept
+		// here because plants.Create sanitizes invalid/empty values back to
+		// the design-system defaults before anything reaches CSS.
 		_, err := provisionPlant(r.Context(), s, params, nil, nil, nil)
 		if err != nil {
 			log.Println("signup: create plant failed:", err)
@@ -203,6 +260,10 @@ func renderSignupForm(s *Server, w http.ResponseWriter, r *http.Request, errorMs
 		NMDPRALicenseNumber: r.FormValue("nmdpra_license_number"),
 		BankCode:            r.FormValue("bank_code"),
 		BankAccountNumber:   r.FormValue("bank_account_number"),
+		PrimaryColor:        r.FormValue("primary_color"),
+		ButtonColor:         r.FormValue("button_color"),
+		SecondaryColor:      r.FormValue("secondary_color"),
+		ButtonTextColor:     r.FormValue("button_text_color"),
 		OwnerName:           r.FormValue("owner_name"),
 		OwnerPhone:          r.FormValue("owner_phone"),
 		OwnerEmail:          r.FormValue("owner_email"),

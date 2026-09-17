@@ -150,6 +150,20 @@ func IsMarketingHost(host, baseDomain string) bool {
 	return slug == "" || slug == "www"
 }
 
+// IsTenantHost reports whether host is a legitimate direct tenant
+// subdomain for this deployment, e.g. sunrise.gatstogo.ng when
+// baseDomain is gatstogo.ng. This is the exported, safe counterpart to
+// ExtractSubdomain for callers that need to query by slug: checking the
+// base-domain suffix first avoids reintroducing the Host-header spoofing
+// issue Tenant itself is hardened against.
+func IsTenantHost(host, baseDomain string) bool {
+	slug := ExtractSubdomain(host)
+	if slug == "" || slug == "www" || slug == "admin" || slug == "api" {
+		return false
+	}
+	return hasBaseDomainSuffix(host, baseDomain)
+}
+
 func stripHostPort(host string) string {
 	if colonIndex := strings.Index(host, ":"); colonIndex != -1 {
 		host = host[:colonIndex]
