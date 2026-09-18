@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"gatstogo/internal/audit"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/payments"
 	"gatstogo/internal/plants"
@@ -268,12 +269,79 @@ func adminPlantStatusHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		status := r.FormValue("status")
+		approvalNotice, noticeErr := loadPlantApprovalNotification(r.Context(), s, plantID)
+		if noticeErr != nil {
+			log.Println("admin plant status: load approval notification:", noticeErr)
+		}
 
 		if err := plants.SetStatus(r.Context(), s.AdminDB, plantID, status, actor.UserID); err != nil {
 			log.Println("admin plant status:", err)
 			http.Redirect(w, r, "/admin?error=status#plants", http.StatusSeeOther)
 			return
 		}
+		if noticeErr == nil && shouldNotifyPlantApproved(approvalNotice.PreviousStatus, status) {
+			notifyPlantApproved(r.Context(), s, approvalNotice)
+		}
 		http.Redirect(w, r, "/admin#plants", http.StatusSeeOther)
+	}
+}
+
+// ---- POST /admin/plants/{id}/messaging ----
+
+func adminPlantMessagingHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		actor := middleware.GetActor(r.Context())
+		if actor == nil {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		if err := r.ParseForm(); err != nil {
+			http.Redirect(w, r, "/admin?error=form#plants", http.StatusSeeOther)
+			return
+		}
+		plantID, err := uuid.Parse(chi.URLParam(r, "id"))
+		if err != nil {
+			http.Redirect(w, r, "/admin?error=form#plants", http.StatusSeeOther)
+			return
+		}
+		senderID := strings.TrimSpace(r.FormValue("termii_sender_id"))
+		if len(senderID) > 32 || strings.ContainsAny(senderID, "\r\n\t") {
+			http.Redirect(w, r, "/admin/plants/"+plantID.String()+"?error=form", http.StatusSeeOther)
+			return
+		}
+
+		tx, err := s.AdminDB.Begin(r.Context())
+		if err != nil {
+			log.Println("admin plant messaging: begin:", err)
+			http.Redirect(w, r, "/admin/plants/"+plantID.String()+"?error=form", http.StatusSeeOther)
+			return
+		}
+		defer tx.Rollback(r.Context())
+
+		tag, err := tx.Exec(r.Context(), `
+			UPDATE plants
+			SET termii_sender_id = NULLIF($2, '')
+			WHERE id = $1
+		`, plantID, senderID)
+		if err != nil || tag.RowsAffected() == 0 {
+			if err != nil {
+				log.Println("admin plant messaging:", err)
+			}
+			http.Redirect(w, r, "/admin/plants/"+plantID.String()+"?error=form", http.StatusSeeOther)
+			return
+		}
+		if err := audit.Log(r.Context(), tx, &plantID, &actor.UserID, "plant.messaging_updated", plantID.String(), map[string]any{
+			"termii_sender_id_set": senderID != "",
+		}); err != nil {
+			log.Println("admin plant messaging: audit:", err)
+			http.Redirect(w, r, "/admin/plants/"+plantID.String()+"?error=form", http.StatusSeeOther)
+			return
+		}
+		if err := tx.Commit(r.Context()); err != nil {
+			log.Println("admin plant messaging: commit:", err)
+			http.Redirect(w, r, "/admin/plants/"+plantID.String()+"?error=form", http.StatusSeeOther)
+			return
+		}
+		http.Redirect(w, r, "/admin/plants/"+plantID.String(), http.StatusSeeOther)
 	}
 }

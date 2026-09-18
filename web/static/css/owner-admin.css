@@ -783,6 +783,125 @@ td {
 	white-space: nowrap;
 }
 .table-actions form { display: flex; }
+.btn.compact {
+	min-height: 32px;
+	padding: 0 10px;
+	font-size: 13px;
+}
+.permission-control {
+	display: grid;
+	gap: 8px;
+	min-width: 220px;
+}
+.permission-chips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.permission-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	min-height: 28px;
+	border: 1px solid #D8E0DA;
+	border-radius: 999px;
+	background: #FFFFFF;
+	color: #647067;
+	padding: 0 10px;
+	font-size: 12px;
+	font-weight: 800;
+	white-space: nowrap;
+}
+.permission-chip .icon {
+	width: 13px;
+	height: 13px;
+}
+.permission-chip.enabled {
+	border-color: #A7E3C8;
+	background: #ECFDF5;
+	color: #006B4D;
+}
+.permission-chip.terminal-only {
+	background: #F8FAFC;
+}
+.muted-permissions {
+	min-width: 160px;
+}
+.permission-menu {
+	position: relative;
+	width: fit-content;
+}
+.permission-menu summary {
+	display: inline-flex;
+	align-items: center;
+	min-height: 34px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
+	background: #F8FAFC;
+	color: var(--ink);
+	padding: 0 12px;
+	font-size: 13px;
+	font-weight: 800;
+	cursor: pointer;
+	list-style: none;
+}
+.permission-menu summary::-webkit-details-marker { display: none; }
+.permission-menu summary::after {
+	content: "v";
+	margin-left: 8px;
+	color: #647067;
+	font-size: 10px;
+}
+.permission-menu[open] summary {
+	border-color: #A7E3C8;
+	background: #ECFDF5;
+	color: #006B4D;
+}
+.permission-menu[open] summary::after { content: "^"; }
+.permission-form {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-width: 260px;
+	margin-top: 8px;
+	border: 1px solid #D8E0DA;
+	border-radius: var(--radius-sm, 6px);
+	background: #FFFFFF;
+	padding: 12px;
+	box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+.check-row {
+	display: grid;
+	grid-template-columns: 18px 1fr;
+	align-items: start;
+	gap: 10px;
+	color: var(--ink);
+	line-height: 1.2;
+}
+.check-row input {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--green);
+	flex: none;
+	margin-top: 2px;
+}
+.check-row strong,
+.check-row em {
+	display: block;
+	font-style: normal;
+}
+.check-row strong {
+	font-size: 13px;
+	font-weight: 800;
+	color: var(--ink);
+}
+.check-row em {
+	margin-top: 3px;
+	color: #647067;
+	font-size: 12px;
+	line-height: 1.35;
+}
 .timeline { display: grid; gap: 14px; }
 .timeline-item { border-left: 1px solid var(--line); padding-left: 12px; }
 .timeline-item strong { display: block; }

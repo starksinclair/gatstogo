@@ -3,6 +3,7 @@ package pages
 import (
 	"gatstogo/internal/domain"
 	"gatstogo/web/templates/components"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -10,6 +11,7 @@ import (
 type customerHomeTheme struct {
 	Name       string
 	Address    string
+	MapHref    string
 	City       string
 	Phone      string
 	PhoneHref  string
@@ -41,6 +43,7 @@ func customerTheme(plant *domain.Plant) customerHomeTheme {
 	}
 
 	address := customerDefaultAddress
+	mapHref := ""
 	if plant != nil {
 		parts := make([]string, 0, 2)
 		if plant.Address != nil && strings.TrimSpace(*plant.Address) != "" {
@@ -51,6 +54,7 @@ func customerTheme(plant *domain.Plant) customerHomeTheme {
 		}
 		if len(parts) > 0 {
 			address = strings.Join(parts, ", ")
+			mapHref = googleMapsHref(address)
 		}
 	}
 
@@ -87,6 +91,7 @@ func customerTheme(plant *domain.Plant) customerHomeTheme {
 	return customerHomeTheme{
 		Name:       name,
 		Address:    address,
+		MapHref:    mapHref,
 		City:       city,
 		Phone:      phone,
 		PhoneHref:  whatsappHref(phone),
@@ -98,6 +103,14 @@ func customerTheme(plant *domain.Plant) customerHomeTheme {
 		Tint:       mixHex(primary, "#FFFFFF", 0.92),
 		SubtleTint: mixHex(primary, "#FFFFFF", 0.96),
 	}
+}
+
+func googleMapsHref(address string) string {
+	address = strings.TrimSpace(address)
+	if address == "" || address == customerDefaultAddress {
+		return ""
+	}
+	return "https://www.google.com/maps/search/?api=1&query=" + url.QueryEscape(address)
 }
 
 func validHexColorOr(value string, fallback string) string {
@@ -454,7 +467,11 @@ templ customerBrand(theme customerHomeTheme) {
 		<div>
 			<div class="brand-name">{ theme.Name }</div>
 			<div class="brand-meta">
-				<span>{ theme.Address }</span>
+				if theme.MapHref != "" {
+					<a href={ theme.MapHref } target="_blank" rel="noreferrer">{ theme.Address }</a>
+				} else {
+					<span>{ theme.Address }</span>
+				}
 				<span class="sep" aria-hidden="true"></span>
 				<a href={ theme.PhoneHref } target="_blank" rel="noreferrer">{ theme.Phone }</a>
 			</div>

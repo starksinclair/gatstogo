@@ -1,5 +1,7 @@
 package pages
 
+import "gatstogo/web/templates/components"
+
 // AdminPlantDetailData backs GET /admin/plants/{id} -- a dedicated page
 // for reviewing one plant's full record, not just the summary row the
 // Plants table (adminConsoleContent) shows. This is specifically the only
@@ -14,6 +16,8 @@ type AdminPlantDetailData struct {
 	City    string
 	Address string
 	Phone   string
+	TermiiSenderID string
+	EffectiveTermiiSenderID string
 
 	RawStatus    string
 	Status       string
@@ -133,6 +137,16 @@ templ adminPlantDetailContent(data AdminPlantDetailData) {
 				<div class="info-row"><span>First transaction</span><strong>{ data.FirstTxn }</strong></div>
 				<div class="info-row"><span>Updated</span><strong>{ data.UpdatedAt }</strong></div>
 			</div>
+			<div class="section-title" style="margin-top:28px;"><h2>Messaging</h2></div>
+			<form method="post" action={ templ.SafeURL("/admin/plants/" + data.ID + "/messaging") }>
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<div class="field">
+					<label>Termii sender ID</label>
+					<input type="text" name="termii_sender_id" value={ data.TermiiSenderID } placeholder={ data.EffectiveTermiiSenderID }/>
+				</div>
+				<p class="muted" style="margin-top: 8px;">Leave blank to use the project default sender ID.</p>
+				<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save sender ID</button></div>
+			</form>
 			<div class="section-title" style="margin-top:28px;"><h2>Owner access</h2></div>
 			<div class="split-list">
 				<div class="info-row"><span>Name</span><strong>{ data.OwnerName }</strong></div>

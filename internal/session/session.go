@@ -35,9 +35,9 @@ const (
 
 // Data is what's stored in Redis for a session, keyed by its token.
 type Data struct {
-	UserID  string `json:"user_id"`
-	Role    Role   `json:"role"`
-	Name    string `json:"name"`
+	UserID string `json:"user_id"`
+	Role   Role   `json:"role"`
+	Name   string `json:"name"`
 	// PlantID is deliberately "" for admin sessions. Even though every
 	// users row (including role='admin' ones) carries a NOT NULL plant_id
 	// in the schema, admin access is platform-wide -- this empty string is
@@ -51,8 +51,10 @@ type Data struct {
 	ShiftID string `json:"shift_id,omitempty"`
 	// Phone is set only for RoleCustomer sessions -- the verified phone
 	// number this session is allowed to see/confirm tickets for.
-	Phone     string    `json:"phone,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	Phone          string    `json:"phone,omitempty"`
+	CanEditPrice   bool      `json:"can_edit_price,omitempty"`
+	CanManageStaff bool      `json:"can_manage_staff,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 // ErrNotFound is returned by Load/Touch when a token has no session --

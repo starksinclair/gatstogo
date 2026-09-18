@@ -44,7 +44,7 @@ internal/tickets                   Ticket creation (shared by online checkout an
 internal/shifts                    Shift open/close, PIN rate limiting, cash movements
 internal/prices, internal/staff, internal/plants   Owner/admin write paths (prices, staff, plant onboarding)
 internal/receipts                  Customer receipts one-time code issuance/verification
-internal/sms                       SMS Sender interface (LoggingSender only -- see Notes)
+internal/sms                       SMS Sender interface, LoggingSender, and Termii provider
 internal/domain                    Database model structs
 migrations                         Database schema, seed data, and role-credential SQL
 web/templates                      templ source files
@@ -104,7 +104,7 @@ Authentication, tenant isolation (RLS), sessions, CSRF, and every write path lis
 What's still worth knowing before treating this as fully production-ready:
 
 - **The Paystack *webhook* path (`POST /webhooks/paystack`) hasn't been exercised live.** Initialize and Verify have (see above, and `internal/payments/live_test.go`), but the webhook needs Paystack's servers to reach a public URL, which no environment used in this build-out has had. The browser-driven callback path (`GET /tickets/{reference}/callback`) is the fallback for exactly this reason, but a real webhook delivery is still worth confirming once this is deployed somewhere reachable.
-- **SMS is not actually sent yet.** `internal/sms.LoggingSender` is the only `Sender` implementation -- receipts one-time codes are written to the server log, not delivered to a phone (confirmed live: the OTP appears in the app's own logs, never on an actual handset). Swapping in a real provider (Termii, Africa's Talking, Twilio, etc.) is meant to be a one-file change (implement `sms.Sender`), but that provider integration itself hasn't been built.
+- **SMS delivery depends on environment configuration.** Local/dev defaults to `internal/sms.LoggingSender`, so messages are written to the server log. Production can use Termii by setting `SMS_PROVIDER=termii`, `TERMII_API_KEY`, and `TERMII_SENDER_ID`; receipts one-time codes and plant approval notices then use the configured provider.
 - **There's no bootstrap path for the first platform admin on a real deployment.** Locally, `migrations/0002_seed_data.up.sql` seeds one (see below) -- but that migration is explicitly dev/demo-only and shouldn't run against production. Provisioning the very first admin for real is an open gap: no CLI tool, no documented manual step.
 - **Default credentials in `docker-compose.yaml` and `.env.example` are placeholders.** Rotate `GATSTOGO_APP_ROLE_PASSWORD`, `GATSTOGO_ADMIN_ROLE_PASSWORD`, `SESSION_HMAC_SECRET`, and the Postgres bootstrap superuser password for any real deployment; none of them are safe to use as-is in production.
 
@@ -140,8 +140,12 @@ PAYSTACK_PUBLIC_KEY=
 # (Gmail-style "+tag" addressing per ticket). Defaults to gatstogofficial@gmail.com.
 TICKET_NOTIFICATION_EMAIL=
 
-# SMS -- no real provider wired up yet, see Current Status above.
+# SMS -- logging locally; Termii in production when configured.
 SMS_PROVIDER=logging
+TERMII_API_KEY=
+TERMII_SENDER_ID=
+TERMII_CHANNEL=generic
+TERMII_BASE_URL=https://api.ng.termii.com
 ```
 
 `APP_DATABASE_URL`, `ADMIN_DATABASE_URL`, `SESSION_HMAC_SECRET`, and `PAYSTACK_SECRET_KEY` are required -- the server fails fast at startup if any is missing or malformed, rather than starting in a half-configured state.

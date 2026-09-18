@@ -671,7 +671,22 @@ a.receipt-item:last-child { border-bottom: 1px solid var(--line); }
 		box-shadow: 0 -4px 16px rgba(10, 10, 10, 0.06);
 	}
 	.page { padding: 28px 20px 40px; }
-	.site-header { margin-bottom: 32px; }
+	.site-header {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 14px;
+		margin-bottom: 32px;
+	}
+	.brand-lockup { width: 100%; }
+	.site-nav {
+		width: 100%;
+		display: flex;
+		justify-content: flex-start;
+	}
+	.site-nav a {
+		min-height: 44px;
+		padding: 10px 0 0;
+	}
 	.site-footer-inner { padding: 20px 20px; flex-wrap: wrap; }
 	.field-grid { grid-template-columns: 1fr; gap: 20px; }
 	.button-primary { width: 100%; min-height: 56px; }

@@ -19,13 +19,15 @@ const ActorContextKey contextKey = "actor"
 // RequireOwnerSession / RequireAdminSession / RequireStaffSession /
 // RequireReceiptSession.
 type Actor struct {
-	UserID  uuid.UUID
-	Name    string
-	Role    session.Role
-	PlantID *uuid.UUID // nil for admin sessions (see session.Data.PlantID)
-	ShiftID *uuid.UUID // set only for staff terminal sessions (RequireStaffSession)
-	Phone   string     // set only for customer receipts sessions (RequireReceiptSession); UserID is uuid.Nil for these -- there's no users-table row
-	Token   string     // the raw session token -- needed for logout
+	UserID         uuid.UUID
+	Name           string
+	Role           session.Role
+	PlantID        *uuid.UUID // nil for admin sessions (see session.Data.PlantID)
+	ShiftID        *uuid.UUID // set only for staff terminal sessions (RequireStaffSession)
+	Phone          string     // set only for customer receipts sessions (RequireReceiptSession); UserID is uuid.Nil for these -- there's no users-table row
+	Token          string     // the raw session token -- needed for logout
+	CanEditPrice   bool
+	CanManageStaff bool
 }
 
 // GetActor returns the authenticated actor for this request, or nil if
@@ -94,7 +96,7 @@ func RequireOwnerSession(store *session.Store) func(http.Handler) http.Handler {
 			session.WriteCookie(w, session.CookieOwner, token, session.OwnerTTL)
 
 			plantID := plant.ID
-			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, Token: token}
+			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, Token: token, CanEditPrice: data.CanEditPrice, CanManageStaff: data.CanManageStaff}
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
 		})
 	}
@@ -189,7 +191,7 @@ func RequireStaffSession(store *session.Store) func(http.Handler) http.Handler {
 			session.WriteCookie(w, session.CookieStaff, token, session.StaffBackstopTTL)
 
 			plantID := plant.ID
-			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, ShiftID: &shiftID, Token: token}
+			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, ShiftID: &shiftID, Token: token, CanEditPrice: data.CanEditPrice, CanManageStaff: data.CanManageStaff}
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
 		})
 	}

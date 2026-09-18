@@ -103,10 +103,14 @@ func bankSelectOptions(banks []payments.Bank) []themedSelectOption {
 
 type OwnerDashboardData struct {
 	PlantName       string
+	PlantNameValue  string
 	PlantSlug       string
 	PlantCity       string
+	PlantCityValue  string
 	PlantAddress    string
+	PlantAddressValue string
 	PlantPhone      string
+	PlantPhoneValue string
 	DomainStatus    string
 	// The remaining PlantXxx fields below are the business/regulatory/
 	// settlement details collected at onboarding (internal/plants.
@@ -128,9 +132,13 @@ type OwnerDashboardData struct {
 	// it doesn't).
 	PlantLogoPath        string
 	PlantPrimaryColor    string
+	PlantPrimaryColorValue string
 	PlantButtonColor     string
+	PlantButtonColorValue string
 	PlantSecondaryColor  string
+	PlantSecondaryColorValue string
 	PlantButtonTextColor string
+	PlantButtonTextColorValue string
 	TodayLabel           string
 	CurrentPrice    string
 	MoneyToday      string
@@ -151,6 +159,9 @@ type OwnerDashboardData struct {
 	CSRFToken       string
 	ErrorMessage    string
 	HasOpenShift    bool
+	CanEditPrice    bool
+	CanManageStaff  bool
+	CanGrantManagerPermissions bool
 }
 
 type OwnerTicketRow struct {
@@ -192,8 +203,11 @@ type OwnerStaffRow struct {
 	Name        string
 	Phone       string
 	Role        string
+	IsManager   bool
 	Status      string
 	Active      bool
+	CanEditPrice bool
+	CanManageStaff bool
 	// CanToggleActive is false for the owner's own row (and any
 	// platform-admin row that happens to share this plant_id) --
 	// internal/staff.SetActive already refuses those server-side, but the
@@ -948,17 +962,73 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			<div>
 				<div class="section-title"><h2>Staff access</h2></div>
 				<div class="table-wrap">
-					<table style="min-width:760px">
-						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th><th></th></tr></thead>
+					<table style="min-width:920px">
+						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th>Permissions</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th><th></th></tr></thead>
 						<tbody>
 							if len(data.Staff) == 0 {
-								<tr><td colspan="8">@emptyState("staff", "No staff yet. Owners, managers, cashiers, and operators will appear here.")</td></tr>
+								<tr><td colspan="9">@emptyState("staff", "No staff yet. Managers, cashiers, and operators will appear here.")</td></tr>
 							}
 							for _, row := range data.Staff {
 								<tr>
-									<td><strong>{ row.Name }</strong></td><td class="mono">{ row.Phone }</td><td>{ row.Role }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td class="num">{ row.SalesCount }</td><td class="num">{ row.ShiftsCount }</td><td>{ row.Joined }</td>
+									<td><strong>{ row.Name }</strong></td><td class="mono">{ row.Phone }</td><td>{ row.Role }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td>
+									<td>
+										if data.CanGrantManagerPermissions && row.IsManager {
+											<div class="permission-control">
+												<div class="permission-chips" aria-label="Current permissions">
+													if row.CanEditPrice {
+														<span class="permission-chip enabled">@components.Icon("check") Price</span>
+													} else {
+														<span class="permission-chip">Price</span>
+													}
+													if row.CanManageStaff {
+														<span class="permission-chip enabled">@components.Icon("check") Staff</span>
+													} else {
+														<span class="permission-chip">Staff</span>
+													}
+												</div>
+												<details class="permission-menu">
+													<summary>Manage</summary>
+													<form style="display: flex; flex-direction: column; gap: 12px;" method="post" action={ templ.SafeURL("/owner/staff/" + row.ID + "/permissions") } class="permission-form">
+														<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+														<label class="check-row">
+															if row.CanEditPrice {
+																<input type="checkbox" name="can_edit_price" value="true" checked/>
+															} else {
+																<input type="checkbox" name="can_edit_price" value="true"/>
+															}
+															<span><strong>Edit gas price: </strong><em>Can update the live customer and terminal rate.</em></span>
+														</label>
+														// <label class="check-row">
+														// 	if row.CanManageStaff {
+														// 		<input type="checkbox" name="can_manage_staff" value="true" checked/>
+														// 	} else {
+														// 		<input type="checkbox" name="can_manage_staff" value="true"/>
+														// 	}
+														// 	<span><strong>Manage staff: </strong><em>Can create staff and deactivate terminal access.</em></span>
+														// </label>
+														<button class="btn compact primary" type="submit">Save permission</button>
+													</form>
+												</details>
+											</div>
+										} else if row.IsManager {
+											<div class="permission-chips muted-permissions">
+												if row.CanEditPrice {
+													<span class="permission-chip enabled">@components.Icon("check") Price</span>
+												}
+												if row.CanManageStaff {
+													<span class="permission-chip enabled">@components.Icon("check") Staff</span>
+												}
+												if !row.CanEditPrice && !row.CanManageStaff {
+													<span class="permission-chip">No extra access</span>
+												}
+											</div>
+										} else {
+											<span class="permission-chip terminal-only">Terminal only</span>
+										}
+									</td>
+									<td class="num">{ row.SalesCount }</td><td class="num">{ row.ShiftsCount }</td><td>{ row.Joined }</td>
 									<td class="action-strip table-actions">
-										if row.CanToggleActive {
+										if data.CanManageStaff && row.CanToggleActive {
 											if row.Active {
 												<form
 													method="post"
@@ -996,23 +1066,27 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			</div>
 			<div class="dash-aside">
 				<div class="section-title"><h2>Add staff</h2></div>
-				<form method="post" action="/owner/staff">
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-					<div class="form-grid">
-						<div class="field"><label>Name</label><input type="text" name="name" placeholder="Full name" required/></div>
-						<div class="field"><label>Phone</label><input type="tel" name="phone" placeholder="0803 000 0000" required/></div>
-						<div class="field">
-							<label>Role</label>
-							@themedSelect("role", []themedSelectOption{
-								{Value: "cashier", Label: "Cashier"},
-								{Value: "operator", Label: "Operator"},
-								{Value: "manager", Label: "Manager"},
-							}, "")
+				if data.CanManageStaff {
+					<form method="post" action="/owner/staff">
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<div class="form-grid">
+							<div class="field"><label>Name</label><input type="text" name="name" placeholder="Full name" required/></div>
+							<div class="field"><label>Phone</label><input type="tel" name="phone" placeholder="0803 000 0000" required/></div>
+							<div class="field">
+								<label>Role</label>
+								@themedSelect("role", []themedSelectOption{
+									{Value: "cashier", Label: "Cashier"},
+									{Value: "operator", Label: "Operator"},
+									{Value: "manager", Label: "Manager"},
+								}, "")
+							</div>
+							<div class="field"><label>PIN</label><input type="text" name="pin" placeholder="4-digit PIN" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required/></div>
 						</div>
-						<div class="field"><label>PIN</label><input type="text" name="pin" placeholder="4-digit PIN" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required/></div>
-					</div>
-					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Create staff</button></div>
-				</form>
+						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Create staff</button></div>
+					</form>
+				} else {
+					<p class="muted">Only the owner, or a manager granted staff-management permission, can create staff.</p>
+				}
 			</div>
 		</div>
 	</section>
@@ -1036,19 +1110,60 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			</div>
 			<div class="dash-aside">
 				<div class="section-title"><h2>Set new rate</h2></div>
-				<form method="post" action="/owner/prices">
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-					<div class="form-grid">
-						<div class="field"><label>Price per kg</label><input type="text" name="price_per_kg" placeholder="1150" inputmode="decimal" required/></div>
-						<div class="field"><label>Effective from</label><input type="text" value="Immediately" disabled/></div>
-					</div>
-					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save new price</button></div>
-				</form>
+				if data.CanEditPrice {
+					<form method="post" action="/owner/prices">
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<div class="form-grid">
+							<div class="field"><label>Price per kg</label><input type="text" name="price_per_kg" placeholder="1150" inputmode="decimal" required/></div>
+							<div class="field"><label>Effective from</label><input type="text" value="Immediately" disabled/></div>
+						</div>
+						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save new price</button></div>
+					</form>
+				} else {
+					<p class="muted">Only the owner, or a manager granted price-editing permission, can set the gas price.</p>
+				}
 			</div>
 		</div>
 		<div class="dashboard-grid section-spaced">
 			<div>
-				<div class="section-title"><h2>Business profile</h2></div>
+				<div class="section-title"><h2>Plant details</h2></div>
+				<form method="post" action="/owner/settings" enctype="multipart/form-data" data-splash="Saving settings">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="form-grid">
+						<div class="field"><label>Plant name</label><input type="text" name="name" value={ data.PlantNameValue } placeholder="Your LPG plant" required/></div>
+						<div class="field"><label>City</label><input type="text" name="city" value={ data.PlantCityValue } placeholder="Plant city"/></div>
+						<div class="field"><label>Phone</label><input type="tel" name="phone" value={ data.PlantPhoneValue } placeholder="0803 000 0000"/></div>
+						<div class="field" style="grid-column: 1 / -1;"><label>Address</label><input type="text" name="address" value={ data.PlantAddressValue } placeholder="Plant address"/></div>
+					</div>
+					<div class="section-title section-spaced"><h2>Brand kit</h2></div>
+					<div class="form-grid">
+						<div class="field"><label>Primary color</label><input type="text" name="primary_color" value={ data.PlantPrimaryColorValue } placeholder="#006B4D"/></div>
+						<div class="field"><label>Button color</label><input type="text" name="button_color" value={ data.PlantButtonColorValue } placeholder="#006B4D"/></div>
+						<div class="field"><label>Secondary color</label><input type="text" name="secondary_color" value={ data.PlantSecondaryColorValue } placeholder="#10B981"/></div>
+						<div class="field"><label>Button text color</label><input type="text" name="button_text_color" value={ data.PlantButtonTextColorValue } placeholder="#F8FAFC"/></div>
+						<div class="field" style="grid-column: 1 / -1;">
+							<label>Logo</label>
+							<div class="file-field" data-file-input>
+								<input type="file" id="owner-logo-input" name="logo" accept="image/png,image/jpeg,image/webp" class="file-native"/>
+								<label class="btn file-trigger" for="owner-logo-input">Choose file</label>
+								<span class="file-name" data-file-name>
+									if data.PlantLogoPath != "" {
+										Current logo saved
+									} else {
+										No file chosen
+									}
+								</span>
+							</div>
+							if data.PlantLogoPath != "" {
+								<img class="brand-logo-preview" src={ data.PlantLogoPath } alt="Plant logo"/>
+							}
+						</div>
+					</div>
+					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save settings</button></div>
+				</form>
+			</div>
+			<div class="dash-aside">
+				<div class="section-title"><h2>Locked records</h2></div>
 				<div class="split-list">
 					<div class="info-row"><span>Legal business name</span><strong>{ data.PlantLegalBusinessName }</strong></div>
 					<div class="info-row"><span>State</span><strong>{ data.PlantState }</strong></div>
@@ -1057,22 +1172,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					<div class="info-row"><span>Settlement account</span><strong class="mono">{ data.PlantBankAccount }</strong></div>
 					<div class="info-row"><span>Account name</span><strong>{ data.PlantBankAccountName }</strong></div>
 				</div>
-			</div>
-			<div class="dash-aside">
-				<div class="section-title"><h2>Brand kit</h2></div>
-				<div class="split-list">
-					<div class="info-row"><span>Logo</span><strong>
-						if data.PlantLogoPath != "" {
-							<img class="brand-logo-preview" src={ data.PlantLogoPath } alt="Plant logo"/>
-						} else {
-							Not yet provided
-						}
-					</strong></div>
-					<div class="info-row"><span>Primary color</span><strong class="mono">{ data.PlantPrimaryColor }</strong></div>
-					<div class="info-row"><span>Button color</span><strong class="mono">{ data.PlantButtonColor }</strong></div>
-					<div class="info-row"><span>Secondary color</span><strong class="mono">{ data.PlantSecondaryColor }</strong></div>
-					<div class="info-row"><span>Button text color</span><strong class="mono">{ data.PlantButtonTextColor }</strong></div>
-				</div>
+				<p class="muted" style="margin-top: 12px;">These identify the registered business and payout destination. Contact GatsToGo to change them.</p>
 			</div>
 		</div>
 		<div class="section-title section-spaced"><h2>Account security</h2></div>

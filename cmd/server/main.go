@@ -190,7 +190,17 @@ func CreateNewServer() (*Server, error) {
 		return nil, fmt.Errorf("PAYSTACK_SECRET_KEY is required")
 	}
 
-	// 6. Email (owner password-reset links). Optional, unlike Paystack:
+	// 6. SMS. Optional: local/dev can keep logging only, while production
+	// can opt into Termii with SMS_PROVIDER=termii and Termii credentials.
+	smsSender, err := loadSMSSender()
+	if err != nil {
+		appDB.Close()
+		adminDB.Close()
+		_ = rdb.Close()
+		return nil, err
+	}
+
+	// 7. Email (owner password-reset links). Optional, unlike Paystack:
 	// falls back to email.LoggingSender (same graceful-degrade precedent
 	// as SMS) when RESEND_API_KEY isn't set yet, rather than failing
 	// startup -- a reset link that's only ever logged, not actually
@@ -209,7 +219,7 @@ func CreateNewServer() (*Server, error) {
 		Paystack:          payments.NewClient(paystackSecretKey),
 		PINLimiter:        shifts.NewPINLimiter(rdb),
 		Receipts:          receipts.NewCodeStore(rdb),
-		SMS:               sms.NewLoggingSender(),
+		SMS:               smsSender,
 		Email:             emailSender,
 		NotificationEmail: getEnv("TICKET_NOTIFICATION_EMAIL", "gatstogofficial@gmail.com"),
 		AppBaseURL:        strings.TrimRight(getEnv("APP_BASE_URL", "/"), "/"),
@@ -302,6 +312,7 @@ func (s *Server) MountHandlers() {
 		r.Post("/admin/logout", adminLogoutHandler(s))
 		r.Post("/admin/plants", adminCreatePlantHandler(s))
 		r.Get("/admin/plants/{id}", adminPlantDetailHandler(s))
+		r.Post("/admin/plants/{id}/messaging", adminPlantMessagingHandler(s))
 		r.Post("/admin/plants/{id}/status", adminPlantStatusHandler(s))
 	})
 
@@ -355,8 +366,9 @@ func (s *Server) MountHandlers() {
 			r.Post("/terminal/redeem", terminalRedeemHandler(s))
 			r.Post("/terminal/fill", terminalFillHandler(s))
 			r.Post("/terminal/cash-sale", terminalCashSaleHandler(s))
-			r.Post("/terminal/token-return", terminalTokenReturnHandler(s))
+			r.Post("/terminal/price", terminalSetPriceHandler(s))
 			r.Post("/terminal/shift/end", terminalShiftEndHandler(s))
+			r.Post("/terminal/logout", terminalLogoutHandler(s))
 		})
 
 		r.With(middleware.CSRF).Post("/owner/login", ownerLoginSubmitHandler(s))
@@ -385,7 +397,9 @@ func (s *Server) MountHandlers() {
 			r.Post("/owner/prices", ownerSetPriceHandler(s))
 			r.Post("/owner/staff", ownerCreateStaffHandler(s))
 			r.Post("/owner/staff/{id}/status", ownerStaffStatusHandler(s))
+			r.Post("/owner/staff/{id}/permissions", ownerStaffPermissionsHandler(s))
 			r.Post("/owner/cash-movements", ownerCashMovementHandler(s))
+			r.Post("/owner/settings", ownerUpdateSettingsHandler(s))
 			r.Post("/owner/password", ownerChangePasswordHandler(s))
 		})
 
@@ -478,6 +492,25 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+func loadSMSSender() (sms.Sender, error) {
+	switch strings.ToLower(strings.TrimSpace(getEnv("SMS_PROVIDER", "logging"))) {
+	case "", "logging", "log":
+		return sms.NewLoggingSender(), nil
+	case "termii":
+		apiKey := strings.TrimSpace(os.Getenv("TERMII_API_KEY"))
+		senderID := strings.TrimSpace(os.Getenv("TERMII_SENDER_ID"))
+		if apiKey == "" {
+			return nil, fmt.Errorf("TERMII_API_KEY is required when SMS_PROVIDER=termii")
+		}
+		if senderID == "" {
+			return nil, fmt.Errorf("TERMII_SENDER_ID is required when SMS_PROVIDER=termii")
+		}
+		return sms.NewTermiiSender(apiKey, senderID, os.Getenv("TERMII_CHANNEL"), os.Getenv("TERMII_BASE_URL")), nil
+	default:
+		return nil, fmt.Errorf("unsupported SMS_PROVIDER %q", os.Getenv("SMS_PROVIDER"))
+	}
+}
+
 // listenPort prefers Cloud Run's PORT, then APP_PORT (local/.env), then 8080.
 func listenPort() string {
 	if p := os.Getenv("PORT"); p != "" {
@@ -550,6 +583,9 @@ func ownerDashboardHandler(s *Server) http.HandlerFunc {
 
 		if actor := middleware.GetActor(r.Context()); actor != nil {
 			data.CSRFToken, _ = csrf.Token(actor.Token)
+			data.CanEditPrice = actor.Role == session.RoleOwner || actor.CanEditPrice
+			data.CanManageStaff = actor.Role == session.RoleOwner || actor.CanManageStaff
+			data.CanGrantManagerPermissions = actor.Role == session.RoleOwner
 		}
 		data.ErrorMessage = ownerErrorMessage(r.URL.Query().Get("error"))
 
@@ -615,12 +651,26 @@ func ownerErrorMessage(code string) string {
 	switch code {
 	case "price":
 		return "Enter a valid price greater than zero."
+	case "price-permission":
+		return "You do not have permission to edit the gas price."
 	case "staff":
 		return "Check the staff details -- name, phone, role, and a 4-digit PIN are all required, and the phone number must not already be in use."
+	case "staff-pin":
+		return "That PIN is already used by another staff member at this plant. Give each staff member a different 4-digit PIN."
+	case "staff-permission":
+		return "You do not have permission to manage staff."
+	case "staff-self":
+		return "You cannot deactivate your own account."
 	case "staff-status":
 		return "Could not update that staff member."
 	case "cash":
 		return "Enter a valid amount, and make sure a shift is currently open."
+	case "settings":
+		return "Could not save those settings. Check the plant name and try again."
+	case "color":
+		return "Use valid hex colors, for example #006B4D."
+	case "logo":
+		return "That image didn't work. Use a PNG, JPEG, or WebP file under 2MB, or leave the logo blank."
 	case "password-missing":
 		return "Enter your current password and a new password."
 	case "password-mismatch":
@@ -670,23 +720,31 @@ func adminErrorMessage(code string) string {
 
 func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) pages.OwnerDashboardData {
 	data := pages.OwnerDashboardData{
-		PlantName:    fallbackString(plant.Name, "Your plant"),
-		PlantSlug:    fallbackString(plant.Slug, "plant-slug"),
-		PlantCity:    ptrString(plant.City, "City coming soon"),
-		PlantAddress: ptrString(plant.Address, "Plant address coming soon"),
-		PlantPhone:   ptrString(plant.Phone, "Phone number coming soon"),
-		DomainStatus: humanize(plant.DomainStatus, "No domain yet"),
-		TodayLabel:   time.Now().Format("2 Jan 2006"),
-		CurrentPrice: "Price coming soon",
+		PlantName:         fallbackString(plant.Name, "Your plant"),
+		PlantNameValue:    strings.TrimSpace(plant.Name),
+		PlantSlug:         fallbackString(plant.Slug, "plant-slug"),
+		PlantCity:         ptrString(plant.City, "City coming soon"),
+		PlantCityValue:    ptrString(plant.City, ""),
+		PlantAddress:      ptrString(plant.Address, "Plant address coming soon"),
+		PlantAddressValue: ptrString(plant.Address, ""),
+		PlantPhone:        ptrString(plant.Phone, "Phone number coming soon"),
+		PlantPhoneValue:   ptrString(plant.Phone, ""),
+		DomainStatus:      humanize(plant.DomainStatus, "No domain yet"),
+		TodayLabel:        time.Now().Format("2 Jan 2006"),
+		CurrentPrice:      "Price coming soon",
 		// Already loaded by middleware.Tenant's own per-request query
 		// (internal/middleware/tenant.go) -- no separate query needed for
 		// these, unlike the compliance/bank fields loadPlantProfile below
 		// queries on its own.
-		PlantLogoPath:        ptrString(plant.LogoPath, ""),
-		PlantPrimaryColor:    plant.PrimaryColor,
-		PlantButtonColor:     plant.ButtonColor,
-		PlantSecondaryColor:  plant.SecondaryColor,
-		PlantButtonTextColor: plant.ButtonTextColor,
+		PlantLogoPath:             ptrString(plant.LogoPath, ""),
+		PlantPrimaryColor:         fallbackString(plant.PrimaryColor, "#006B4D"),
+		PlantPrimaryColorValue:    strings.TrimSpace(plant.PrimaryColor),
+		PlantButtonColor:          fallbackString(plant.ButtonColor, "#006B4D"),
+		PlantButtonColorValue:     strings.TrimSpace(plant.ButtonColor),
+		PlantSecondaryColor:       fallbackString(plant.SecondaryColor, "#10B981"),
+		PlantSecondaryColorValue:  strings.TrimSpace(plant.SecondaryColor),
+		PlantButtonTextColor:      fallbackString(plant.ButtonTextColor, "#F8FAFC"),
+		PlantButtonTextColorValue: strings.TrimSpace(plant.ButtonTextColor),
 	}
 	loadPlantProfile(ctx, db, plant.ID, &data)
 
@@ -835,14 +893,15 @@ func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Pl
 
 func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerStaffRow {
 	rows, err := db.Query(ctx, `
-		SELECT u.id, u.name, u.phone, u.role, u.active, u.created_at,
+		SELECT u.id, u.name, u.phone, u.role, u.active, u.can_edit_price, u.can_manage_staff, u.created_at,
 		       COUNT(DISTINCT t.id),
 		       COUNT(DISTINCT s.id)
 		FROM users u
 		LEFT JOIN tickets t ON t.sold_by = u.id
 		LEFT JOIN shifts s ON s.user_id = u.id
 		WHERE u.plant_id = $1
-		GROUP BY u.id, u.name, u.phone, u.role, u.active, u.created_at
+		  AND u.role IN ('manager', 'cashier', 'operator')
+		GROUP BY u.id, u.name, u.phone, u.role, u.active, u.can_edit_price, u.can_manage_staff, u.created_at
 		ORDER BY u.active DESC, u.role, u.name
 	`, plant.ID)
 	if err != nil {
@@ -855,16 +914,20 @@ func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plan
 		var id uuid.UUID
 		var rawRole string
 		var active bool
+		var canEditPrice, canManageStaff bool
 		var row pages.OwnerStaffRow
 		var created time.Time
-		if err := rows.Scan(&id, &row.Name, &row.Phone, &rawRole, &active, &created, &row.SalesCount, &row.ShiftsCount); err != nil {
+		if err := rows.Scan(&id, &row.Name, &row.Phone, &rawRole, &active, &canEditPrice, &canManageStaff, &created, &row.SalesCount, &row.ShiftsCount); err != nil {
 			continue
 		}
 		row.ID = id.String()
 		row.Name = fallbackString(row.Name, "Unnamed staff")
 		row.Phone = fallbackString(row.Phone, "No phone")
 		row.Role = humanize(rawRole, "Staff")
+		row.IsManager = rawRole == "manager"
 		row.Active = active
+		row.CanEditPrice = canEditPrice
+		row.CanManageStaff = canManageStaff
 		row.CanToggleActive = rawRole == "manager" || rawRole == "cashier" || rawRole == "operator"
 		if active {
 			row.Status = "Active"

@@ -27,6 +27,7 @@ type Plant struct {
 	ButtonColor     string    `json:"button_color"`
 	ButtonTextColor string    `json:"button_text_color"`
 	FontFamily      string    `json:"font_family"`
+	TermiiSenderID  *string   `json:"termii_sender_id"`
 	// PaystackSubaccountCode is the only new plant-onboarding field
 	// (internal/plants.CreateParams) loaded here rather than through a
 	// separate tenant-scoped query -- it's needed on every ticket-purchase
@@ -43,16 +44,18 @@ type Plant struct {
 }
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	PlantID      uuid.UUID `json:"plant_id"`
-	Name         string    `json:"name"`
-	Phone        string    `json:"phone"`
-	Role         string    `json:"role"`
-	PinHash      *string   `json:"pin_hash"`
-	PasswordHash *string   `json:"password_hash"`
-	Active       bool      `json:"active"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID             uuid.UUID `json:"id"`
+	PlantID        uuid.UUID `json:"plant_id"`
+	Name           string    `json:"name"`
+	Phone          string    `json:"phone"`
+	Role           string    `json:"role"`
+	PinHash        *string   `json:"pin_hash"`
+	PasswordHash   *string   `json:"password_hash"`
+	Active         bool      `json:"active"`
+	CanEditPrice   bool      `json:"can_edit_price"`
+	CanManageStaff bool      `json:"can_manage_staff"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type Price struct {

@@ -15,6 +15,7 @@ import (
 	"gatstogo/internal/auth"
 	"gatstogo/internal/csrf"
 	"gatstogo/internal/middleware"
+	"gatstogo/internal/prices"
 	"gatstogo/internal/session"
 	"gatstogo/internal/shifts"
 	"gatstogo/internal/tenantdb"
@@ -41,6 +42,8 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]any{"error": message})
 }
 
+var errTerminalForbidden = errors.New("terminal: forbidden")
+
 // ---- GET /terminal (the page itself) ----
 
 // terminalInitPayload is embedded in the page as JSON (see
@@ -48,11 +51,12 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 // list and live price, replacing what used to be hardcoded demo data
 // baked into the JS itself.
 type terminalInitPayload struct {
-	PlantName      string                 `json:"plantName"`
-	TodayLabel     string                 `json:"todayLabel"`
-	Staff          []terminalStaffPayload `json:"staff"`
-	CSRFToken      string                 `json:"csrfToken"`
-	PricePerKgKobo int64                  `json:"pricePerKgKobo"`
+	PlantName      string                  `json:"plantName"`
+	TodayLabel     string                  `json:"todayLabel"`
+	Staff          []terminalStaffPayload  `json:"staff"`
+	CSRFToken      string                  `json:"csrfToken"`
+	PricePerKgKobo int64                   `json:"pricePerKgKobo"`
+	CurrentSession *terminalSessionPayload `json:"currentSession,omitempty"`
 }
 
 type terminalStaffPayload struct {
@@ -64,6 +68,20 @@ type terminalStaffPayload struct {
 	// tile and starting would resume it (StartOrResume), not open a new
 	// one. Empty means no open shift.
 	ShiftOpenSince string `json:"shiftOpenSince,omitempty"`
+}
+
+type terminalSessionPayload struct {
+	ShiftID         string `json:"shift_id"`
+	UserID          string `json:"user_id"`
+	Name            string `json:"name"`
+	Role            string `json:"role"`
+	OpeningCashKobo int64  `json:"opening_cash_kobo"`
+	FillsCompleted  int    `json:"fills_completed"`
+	GramsDispensed  int64  `json:"grams_dispensed"`
+	CashHeldKobo    int64  `json:"cash_held_kobo"`
+	CanEditPrice    bool   `json:"can_edit_price"`
+	CanManageStaff  bool   `json:"can_manage_staff"`
+	CSRFToken       string `json:"csrf_token"`
 }
 
 func terminalPageHandler(s *Server) http.HandlerFunc {
@@ -110,6 +128,7 @@ func terminalPageHandler(s *Server) http.HandlerFunc {
 				payload.Staff[i].ShiftOpenSince = openedAt.Format("3:04 PM")
 			}
 		}
+		payload.CurrentSession = loadCurrentTerminalSession(r.Context(), s, w, r, plant.ID)
 
 		// Passed straight through to templ.JSONScript, which does its own
 		// json.Marshal -- previously this pre-marshaled to a string and
@@ -128,6 +147,71 @@ func terminalPageHandler(s *Server) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
+}
+
+func loadCurrentTerminalSession(ctx context.Context, s *Server, w http.ResponseWriter, r *http.Request, plantID uuid.UUID) *terminalSessionPayload {
+	token, ok := session.ReadCookie(r, session.CookieStaff)
+	if !ok {
+		return nil
+	}
+	data, err := s.Sessions.Load(ctx, token)
+	if err != nil {
+		session.ClearCookie(w, session.CookieStaff)
+		return nil
+	}
+	staffRole := data.Role == session.RoleManager || data.Role == session.RoleCashier || data.Role == session.RoleOperator
+	if !staffRole || data.PlantID != plantID.String() || data.ShiftID == "" {
+		session.ClearCookie(w, session.CookieStaff)
+		return nil
+	}
+	userID, err := uuid.Parse(data.UserID)
+	if err != nil {
+		session.ClearCookie(w, session.CookieStaff)
+		return nil
+	}
+	shiftID, err := uuid.Parse(data.ShiftID)
+	if err != nil {
+		session.ClearCookie(w, session.CookieStaff)
+		return nil
+	}
+
+	payload := &terminalSessionPayload{ShiftID: shiftID.String(), UserID: userID.String()}
+	err = tenantdb.WithTenant(ctx, s.AppDB, plantID, func(ctx context.Context, q tenantdb.Querier) error {
+		var role string
+		var active bool
+		if err := q.QueryRow(ctx, `
+			SELECT u.name, u.role, u.active, u.can_edit_price, u.can_manage_staff,
+			       s.opening_cash_kobo
+			FROM users u
+			JOIN shifts s ON s.user_id = u.id AND s.plant_id = u.plant_id
+			WHERE u.id = $1
+			  AND u.plant_id = $2
+			  AND s.id = $3
+			  AND s.closed_at IS NULL
+			  AND u.role IN ('manager', 'cashier', 'operator')
+		`, userID, plantID, shiftID).Scan(
+			&payload.Name, &role, &active, &payload.CanEditPrice, &payload.CanManageStaff,
+			&payload.OpeningCashKobo,
+		); err != nil {
+			return err
+		}
+		if !active {
+			return errTerminalForbidden
+		}
+		payload.Role = role
+		var err error
+		payload.FillsCompleted, payload.GramsDispensed, payload.CashHeldKobo, err = shifts.Summary(ctx, q, plantID, shiftID)
+		return err
+	})
+	if err != nil {
+		session.ClearCookie(w, session.CookieStaff)
+		return nil
+	}
+
+	_ = s.Sessions.Touch(ctx, token, session.StaffBackstopTTL)
+	session.WriteCookie(w, session.CookieStaff, token, session.StaffBackstopTTL)
+	payload.CSRFToken, _ = csrf.Token(token)
+	return payload
 }
 
 // ---- POST /terminal/pin (public: no staff session exists yet) ----
@@ -179,17 +263,17 @@ func terminalPinHandler(s *Server) http.HandlerFunc {
 		}
 
 		var (
-			name, role string
-			pinHash    *string
-			active     bool
-			found      bool
+			name, role            string
+			pinHash               *string
+			active, canEditPrice  bool
+			canManageStaff, found bool
 		)
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			row := q.QueryRow(ctx, `
-				SELECT name, role, pin_hash, active FROM users
+				SELECT name, role, pin_hash, active, can_edit_price, can_manage_staff FROM users
 				WHERE id = $1 AND plant_id = $2 AND role IN ('manager', 'cashier', 'operator')
 			`, userID, plant.ID)
-			switch scanErr := row.Scan(&name, &role, &pinHash, &active); scanErr {
+			switch scanErr := row.Scan(&name, &role, &pinHash, &active, &canEditPrice, &canManageStaff); scanErr {
 			case nil:
 				found = true
 				return nil
@@ -248,11 +332,13 @@ func terminalPinHandler(s *Server) http.HandlerFunc {
 		}
 
 		sessionToken, err := s.Sessions.Create(r.Context(), session.Data{
-			UserID:  userID.String(),
-			Role:    session.Role(role),
-			Name:    name,
-			PlantID: plant.ID.String(),
-			ShiftID: shift.ID.String(),
+			UserID:         userID.String(),
+			Role:           session.Role(role),
+			Name:           name,
+			PlantID:        plant.ID.String(),
+			ShiftID:        shift.ID.String(),
+			CanEditPrice:   canEditPrice,
+			CanManageStaff: canManageStaff,
 		}, session.StaffBackstopTTL)
 		if err != nil {
 			log.Println("terminal pin: create session failed:", err)
@@ -269,12 +355,12 @@ func terminalPinHandler(s *Server) http.HandlerFunc {
 			"role":              role,
 			"opened_at":         shift.OpenedAt,
 			"opening_cash_kobo": shift.OpeningCashKobo,
-			"tokens_issued":     shift.TokensIssued,
-			"tokens_returned":   shift.TokensReturned,
 			"fills_completed":   fillsCompleted,
 			"grams_dispensed":   gramsDispensed,
 			"cash_held_kobo":    cashHeldKobo,
 			"resumed":           resumed,
+			"can_edit_price":    canEditPrice,
+			"can_manage_staff":  canManageStaff,
 			"csrf_token":        csrfToken,
 		})
 	}
@@ -385,27 +471,33 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 			writeJSONError(w, http.StatusBadRequest, "could not read submission")
 			return
 		}
-		cylinderKg, err := strconv.ParseFloat(strings.TrimSpace(r.FormValue("cylinder_kg")), 64)
-		if err != nil || cylinderKg <= 0 {
-			writeJSONError(w, http.StatusBadRequest, "choose a cylinder size")
+		amountNaira, err := strconv.ParseFloat(strings.TrimSpace(r.FormValue("amount_naira")), 64)
+		if err != nil || amountNaira <= 0 {
+			writeJSONError(w, http.StatusBadRequest, "enter the cash amount")
 			return
 		}
 		phone := strings.TrimSpace(r.FormValue("phone"))
-		sizeGrams := int(math.Round(cylinderKg * 1000))
+		amountKobo := int64(math.Round(amountNaira * 100))
 
 		var (
 			ticket       *tickets.Ticket
-			amountKobo   int64
-			tokenNumber  int
-			tokenIssued  bool
+			sizeGrams    int
 			cashHeldKobo int64
+			pricePerKg   int64
 		)
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
-			priceID, pricePerKg, err := loadCurrentPrice(ctx, q, plant.ID)
+			priceID, currentPrice, err := loadCurrentPrice(ctx, q, plant.ID)
 			if err != nil {
 				return err
 			}
-			amountKobo = tickets.AmountFromGrams(sizeGrams, pricePerKg)
+			pricePerKg = currentPrice
+			if pricePerKg <= 0 {
+				return errors.New("cash sale price is not set")
+			}
+			sizeGrams = int(math.Round((float64(amountKobo) * 1000) / float64(pricePerKg)))
+			if sizeGrams <= 0 {
+				return errors.New("cash sale amount is too small")
+			}
 
 			// Same tickets.Purchase core the online checkout
 			// (buyGasSubmitHandler, cmd/server/tickets.go) goes through --
@@ -432,14 +524,6 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 				return err
 			}
 
-			if actor.Role == session.RoleCashier {
-				n, err := shifts.IncrementTokensIssued(ctx, q, plant.ID, *actor.ShiftID)
-				if err != nil {
-					return err
-				}
-				tokenNumber, tokenIssued = n, true
-			}
-
 			if err := audit.Log(ctx, q, &plant.ID, &actor.UserID, "ticket.cash_sale", ticket.Reference, map[string]any{
 				"amount_kobo": amountKobo,
 				"size_grams":  sizeGrams,
@@ -460,8 +544,8 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 			"ticket_id":      ticket.ID,
 			"code":           ticket.Code,
 			"amount":         formatNaira(amountKobo),
-			"token_issued":   tokenIssued,
-			"token_number":   tokenNumber,
+			"size_kg":        formatKg(int64(sizeGrams)),
+			"rate":           formatNaira(pricePerKg) + "/kg",
 			"cash_held_kobo": cashHeldKobo,
 		})
 	}
@@ -472,27 +556,82 @@ func shiftCashHeld(ctx context.Context, q tenantdb.Querier, plantID, shiftID uui
 	return cashHeldKobo, err
 }
 
-func terminalTokenReturnHandler(s *Server) http.HandlerFunc {
+func terminalSetPriceHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		plant := middleware.GetPlant(r.Context())
 		actor := middleware.GetActor(r.Context())
-		if plant == nil || actor == nil || actor.ShiftID == nil {
+		if plant == nil || actor == nil {
 			writeJSONError(w, http.StatusUnauthorized, "not signed in")
 			return
 		}
-
-		var newCount int
-		err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
-			n, err := shifts.IncrementTokensReturned(ctx, q, plant.ID, *actor.ShiftID)
-			newCount = n
-			return err
-		})
-		if err != nil {
-			log.Println("terminal token return: failed:", err)
-			writeJSONError(w, http.StatusInternalServerError, "could not record token return")
+		if actor.Role != session.RoleManager {
+			writeJSONError(w, http.StatusForbidden, "you do not have permission to set prices")
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"tokens_returned": newCount})
+		if err := r.ParseForm(); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "could not read submission")
+			return
+		}
+		priceNaira, err := strconv.ParseFloat(strings.TrimSpace(r.FormValue("price_per_kg")), 64)
+		if err != nil || priceNaira <= 0 {
+			writeJSONError(w, http.StatusBadRequest, "enter a valid price")
+			return
+		}
+		priceKobo := int64(math.Round(priceNaira * 100))
+
+		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			var allowed bool
+			if err := q.QueryRow(ctx, `
+				SELECT can_edit_price
+				FROM users
+				WHERE id = $1
+				  AND plant_id = $2
+				  AND role = 'manager'
+				  AND active = TRUE
+			`, actor.UserID, plant.ID).Scan(&allowed); err != nil {
+				return err
+			}
+			if !allowed {
+				return errTerminalForbidden
+			}
+			priceID, err := prices.Set(ctx, q, plant.ID, priceKobo, actor.UserID)
+			if err != nil {
+				return err
+			}
+			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "price.set", priceID.String(), map[string]any{
+				"price_per_kg_kobo": priceKobo,
+				"source":            "terminal",
+			})
+		})
+		if errors.Is(err, errTerminalForbidden) {
+			writeJSONError(w, http.StatusForbidden, "you do not have permission to set prices")
+			return
+		}
+		if err != nil {
+			log.Println("terminal set price:", err)
+			writeJSONError(w, http.StatusInternalServerError, "could not save price")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "price_per_kg_kobo": priceKobo, "price": formatNaira(priceKobo) + "/kg"})
+	}
+}
+
+func terminalLogoutHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		actor := middleware.GetActor(r.Context())
+		if plant == nil || actor == nil {
+			writeJSONError(w, http.StatusUnauthorized, "not signed in")
+			return
+		}
+		_ = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "terminal.logged_out", "", map[string]any{
+				"shift_id": actor.ShiftID,
+			})
+		})
+		_ = s.Sessions.Delete(r.Context(), actor.Token)
+		session.ClearCookie(w, session.CookieStaff)
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 	}
 }
 

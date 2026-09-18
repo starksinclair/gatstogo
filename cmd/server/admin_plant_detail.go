@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -66,6 +67,7 @@ func loadAdminPlantDetail(ctx context.Context, db tenantdb.Querier, plantID uuid
 
 	err := db.QueryRow(ctx, `
 		SELECT p.name, p.slug, COALESCE(p.city, ''), COALESCE(p.address, ''), COALESCE(p.phone, ''),
+		       COALESCE(p.termii_sender_id, ''),
 		       COALESCE(p.state, ''), COALESCE(p.legal_business_name, ''), COALESCE(p.cac_number, ''),
 		       COALESCE(p.nmdpra_license_number, ''),
 		       COALESCE(p.bank_name, ''), COALESCE(p.bank_account_number, ''), COALESCE(p.bank_account_name, ''),
@@ -83,6 +85,7 @@ func loadAdminPlantDetail(ctx context.Context, db tenantdb.Querier, plantID uuid
 		WHERE p.id = $1
 	`, plantID).Scan(
 		&data.Name, &data.Slug, &data.City, &data.Address, &data.Phone,
+		&data.TermiiSenderID,
 		&data.State, &data.LegalBusinessName, &data.CACNumber, &data.NMDPRALicense,
 		&data.BankName, &bankAccountNumber, &data.BankAccountName, &data.SubaccountCode,
 		&data.RawStatus, &data.Domain, &data.DomainStatus,
@@ -106,6 +109,7 @@ func loadAdminPlantDetail(ctx context.Context, db tenantdb.Querier, plantID uuid
 	data.City = fallbackString(data.City, "Coming soon")
 	data.Address = fallbackString(data.Address, "Address coming soon")
 	data.Phone = fallbackString(data.Phone, "Phone coming soon")
+	data.EffectiveTermiiSenderID = fallbackString(strings.TrimSpace(data.TermiiSenderID), fallbackString(strings.TrimSpace(os.Getenv("TERMII_SENDER_ID")), "Project default not configured"))
 	data.State = fallbackString(data.State, "Not yet provided")
 	data.LegalBusinessName = fallbackString(data.LegalBusinessName, "Not yet provided")
 	data.CACNumber = fallbackString(data.CACNumber, "Not yet provided")

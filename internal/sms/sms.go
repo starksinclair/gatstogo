@@ -1,10 +1,7 @@
-// Package sms defines the interface this app's two SMS touchpoints (a
-// receipt lookup one-time code, and -- eventually -- a payment
-// confirmation notice) send through. No real provider is wired up yet;
-// LoggingSender is the only implementation, so nothing is actually sent.
-// The interface exists so swapping in a real provider (Termii, Africa's
-// Talking, Twilio) later is a one-file change, not a rewrite of every
-// call site.
+// Package sms defines the interface this app's SMS touchpoints send
+// through. LoggingSender keeps local/dev safe, while provider-backed
+// senders such as Termii can be selected at startup without rewriting
+// every call site.
 package sms
 
 import (
@@ -15,6 +12,22 @@ import (
 // Sender sends a text message to a phone number.
 type Sender interface {
 	Send(ctx context.Context, to, message string) error
+}
+
+// SenderIDSender is implemented by providers that can override the
+// sender/from ID per message. SendWithSenderID falls back to Sender.Send
+// for providers that do not support this.
+type SenderIDSender interface {
+	SendFrom(ctx context.Context, senderID, to, message string) error
+}
+
+func SendWithSenderID(ctx context.Context, sender Sender, senderID, to, message string) error {
+	if senderID != "" {
+		if withSenderID, ok := sender.(SenderIDSender); ok {
+			return withSenderID.SendFrom(ctx, senderID, to, message)
+		}
+	}
+	return sender.Send(ctx, to, message)
 }
 
 // LoggingSender logs the message that would have been sent instead of
@@ -32,5 +45,10 @@ func NewLoggingSender() *LoggingSender { return &LoggingSender{} }
 
 func (LoggingSender) Send(_ context.Context, to, message string) error {
 	log.Printf("sms (not actually sent, no provider configured): to=%s message=%q", to, message)
+	return nil
+}
+
+func (LoggingSender) SendFrom(_ context.Context, senderID, to, message string) error {
+	log.Printf("sms (not actually sent, no provider configured): sender_id=%s to=%s message=%q", senderID, to, message)
 	return nil
 }

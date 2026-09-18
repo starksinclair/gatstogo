@@ -14,6 +14,7 @@ import (
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/receipts"
 	"gatstogo/internal/session"
+	"gatstogo/internal/sms"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/internal/tickets"
 	"gatstogo/web/templates/pages"
@@ -277,11 +278,9 @@ func receiptsLookupHandler(s *Server) http.HandlerFunc {
 		// differently for "no purchases on file" vs. "here's your code"
 		// would let anyone probe which phone numbers have bought gas here.
 		message := fmt.Sprintf("Your %s receipts code is %s. It expires in 10 minutes.", plant.Name, code)
-		if err := s.SMS.Send(r.Context(), rawPhone, message); err != nil {
-			// Logged, not fatal: LoggingSender (the only Sender wired up so
-			// far) never actually fails, but a future real provider might --
-			// the code is already valid in Redis regardless, so still let
-			// the customer try entering it.
+		if err := sms.SendWithSenderID(r.Context(), s.SMS, ptrString(plant.TermiiSenderID, ""), rawPhone, message); err != nil {
+			// Logged, not fatal: the code is already valid in Redis
+			// regardless, so still let the customer try entering it.
 			log.Println("receipts lookup: sms send failed:", err)
 		}
 

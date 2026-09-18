@@ -65,6 +65,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						openingCash: "",
 						busy: false,
 						startError: "",
+						startNotice: "",
 						lockedUntil: 0,
 						lockTimer: null,
 
@@ -74,6 +75,9 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						name: "",
 						role: "",
 						config: "combined",
+						canEditPrice: false,
+						canManageStaff: false,
+						priceInput: String(Math.round(pricePerKgNaira || 0)),
 
 						tab: "fill",
 						code: "",
@@ -84,11 +88,10 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						fills: 0,
 						gramsDispensed: 0,
 						cashHeldKobo: 0,
-						cylinder: 12.5,
+						cashAmount: "",
 						phone: "",
-						tokensIssued: 0,
-						tokensReturned: 0,
-						closingCash: ""
+						closingCash: "",
+						shiftNotes: ""
 					};
 
 					function naira(kobo) {
@@ -102,10 +105,40 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						var n = parseFloat((s || "").toString().replace(/[^0-9.]/g, ""));
 						return Number.isFinite(n) ? Math.round(n * 100) : 0;
 					}
+					function gasGramsFromCashAmount() {
+						var amountNaira = parseNairaInputToKobo(state.cashAmount) / 100;
+						return pricePerKgNaira > 0 ? Math.round((amountNaira / pricePerKgNaira) * 1000) : 0;
+					}
+					function updateCashPreview() {
+						var output = root.querySelector("[data-cash-kg]");
+						if (output) output.textContent = kg(gasGramsFromCashAmount());
+						var button = root.querySelector('[data-action="record-cash"]');
+						if (button) {
+							var blocked = state.cashHeldKobo >= blockLimitKobo;
+							button.disabled = parseNairaInputToKobo(state.cashAmount) <= 0 || blocked || state.busy;
+						}
+					}
 					function configForRole(role) {
 						if (role === "cashier") return "cashier";
 						if (role === "operator") return "operator";
 						return "combined"; // manager
+					}
+					function applySessionData(d) {
+						state.sessionCsrfToken = d.csrf_token;
+						state.shiftId = d.shift_id;
+						state.name = d.name;
+						state.role = d.role;
+						state.config = configForRole(d.role);
+						state.canEditPrice = !!d.can_edit_price;
+						state.canManageStaff = !!d.can_manage_staff;
+						state.priceInput = String(Math.round(pricePerKgNaira || 0));
+						state.tab = "fill";
+						state.fills = d.fills_completed || 0;
+						state.gramsDispensed = d.grams_dispensed || 0;
+						state.cashHeldKobo = d.cash_held_kobo || 0;
+						state.openingCash = d.opening_cash_kobo ? String(Math.round(d.opening_cash_kobo / 100)) : state.openingCash;
+						state.screen = "main";
+						state.startNotice = "";
 					}
 					function roleLabel(role) {
 						if (role === "cashier") return "Cashier";
@@ -214,19 +247,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 							return;
 						}
 
-						var d = result.data;
-						state.sessionCsrfToken = d.csrf_token;
-						state.shiftId = d.shift_id;
-						state.name = d.name;
-						state.role = d.role;
-						state.config = configForRole(d.role);
-						state.tab = "fill";
-						state.fills = d.fills_completed || 0;
-						state.gramsDispensed = d.grams_dispensed || 0;
-						state.cashHeldKobo = d.cash_held_kobo || 0;
-						state.tokensIssued = d.tokens_issued || 0;
-						state.tokensReturned = d.tokens_returned || 0;
-						state.screen = "main";
+						applySessionData(result.data);
 						render();
 					}
 
@@ -245,6 +266,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						// operators (setTab("end") was refused the same as
 						// setTab("cash") would have been).
 						if (state.config === "operator" && tab === "cash") return;
+						if (tab === "price" && !(state.role === "manager" && state.canEditPrice)) return;
 						state.tab = tab;
 						render();
 					}
@@ -334,11 +356,11 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					}
 
 					async function recordCash() {
-						if (state.busy) return;
+						if (state.busy || parseNairaInputToKobo(state.cashAmount) <= 0) return;
 						state.busy = true;
 						render();
 						var result = await postForm("/terminal/cash-sale", {
-							cylinder_kg: String(state.cylinder),
+							amount_naira: state.cashAmount,
 							phone: state.phone
 						});
 						state.busy = false;
@@ -352,12 +374,8 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						var d = result.data;
 						state.cashHeldKobo = d.cash_held_kobo;
 						state.phone = "";
-						if (d.token_issued) {
-							state.tokensIssued = d.token_number;
-							state.message = "Cash recorded. Give the customer token #" + d.token_number + " and tell them their code: " + d.code + ".";
-						} else {
-							state.message = "Cash recorded and fill queued. Code: " + d.code + ".";
-						}
+						state.cashAmount = "";
+						state.message = "Cash recorded for " + d.size_kg + ". Fill queued. Code: " + d.code + ".";
 						state.messageKind = "confirmed";
 						render();
 						setTimeout(function () {
@@ -365,21 +383,46 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						}, 3200);
 					}
 
-					async function returnToken() {
+					async function savePrice() {
+						if (state.busy || !(state.role === "manager" && state.canEditPrice)) return;
+						state.busy = true;
+						render();
+						var result = await postForm("/terminal/price", { price_per_kg: state.priceInput });
+						state.busy = false;
+						if (!result.ok) {
+							state.message = (result.data && result.data.error) || "Could not save price.";
+							state.messageKind = "wrong";
+							render();
+							return;
+						}
+						pricePerKgNaira = result.data.price_per_kg_kobo / 100;
+						init.pricePerKgKobo = result.data.price_per_kg_kobo;
+						state.priceInput = String(Math.round(pricePerKgNaira));
+						state.message = "Price updated to " + result.data.price + ".";
+						state.messageKind = "confirmed";
+						render();
+					}
+
+					async function logoutTerminal() {
 						if (state.busy) return;
 						state.busy = true;
 						render();
-						var result = await postForm("/terminal/token-return", {});
+						var result = await postForm("/terminal/logout", {});
 						state.busy = false;
-						if (result.ok) state.tokensReturned = result.data.tokens_returned;
-						render();
+						if (!result.ok) {
+							state.message = (result.data && result.data.error) || "Could not log out.";
+							state.messageKind = "wrong";
+							render();
+							return;
+						}
+						resetToStart("Logged out. Your shift is still open; sign in again to continue or close it.");
 					}
 
 					async function finishShift() {
 						if (state.busy) return;
 						state.busy = true;
 						render();
-						var result = await postForm("/terminal/shift/end", { closing_cash: state.closingCash });
+						var result = await postForm("/terminal/shift/end", { closing_cash: state.closingCash, notes: state.shiftNotes });
 						state.busy = false;
 
 						if (!result.ok) {
@@ -391,15 +434,15 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						resetToStart();
 					}
 
-					function resetToStart() {
+					function resetToStart(notice) {
 						clearInterval(state.lockTimer);
 						state = {
-							screen: "start", employeeId: "", pin: "", openingCash: "", busy: false, startError: "",
+							screen: "start", employeeId: "", pin: "", openingCash: "", busy: false, startError: "", startNotice: notice || "",
 							lockedUntil: 0, lockTimer: null,
-							sessionCsrfToken: "", shiftId: "", name: "", role: "", config: "combined",
+							sessionCsrfToken: "", shiftId: "", name: "", role: "", config: "combined", canEditPrice: false, canManageStaff: false, priceInput: String(Math.round(pricePerKgNaira || 0)),
 							tab: "fill", code: "", revealed: null, message: "", messageKind: "",
-							fills: 0, gramsDispensed: 0, cashHeldKobo: 0, cylinder: 12.5, phone: "",
-							tokensIssued: 0, tokensReturned: 0, closingCash: ""
+							fills: 0, gramsDispensed: 0, cashHeldKobo: 0, cashAmount: "", phone: "",
+							closingCash: "", shiftNotes: ""
 						};
 						render();
 					}
@@ -431,7 +474,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 								'<h1>Start terminal shift</h1>' +
 								'<p class="helper-text">Pick your name, enter your PIN, then count opening cash.</p>' +
 								(staff.length === 0 ? '<p class="helper-text">No staff are set up for this plant yet. Ask an owner to add staff from the owner dashboard.</p>' : '<div class="staff-grid">' + staff.map(employeeButton).join("") + '</div>') +
-								(selected ? '<p class="helper-text">Terminal mode: <strong>' + roleLabel(selected.role) + '</strong> (' + (configForRole(selected.role) === "operator" ? "fill only" : configForRole(selected.role) === "cashier" ? "cash, tokens, fill" : "cash + fill") + ')</p>' : '') +
+								(state.startNotice ? '<div class="state-message confirmed">' + icon("check-circle") + state.startNotice + '</div>' : '') +
 								'<div class="term-field">' +
 									'<label class="field-label" for="opening-cash">Opening cash drawer</label>' +
 									'<input id="opening-cash" class="term-input mono" value="' + state.openingCash + '" placeholder="₦20,000" inputmode="numeric" data-action="opening-cash" ' + (locked ? "disabled" : "") + '/>' +
@@ -458,15 +501,17 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 								'<div class="stat"><span>Staff</span><strong>' + escapeHtml(state.name) + '</strong></div>' +
 								'<div class="stat"><span>Fills</span><strong class="mono">' + state.fills + '</strong></div>' +
 								'<div class="stat"><span>Dispensed</span><strong class="mono">' + kg(state.gramsDispensed) + '</strong></div>' +
+								'<button type="button" data-action="logout">' + icon("sign-out") + 'Log out</button>' +
 								'<button type="button" data-action="end-screen">' + icon("sign-out") + 'End shift</button>' +
 							'</div>' +
 						'</header>' +
 						'<nav class="terminal-tabs">' +
 							tabButton("fill", "Fill") +
-							(state.config === "operator" ? "" : tabButton("cash", state.config === "cashier" ? "Cash sale + tokens" : "Cash sale")) +
+							(state.config === "operator" ? "" : tabButton("cash", "Cash sale")) +
+							(state.role === "manager" && state.canEditPrice ? tabButton("price", "Set price") : "") +
 							tabButton("end", "End shift") +
 						'</nav>' +
-						'<main>' + (state.tab === "fill" ? renderFill() : state.tab === "cash" ? renderCash() : renderEnd()) + '</main>';
+						'<main>' + (state.tab === "fill" ? renderFill() : state.tab === "cash" ? renderCash() : state.tab === "price" ? renderPrice() : renderEnd()) + '</main>';
 					}
 					function tabButton(id, label) {
 						return '<button class="' + (state.tab === id ? "active" : "") + '" type="button" data-action="tab" data-value="' + id + '">' + label + '</button>';
@@ -508,42 +553,59 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					}
 
 					function renderCash() {
-						var amountKobo = Math.round(state.cylinder * pricePerKgNaira * 100);
+						var amountKobo = parseNairaInputToKobo(state.cashAmount);
+						var gasGrams = gasGramsFromCashAmount();
 						var blocked = state.cashHeldKobo >= blockLimitKobo;
+						var canRecord = amountKobo > 0 && !blocked && !state.busy;
 						return '<div class="term-layout">' +
 							'<div class="term-main">' +
 								'<div class="section-eyebrow">Cash sale</div>' +
 								'<h1>Record cash and queue fill</h1>' +
-								'<div class="cylinder-grid">' + [3,6,12.5,25,50].map(function (size) { return '<button class="' + (state.cylinder === size ? "active" : "") + '" type="button" data-action="cylinder" data-value="' + size + '"><span class="mono">' + kg(size * 1000) + '</span></button>'; }).join("") + '</div>' +
+								'<div class="term-field">' +
+									'<label class="field-label" for="cash-amount">Cash received</label>' +
+									'<input id="cash-amount" class="term-input mono" value="' + escapeHtml(state.cashAmount) + '" placeholder="₦5,000" inputmode="decimal" data-action="cash-amount"/>' +
+								'</div>' +
 								'<div class="term-field">' +
 									'<label class="field-label" for="phone">Phone number optional</label>' +
-									'<input id="phone" class="term-input mono" value="' + state.phone + '" placeholder="0803 000 0000" inputmode="tel" data-action="phone"/>' +
+									'<input id="phone" class="term-input mono" value="' + escapeHtml(state.phone) + '" placeholder="0803 000 0000" inputmode="tel" data-action="phone"/>' +
 								'</div>' +
 								'<div class="amount-row">' +
-									'<span class="label">Amount at ' + naira(pricePerKgNaira * 100) + '/kg<em class="note">Not editable</em></span>' +
-									'<strong class="value mono">' + naira(amountKobo) + '</strong>' +
+									'<span class="label">Gas at ' + naira(pricePerKgNaira * 100) + '/kg<em class="note">Published rate</em></span>' +
+									'<strong class="value mono" data-cash-kg>' + kg(gasGrams) + '</strong>' +
 								'</div>' +
 								(blocked ? '<div class="state-message used">' + icon("warning-circle") + 'Cash limit reached. Record a deposit before taking more cash.</div>' : '') +
-								'<button class="primary-action" type="button" data-action="record-cash" ' + (blocked || state.busy ? "disabled" : "") + '>' + (state.busy ? "Recording…" : (state.config === "cashier" ? "Record cash and issue a token" : "Record cash and queue fill")) + '</button>' +
+								'<button class="primary-action" type="button" data-action="record-cash" ' + (canRecord ? "" : "disabled") + '>' + (state.busy ? "Recording…" : "Record cash and queue fill") + '</button>' +
 								(state.message ? '<div class="state-message ' + (state.messageKind || "confirmed") + '">' + stateMessageIcon(state.messageKind || "confirmed") + state.message + '</div>' : '') +
 							'</div>' +
 							'<aside class="term-aside">' +
 								'<div class="section-eyebrow">Cash holding</div>' +
 								'<div class="cash-held ' + cashClass() + '"><strong class="mono">' + naira(state.cashHeldKobo) + '</strong><span>' + (cashClass() === "ok" ? "Normal" : cashClass() === "warn" ? "Deposit soon" : "Deposit required") + '</span></div>' +
-								(state.config === "cashier" ? renderTokens() : '<p class="helper-text">Combined staff can take cash and move straight to filling.</p>') +
+								'<p class="helper-text">Cash sales create a customer code for the fill queue.</p>' +
 							'</aside>' +
 						'</div>';
 					}
-					function renderTokens() {
-						return '<div class="token-panel">' +
-							'<div class="field-label">Tokens</div>' +
-							'<div class="proof-row"><span>Issued this shift</span><strong class="mono">' + state.tokensIssued + '</strong></div>' +
-							'<div class="proof-row"><span>Returned this shift</span><strong class="mono">' + state.tokensReturned + '</strong></div>' +
-							'<button class="secondary-action" type="button" data-action="return-token" ' + (state.tokensReturned >= state.tokensIssued || state.busy ? "disabled" : "") + '>Mark one token returned</button>' +
-							'<p class="helper-text small">Tap when a customer hands their token back.</p>' +
+					function renderPrice() {
+						return '<div class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Manager permission</div>' +
+								'<h1>Set gas price</h1>' +
+								'<div class="term-field">' +
+									'<label class="field-label" for="price-per-kg">Price per kg</label>' +
+									'<input id="price-per-kg" class="term-input mono" value="' + escapeHtml(state.priceInput) + '" placeholder="1150" inputmode="decimal" data-action="price-input"/>' +
+								'</div>' +
+								'<div class="amount-row">' +
+									'<span class="label">Current published price<em class="note">Used for cash sales and customer checkout</em></span>' +
+									'<strong class="value mono">' + naira(pricePerKgNaira * 100) + '/kg</strong>' +
+								'</div>' +
+								(state.message ? '<div class="state-message ' + (state.messageKind || "confirmed") + '">' + stateMessageIcon(state.messageKind || "confirmed") + state.message + '</div>' : '') +
+								'<button class="primary-action" type="button" data-action="save-price" ' + (state.busy ? "disabled" : "") + '>' + (state.busy ? "Saving…" : "Save gas price") + '</button>' +
+							'</div>' +
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Tracked action</div>' +
+								'<p class="privacy-note">' + icon("shield-check") + 'Every price change is saved to the plant activity log with your staff account.</p>' +
+							'</aside>' +
 						'</div>';
 					}
-
 					function renderEnd() {
 						var expectedKobo = state.cashHeldKobo + parseNairaInputToKobo(state.openingCash);
 						if (!state.closingCash) state.closingCash = String(Math.round(expectedKobo / 100));
@@ -551,11 +613,15 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 							'<div class="term-main">' +
 								'<div class="section-eyebrow">Shift end</div>' +
 								'<h1>Count and close shift</h1>' +
+								'<p class="helper-text">Use Log out if you only want to leave the terminal. This button closes the shift.</p>' +
 								'<div class="term-field">' +
 									'<label class="field-label" for="closing-cash">Closing cash count</label>' +
 									'<input id="closing-cash" class="term-input mono" value="' + state.closingCash + '" placeholder="' + naira(expectedKobo) + '" inputmode="numeric" data-action="closing-cash"/>' +
 								'</div>' +
-								(state.config === "cashier" && state.tokensReturned < state.tokensIssued ? '<div class="state-message wrong">' + icon("x-circle") + (state.tokensIssued - state.tokensReturned) + ' token(s) still out.</div>' : '') +
+								'<div class="term-field">' +
+									'<label class="field-label" for="shift-notes">Shift note optional</label>' +
+									'<textarea id="shift-notes" class="term-input term-textarea" placeholder="Short note for owner dashboard" data-action="shift-notes">' + escapeHtml(state.shiftNotes) + '</textarea>' +
+								'</div>' +
 								(state.message ? '<div class="state-message ' + (state.messageKind || "wrong") + '">' + stateMessageIcon(state.messageKind || "wrong") + state.message + '</div>' : '') +
 								'<button class="primary-action" type="button" data-action="finish-shift" ' + (state.busy ? "disabled" : "") + '>' + (state.busy ? "Closing…" : "Submit and end shift") + '</button>' +
 							'</div>' +
@@ -588,19 +654,23 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						if (action === "code-back") backCode();
 						if (action === "code-clear") clearCode();
 						if (action === "confirm-fill") confirmFill();
-						if (action === "cylinder") { state.cylinder = Number(value); render(); }
 						if (action === "record-cash") recordCash();
-						if (action === "return-token") returnToken();
+						if (action === "save-price") savePrice();
+						if (action === "logout") logoutTerminal();
 						if (action === "end-screen") setTab("end");
 						if (action === "finish-shift") finishShift();
 					});
 					root.addEventListener("input", function (event) {
 						var action = event.target.dataset.action;
 						if (action === "opening-cash") { state.openingCash = event.target.value; syncStartButton(); }
+						if (action === "cash-amount") { state.cashAmount = event.target.value; updateCashPreview(); }
 						if (action === "phone") state.phone = event.target.value;
+						if (action === "price-input") state.priceInput = event.target.value;
 						if (action === "closing-cash") state.closingCash = event.target.value;
+						if (action === "shift-notes") state.shiftNotes = event.target.value;
 					});
 
+					if (init.currentSession) applySessionData(init.currentSession);
 					render();
 				});
 			</script>

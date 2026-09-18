@@ -21,6 +21,7 @@ var (
 	ErrMissingField = errors.New("staff: name, phone, and PIN are required")
 	ErrInvalidRole  = errors.New("staff: role must be manager, cashier, or operator")
 	ErrInvalidPIN   = errors.New("staff: PIN must be exactly 4 digits")
+	ErrPINTaken     = errors.New("staff: that PIN is already used by another staff member at this plant")
 	ErrPhoneTaken   = errors.New("staff: a staff member with that phone number already exists at this plant")
 	ErrNotFound     = errors.New("staff: not found")
 )
@@ -58,6 +59,13 @@ func Create(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, p Create
 	if !validPIN(pin) {
 		return uuid.Nil, ErrInvalidPIN
 	}
+	taken, err := pinAlreadyUsed(ctx, q, plantID, pin)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if taken {
+		return uuid.Nil, ErrPINTaken
+	}
 
 	pinHash, err := auth.HashPassword(pin)
 	if err != nil {
@@ -77,6 +85,30 @@ func Create(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, p Create
 		return uuid.Nil, err
 	}
 	return id, nil
+}
+
+func pinAlreadyUsed(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, pin string) (bool, error) {
+	rows, err := q.Query(ctx, `
+		SELECT pin_hash FROM users
+		WHERE plant_id = $1
+		  AND role IN ('manager', 'cashier', 'operator')
+		  AND pin_hash IS NOT NULL
+	`, plantID)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var existingHash string
+		if err := rows.Scan(&existingHash); err != nil {
+			return false, err
+		}
+		if auth.VerifyPassword(existingHash, pin) {
+			return true, nil
+		}
+	}
+	return false, rows.Err()
 }
 
 // SetActive activates or deactivates a staff member. The terminal's PIN

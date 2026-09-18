@@ -82,19 +82,21 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 		}
 
 		var (
-			userID       uuid.UUID
-			name, role   string
-			passwordHash *string
-			active       bool
-			found        bool
+			userID         uuid.UUID
+			name, role     string
+			passwordHash   *string
+			active         bool
+			canEditPrice   bool
+			canManageStaff bool
+			found          bool
 		)
 		err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			row := q.QueryRow(ctx, `
-				SELECT id, name, role, password_hash, active
+				SELECT id, name, role, password_hash, active, can_edit_price, can_manage_staff
 				FROM users
 				WHERE plant_id = $1 AND phone = $2 AND role IN ('owner', 'manager')
 			`, plant.ID, phone)
-			switch scanErr := row.Scan(&userID, &name, &role, &passwordHash, &active); scanErr {
+			switch scanErr := row.Scan(&userID, &name, &role, &passwordHash, &active, &canEditPrice, &canManageStaff); scanErr {
 			case nil:
 				found = true
 				return nil
@@ -121,10 +123,12 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 		}
 
 		token, err := s.Sessions.Create(r.Context(), session.Data{
-			UserID:  userID.String(),
-			Role:    session.Role(role),
-			Name:    name,
-			PlantID: plant.ID.String(),
+			UserID:         userID.String(),
+			Role:           session.Role(role),
+			Name:           name,
+			PlantID:        plant.ID.String(),
+			CanEditPrice:   canEditPrice,
+			CanManageStaff: canManageStaff,
 		}, session.OwnerTTL)
 		if err != nil {
 			log.Println("owner login: create session failed:", err)
