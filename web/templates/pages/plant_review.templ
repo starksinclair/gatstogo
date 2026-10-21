@@ -1,0 +1,86 @@
+package pages
+
+import (
+	"strconv"
+	"strings"
+
+	"gatstogo/internal/domain"
+)
+
+type PlantReviewData struct {
+	Plant            *domain.Plant
+	CSRFToken        string
+	Token            string
+	TicketReference  string
+	Rating           int
+	Note             string
+	AlreadySubmitted bool
+	ErrorMessage      string
+}
+
+templ PlantReview(data PlantReviewData) {
+	{{ theme := customerTheme(data.Plant) }}
+	@customerPageShell(theme, theme.Name+" | Review", plantReviewContent(theme, data))
+}
+
+templ plantReviewContent(theme customerHomeTheme, data PlantReviewData) {
+	<main class="page">
+		<div class="wrap narrow-wrap">
+			@customerBrand(theme)
+			<section class="review-hero">
+				<div class="section-eyebrow">Plant review</div>
+				if data.AlreadySubmitted {
+					<h1>Thank you for your review.</h1>
+					<p class="lede">Your feedback helps this plant improve how they serve customers.</p>
+					<div class="review-complete">
+						<div class="review-stars-display" aria-label={ strconv.Itoa(data.Rating) + " out of 5 stars" }>{ reviewStars(data.Rating) }</div>
+						if data.Note != "" {
+							<p>{ data.Note }</p>
+						}
+					</div>
+					<a class="primary-action link-action" href="/">Buy gas again</a>
+				} else {
+					<h1>How was your gas purchase?</h1>
+					<p class="lede">Rate { theme.Name } and leave a short note if there is anything they should know.</p>
+					if data.ErrorMessage != "" {
+						<div class="customer-error">{ data.ErrorMessage }</div>
+					}
+					<form class="review-form" method="post" action={ templ.SafeURL("/reviews/" + data.Token) }>
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<fieldset class="star-field">
+							<legend>Rating</legend>
+							<div class="star-options">
+								for i := 5; i >= 1; i-- {
+									<label>
+										if data.Rating == i {
+											<input type="radio" name="rating" value={ strconv.Itoa(i) } checked required/>
+										} else {
+											<input type="radio" name="rating" value={ strconv.Itoa(i) } required/>
+										}
+										<span>{ reviewStars(i) }</span>
+										<em>{ strconv.Itoa(i) }</em>
+									</label>
+								}
+							</div>
+						</fieldset>
+						<div class="field">
+							<label for="review-note">Additional message optional</label>
+							<textarea id="review-note" name="note" rows="5" placeholder="Tell the plant what went well or what needs attention.">{ data.Note }</textarea>
+						</div>
+						<button class="primary-action" type="submit">Submit review</button>
+					</form>
+				}
+			</section>
+		</div>
+	</main>
+}
+
+func reviewStars(rating int) string {
+	if rating < 0 {
+		rating = 0
+	}
+	if rating > 5 {
+		rating = 5
+	}
+	return strings.Repeat("★", rating) + strings.Repeat("☆", 5-rating)
+}

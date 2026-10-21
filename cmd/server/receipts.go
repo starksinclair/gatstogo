@@ -51,6 +51,8 @@ func receiptStatusLabel(status string, confirmed bool) string {
 		return "Awaiting payment"
 	case "paid":
 		return "Awaiting fill"
+	case "dispensing":
+		return "Dispensing in progress"
 	case "filled":
 		if confirmed {
 			return "Received"
@@ -86,7 +88,7 @@ func receiptBadgeCSS(status string, confirmed bool) string {
 			return "badge-success"
 		}
 		return "badge-pending"
-	case "paid", "pending":
+	case "paid", "pending", "dispensing":
 		return "badge-pending"
 	case "expired", "voided":
 		return "badge-danger"

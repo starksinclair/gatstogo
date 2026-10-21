@@ -11,9 +11,12 @@ import (
 	"gatstogo/internal/csrf"
 	"gatstogo/internal/domain"
 	"gatstogo/internal/email"
+	"gatstogo/internal/hours"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/payments"
+	"gatstogo/internal/pumps"
 	"gatstogo/internal/receipts"
+	"gatstogo/internal/reviews"
 	"gatstogo/internal/session"
 	"gatstogo/internal/shifts"
 	"gatstogo/internal/sms"
@@ -32,6 +35,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
@@ -345,6 +349,8 @@ func (s *Server) MountHandlers() {
 		r.Get("/receipts", receiptsPageHandler(s))
 		r.With(middleware.CSRF).Post("/receipts/lookup", receiptsLookupHandler(s))
 		r.With(middleware.CSRF).Post("/receipts/verify", receiptsVerifyHandler(s))
+		r.Get("/reviews/{token}", reviewPageHandler(s))
+		r.With(middleware.CSRF).Post("/reviews/{token}", reviewSubmitHandler(s))
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.RequireReceiptSession(s.Sessions))
 			r.Use(middleware.CSRF)
@@ -365,8 +371,13 @@ func (s *Server) MountHandlers() {
 
 			r.Post("/terminal/redeem", terminalRedeemHandler(s))
 			r.Post("/terminal/fill", terminalFillHandler(s))
+			r.Get("/terminal/pump-queue", terminalPumpQueueHandler(s))
+			r.Post("/terminal/receipt/close", terminalCloseReceiptHandler(s))
+			r.Post("/terminal/receipt/bulk-close", terminalBulkCloseReceiptsHandler(s))
 			r.Post("/terminal/cash-sale", terminalCashSaleHandler(s))
 			r.Post("/terminal/price", terminalSetPriceHandler(s))
+			r.Post("/terminal/pumps", terminalPumpHandler(s))
+			r.Post("/terminal/staff/status", terminalStaffStatusHandler(s))
 			r.Post("/terminal/shift/end", terminalShiftEndHandler(s))
 			r.Post("/terminal/logout", terminalLogoutHandler(s))
 		})
@@ -398,7 +409,8 @@ func (s *Server) MountHandlers() {
 			r.Post("/owner/staff", ownerCreateStaffHandler(s))
 			r.Post("/owner/staff/{id}/status", ownerStaffStatusHandler(s))
 			r.Post("/owner/staff/{id}/permissions", ownerStaffPermissionsHandler(s))
-			r.Post("/owner/cash-movements", ownerCashMovementHandler(s))
+			r.Post("/owner/hours", ownerHoursHandler(s))
+			r.Post("/owner/pumps", ownerPumpHandler(s))
 			r.Post("/owner/settings", ownerUpdateSettingsHandler(s))
 			r.Post("/owner/password", ownerChangePasswordHandler(s))
 		})
@@ -582,9 +594,33 @@ func ownerDashboardHandler(s *Server) http.HandlerFunc {
 		}
 
 		if actor := middleware.GetActor(r.Context()); actor != nil {
+			if actor.Role == session.RoleManager {
+				err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+					return q.QueryRow(ctx, `
+						SELECT can_edit_price, can_manage_staff, can_manage_pumps
+						FROM users
+						WHERE id = $1
+						  AND plant_id = $2
+						  AND role = 'manager'
+						  AND active = TRUE
+					`, actor.UserID, plant.ID).Scan(&actor.CanEditPrice, &actor.CanManageStaff, &actor.CanManagePumps)
+				})
+				if err != nil {
+					if errors.Is(err, pgx.ErrNoRows) {
+						session.ClearCookie(w, session.CookieOwner)
+						http.Redirect(w, r, "/owner/login", http.StatusSeeOther)
+						return
+					}
+					log.Println("owner dashboard: permission refresh failed:", err)
+					actor.CanEditPrice = false
+					actor.CanManageStaff = false
+					actor.CanManagePumps = false
+				}
+			}
 			data.CSRFToken, _ = csrf.Token(actor.Token)
 			data.CanEditPrice = actor.Role == session.RoleOwner || actor.CanEditPrice
 			data.CanManageStaff = actor.Role == session.RoleOwner || actor.CanManageStaff
+			data.CanManagePumps = actor.Role == session.RoleOwner || actor.CanManagePumps
 			data.CanGrantManagerPermissions = actor.Role == session.RoleOwner
 		}
 		data.ErrorMessage = ownerErrorMessage(r.URL.Query().Get("error"))
@@ -609,15 +645,19 @@ func customerHomeHandler(s *Server) http.HandlerFunc {
 		}
 
 		var pricePerKg int64
+		openStatus := hours.TodayStatus{IsOpen: true, Label: "Hours not set"}
 		_ = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			_, pricePerKg, _ = loadCurrentPrice(ctx, q, plant.ID)
+			if status, err := hours.StatusNow(ctx, q, plant.ID, plant.Timezone); err == nil {
+				openStatus = status
+			}
 			return nil
 		})
 
 		csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
 		errorMsg := buyGasErrorMessage(r.URL.Query().Get("error"))
 
-		if err := pages.CustomerHome(plant, pricePerKg, csrfToken, errorMsg).Render(r.Context(), w); err != nil {
+		if err := pages.CustomerHome(plant, pricePerKg, csrfToken, errorMsg, openStatus.IsOpen, openStatus.Label).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -634,6 +674,8 @@ func buyGasErrorMessage(code string) string {
 		return "Enter your name and phone number."
 	case "channel":
 		return "Choose how you will pay."
+	case "closed":
+		return "Plant is currently closed. You can still check the current price."
 	case "payment":
 		return "We could not start your payment just now. Please try again."
 	case "form", "server":
@@ -659,6 +701,12 @@ func ownerErrorMessage(code string) string {
 		return "That PIN is already used by another staff member at this plant. Give each staff member a different 4-digit PIN."
 	case "staff-permission":
 		return "You do not have permission to manage staff."
+	case "pump-permission":
+		return "You do not have permission to manage pumps or opening hours."
+	case "pump":
+		return "Could not save that pump. Check the name and status."
+	case "hours":
+		return "Could not save those opening hours. Check the time format and try again."
 	case "staff-self":
 		return "You cannot deactivate your own account."
 	case "staff-status":
@@ -786,10 +834,10 @@ func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.
 	data.Shifts = loadOwnerShifts(ctx, db, plant)
 	data.CashMovements = loadOwnerCashMovements(ctx, db, plant)
 	data.PriceHistory = loadOwnerPriceHistory(ctx, db, plant)
+	data.Hours = loadOwnerHours(ctx, db, plant)
+	data.Pumps = loadOwnerPumps(ctx, db, plant)
+	data.Reviews, data.ReviewCount, data.ReviewAverage = loadOwnerReviews(ctx, db, plant)
 	data.Activity = loadActivity(ctx, db, plant.ID, 6)
-	if _, err := shifts.MostRecentOpenShiftID(ctx, db, plant.ID); err == nil {
-		data.HasOpenShift = true
-	}
 	return data
 }
 
@@ -845,12 +893,13 @@ func maskAccountNumber(v string) string {
 
 func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerTicketRow {
 	rows, err := db.Query(ctx, `
-		SELECT reference, code, COALESCE(customer_name, ''), COALESCE(customer_phone, ''),
-		       size_grams, COALESCE(net_grams, 0), rate_per_kg, amount, channel, status,
-		       created_at, paid_at, filled_at
-		FROM tickets
-		WHERE plant_id = $1
-		ORDER BY created_at DESC
+		SELECT t.reference, t.code, COALESCE(t.customer_name, ''), COALESCE(t.customer_phone, ''),
+		       t.size_grams, COALESCE(t.net_grams, 0), t.rate_per_kg, t.amount, t.channel, t.status,
+		       t.created_at, t.paid_at, t.filled_at, COALESCE(p.name, '')
+		FROM tickets t
+		LEFT JOIN pumps p ON p.id = t.pump_id AND p.plant_id = t.plant_id
+		WHERE t.plant_id = $1
+		ORDER BY t.created_at DESC
 		LIMIT 8
 	`, plant.ID)
 	if err != nil {
@@ -864,7 +913,7 @@ func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Pl
 		var grams, netGrams, rate, amount int64
 		var created time.Time
 		var paidAt, filledAt sql.NullTime
-		if err := rows.Scan(&row.Reference, &row.Code, &row.Customer, &row.Phone, &grams, &netGrams, &rate, &amount, &row.Channel, &row.Status, &created, &paidAt, &filledAt); err != nil {
+		if err := rows.Scan(&row.Reference, &row.Code, &row.Customer, &row.Phone, &grams, &netGrams, &rate, &amount, &row.Channel, &row.Status, &created, &paidAt, &filledAt, &row.Pump); err != nil {
 			continue
 		}
 		row.Reference = fallbackString(row.Reference, "No reference")
@@ -878,6 +927,7 @@ func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Pl
 		row.Rate = formatNaira(rate) + "/kg"
 		row.Amount = formatNaira(amount)
 		row.Channel = channelLabel(row.Channel)
+		row.Pump = fallbackString(row.Pump, "Not assigned")
 		row.Status = strings.ToUpper(fallbackString(row.Status, "pending"))
 		row.When = created.Format("2 Jan, 15:04")
 		row.PaidAt = formatOptionalTime(paidAt, "Not paid yet")
@@ -893,7 +943,7 @@ func loadOwnerTickets(ctx context.Context, db tenantdb.Querier, plant *domain.Pl
 
 func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerStaffRow {
 	rows, err := db.Query(ctx, `
-		SELECT u.id, u.name, u.phone, u.role, u.active, u.can_edit_price, u.can_manage_staff, u.created_at,
+		SELECT u.id, u.name, u.phone, u.role, u.active, u.can_edit_price, u.can_manage_staff, u.can_manage_pumps, u.created_at,
 		       COUNT(DISTINCT t.id),
 		       COUNT(DISTINCT s.id)
 		FROM users u
@@ -901,7 +951,7 @@ func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plan
 		LEFT JOIN shifts s ON s.user_id = u.id
 		WHERE u.plant_id = $1
 		  AND u.role IN ('manager', 'cashier', 'operator')
-		GROUP BY u.id, u.name, u.phone, u.role, u.active, u.can_edit_price, u.can_manage_staff, u.created_at
+		GROUP BY u.id, u.name, u.phone, u.role, u.active, u.can_edit_price, u.can_manage_staff, u.can_manage_pumps, u.created_at
 		ORDER BY u.active DESC, u.role, u.name
 	`, plant.ID)
 	if err != nil {
@@ -914,10 +964,10 @@ func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plan
 		var id uuid.UUID
 		var rawRole string
 		var active bool
-		var canEditPrice, canManageStaff bool
+		var canEditPrice, canManageStaff, canManagePumps bool
 		var row pages.OwnerStaffRow
 		var created time.Time
-		if err := rows.Scan(&id, &row.Name, &row.Phone, &rawRole, &active, &canEditPrice, &canManageStaff, &created, &row.SalesCount, &row.ShiftsCount); err != nil {
+		if err := rows.Scan(&id, &row.Name, &row.Phone, &rawRole, &active, &canEditPrice, &canManageStaff, &canManagePumps, &created, &row.SalesCount, &row.ShiftsCount); err != nil {
 			continue
 		}
 		row.ID = id.String()
@@ -928,6 +978,7 @@ func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plan
 		row.Active = active
 		row.CanEditPrice = canEditPrice
 		row.CanManageStaff = canManageStaff
+		row.CanManagePumps = canManagePumps
 		row.CanToggleActive = rawRole == "manager" || rawRole == "cashier" || rawRole == "operator"
 		if active {
 			row.Status = "Active"
@@ -944,13 +995,14 @@ func loadOwnerStaff(ctx context.Context, db tenantdb.Querier, plant *domain.Plan
 
 func loadOwnerShifts(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerShiftRow {
 	rows, err := db.Query(ctx, `
-		SELECT u.name, COALESCE(s.device_id, ''), s.opened_at, s.closed_at, COUNT(DISTINCT t.id),
+		SELECT u.name, COALESCE(s.device_id, ''), COALESCE(p.name, ''), s.opened_at, s.closed_at, COUNT(DISTINCT t.id),
 		       s.opening_cash_kobo, s.closing_cash_kobo, s.tokens_issued, s.tokens_returned, COALESCE(s.notes, '')
 		FROM shifts s
 		JOIN users u ON u.id = s.user_id
+		LEFT JOIN pumps p ON p.id = s.pump_id AND p.plant_id = s.plant_id
 		LEFT JOIN tickets t ON t.shift_id = s.id OR t.filled_shift_id = s.id
 		WHERE s.plant_id = $1
-		GROUP BY s.id, u.name
+		GROUP BY s.id, u.name, p.name
 		ORDER BY s.opened_at DESC
 		LIMIT 6
 	`, plant.ID)
@@ -967,11 +1019,12 @@ func loadOwnerShifts(ctx context.Context, db tenantdb.Querier, plant *domain.Pla
 		var opened time.Time
 		var opening int64
 		var row pages.OwnerShiftRow
-		if err := rows.Scan(&row.Staff, &row.Device, &opened, &closed, &row.Tickets, &opening, &closing, &row.TokensIssued, &returned, &row.Notes); err != nil {
+		if err := rows.Scan(&row.Staff, &row.Device, &row.Pump, &opened, &closed, &row.Tickets, &opening, &closing, &row.TokensIssued, &returned, &row.Notes); err != nil {
 			continue
 		}
 		row.Staff = fallbackString(row.Staff, "Unnamed staff")
 		row.Device = fallbackString(row.Device, "No device")
+		row.Pump = fallbackString(row.Pump, "No pump")
 		row.Opened = opened.Format("2 Jan, 15:04")
 		row.Closed = "Open"
 		row.ClosingCash = "Open"
@@ -1074,6 +1127,117 @@ func loadOwnerPriceHistory(ctx context.Context, db tenantdb.Querier, plant *doma
 		out = append(out, row)
 	}
 	return out
+}
+
+func loadOwnerHours(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerHoursDay {
+	week, err := hours.Week(ctx, db, plant.ID)
+	if err != nil {
+		return nil
+	}
+	out := make([]pages.OwnerHoursDay, 0, len(week))
+	for _, day := range week {
+		row := pages.OwnerHoursDay{DayOfWeek: day.DayOfWeek, Label: day.Label, Closed: day.Closed}
+		for _, seg := range day.Segments {
+			if seg.Closed {
+				row.Closed = true
+				continue
+			}
+			if seg.Segment == 1 {
+				row.Open1, row.Close1 = seg.OpensAt, seg.ClosesAt
+			}
+			if seg.Segment == 2 {
+				row.Open2, row.Close2 = seg.OpensAt, seg.ClosesAt
+			}
+		}
+		if row.Closed {
+			row.Summary = "Closed"
+		} else if row.Open2 != "" && row.Close2 != "" {
+			row.Summary = row.Open1 + "-" + row.Close1 + ", " + row.Open2 + "-" + row.Close2
+		} else if row.Open1 != "" && row.Close1 != "" {
+			row.Summary = row.Open1 + "-" + row.Close1
+		} else {
+			row.Summary = "Hours not set"
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
+func loadOwnerPumps(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) []pages.OwnerPumpRow {
+	list, err := pumps.List(ctx, db, plant.ID)
+	if err != nil {
+		return nil
+	}
+	out := make([]pages.OwnerPumpRow, 0, len(list))
+	for _, p := range list {
+		row := pages.OwnerPumpRow{
+			ID:        p.ID.String(),
+			Name:      fallbackString(p.Name, "Pump"),
+			StatusRaw: p.Status,
+			Status:    humanize(p.Status, "Working"),
+			SortOrder: p.SortOrder,
+			BusyCount: p.BusyCount,
+			OpenShift: p.OpenShift,
+			BadgeCSS:  badgeForStatus(p.Status),
+		}
+		if p.Status == "working" {
+			row.BadgeCSS = "badge-ok"
+		} else if p.Status == "maintenance" {
+			row.BadgeCSS = "badge-warn"
+		} else {
+			row.BadgeCSS = "badge-danger"
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
+func loadOwnerReviews(ctx context.Context, db tenantdb.Querier, plant *domain.Plant) ([]pages.OwnerReviewRow, int64, string) {
+	stats, err := reviews.Stats(ctx, db, plant.ID)
+	if err != nil {
+		return nil, 0, "No reviews yet"
+	}
+	rows, err := reviews.List(ctx, db, plant.ID, 50)
+	if err != nil {
+		return nil, stats.Count, formatReviewAverage(stats.Average, stats.Count)
+	}
+	out := make([]pages.OwnerReviewRow, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, pages.OwnerReviewRow{
+			Ticket:      shortReviewTicketRef(r.TicketReference, plant.Slug),
+			Phone:       fallbackString(r.CustomerPhone, "No phone"),
+			Rating:      r.Rating,
+			Stars:       reviewStarsText(r.Rating),
+			Note:        fallbackString(r.Note, "No note"),
+			SubmittedAt: r.SubmittedAt.Format("2 Jan, 15:04"),
+		})
+	}
+	return out, stats.Count, formatReviewAverage(stats.Average, stats.Count)
+}
+
+func formatReviewAverage(avg float64, count int64) string {
+	if count == 0 {
+		return "No reviews yet"
+	}
+	return fmt.Sprintf("%.1f / 5", avg)
+}
+
+func reviewStarsText(rating int) string {
+	if rating < 0 {
+		rating = 0
+	}
+	if rating > 5 {
+		rating = 5
+	}
+	return strings.Repeat("★", rating) + strings.Repeat("☆", 5-rating)
+}
+
+func shortReviewTicketRef(reference, plantSlug string) string {
+	prefix := plantSlug + "-"
+	if trimmed := strings.TrimPrefix(reference, prefix); trimmed != reference {
+		return trimmed
+	}
+	return reference
 }
 
 func loadAdminConsole(ctx context.Context, db tenantdb.Querier) pages.AdminConsoleData {
@@ -1288,8 +1452,11 @@ func loadSystemTables(ctx context.Context, db tenantdb.Querier) []pages.AdminSys
 		{Name: "reserved_slugs", Label: "Reserved web addresses", Role: "Protected web addresses that plants cannot claim.", Description: "Keeps admin, api, support, and system from being used as a plant's web address."},
 		{Name: "users", Label: "Staff and owners", Role: "Owners, managers, cashiers, operators, and admins.", Description: "Each person can only access their own plant."},
 		{Name: "prices", Label: "Prices", Role: "Price history, kept in full and never changed once set.", Description: "Used to work out what a ticket was actually sold at."},
+		{Name: "plant_hours", Label: "Opening hours", Role: "Weekly plant opening windows, including split hours.", Description: "Controls when customers can pay."},
+		{Name: "pumps", Label: "Pumps", Role: "Pump names, status, and assignment targets.", Description: "Used to route paid tickets to the least busy working pump."},
 		{Name: "shifts", Label: "Shifts", Role: "Cashier/operator work sessions and drawer totals.", Description: "One open shift per person per plant."},
 		{Name: "tickets", Label: "Sales", Role: "Customer purchases, payment status, and receipt proof.", Description: "Where every sale is recorded."},
+		{Name: "plant_reviews", Label: "Reviews", Role: "Customer ratings and notes.", Description: "Collected from review links sent after dispensing starts."},
 		{Name: "cash_movements", Label: "Cash movements", Role: "Opening float, sales, deposits, payouts, counts, and closing.", Description: "Tied back to shifts."},
 		{Name: "activity_log", Label: "Activity log", Role: "A record of plant and platform actions.", Description: "Useful for support and dispute review."},
 	}
@@ -1305,8 +1472,11 @@ func countRows(ctx context.Context, db tenantdb.Querier, table string) int64 {
 		"reserved_slugs": true,
 		"users":          true,
 		"prices":         true,
+		"plant_hours":    true,
+		"pumps":          true,
 		"shifts":         true,
 		"tickets":        true,
+		"plant_reviews":  true,
 		"cash_movements": true,
 		"activity_log":   true,
 	}
@@ -1429,14 +1599,24 @@ func humanizeActivityAction(action string) string {
 		return "Sale confirmed"
 	case "ticket.filled":
 		return "Order filled"
+	case "ticket.bulk_filled":
+		return "Receipts bulk closed"
+	case "ticket.dispensing_started":
+		return "Dispensing started"
 	case "ticket.cash_sale":
 		return "Cash sale recorded"
 	case "ticket.voided":
 		return "Sale voided"
+	case "review.submitted":
+		return "Customer review submitted"
 	case "plant.created":
 		return "Plant created"
 	case "plant.status_changed":
 		return "Plant status changed"
+	case "plant.hours_updated":
+		return "Opening hours updated"
+	case "pump.updated":
+		return "Pump updated"
 	case "owner.password_changed":
 		return "Owner password changed"
 	case "owner.password_reset":
@@ -1525,11 +1705,11 @@ func plantStatusLabel(rawStatus string) string {
 
 func badgeForStatus(status string) string {
 	switch strings.ToLower(status) {
-	case "active", "paid", "filled":
+	case "active", "paid", "filled", "working":
 		return "badge-ok"
-	case "pending", "provisioning":
+	case "pending", "provisioning", "dispensing", "maintenance":
 		return "badge-warn"
-	case "voided", "suspended", "closed", "expired":
+	case "voided", "suspended", "closed", "expired", "issue", "cancelled", "not_working":
 		return "badge-danger"
 	default:
 		return "badge-muted"

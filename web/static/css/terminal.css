@@ -72,7 +72,7 @@ body {
 	-webkit-font-smoothing: antialiased;
 }
 
-button, input { font: inherit; }
+button, input, select, textarea { font: inherit; }
 
 button {
 	cursor: pointer;
@@ -82,6 +82,11 @@ button {
 
 button:focus-visible,
 input:focus-visible {
+	outline: 2px solid var(--brand);
+	outline-offset: 2px;
+}
+select:focus-visible,
+textarea:focus-visible {
 	outline: 2px solid var(--brand);
 	outline-offset: 2px;
 }
@@ -113,6 +118,12 @@ button:disabled {
 	text-transform: uppercase;
 }
 .section-eyebrow .icon { font-size: 13px; }
+.required-note {
+	color: var(--muted);
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+}
 
 h1 {
 	margin: 0 0 8px;
@@ -327,6 +338,10 @@ h1 {
 .term-input:focus { outline: none; border-bottom-color: var(--ink); }
 .term-input::placeholder { color: var(--faint); font-weight: 500; }
 .term-input:disabled { color: var(--faint); border-bottom-style: dashed; }
+select.term-input {
+	appearance: none;
+	cursor: pointer;
+}
 .term-textarea {
 	min-height: 96px;
 	padding-top: 10px;
@@ -659,6 +674,83 @@ h1 {
 .cash-held.danger strong,
 .cash-held.danger span { color: var(--danger); }
 
+.pump-grid .staff-tile:disabled {
+	cursor: not-allowed;
+	opacity: 0.55;
+}
+.queue-list {
+	display: grid;
+	gap: 12px;
+	margin-top: 18px;
+}
+.queue-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 16px;
+	border: 2px solid var(--line-strong);
+	background: #FFFFFF;
+}
+.queue-row strong {
+	display: block;
+	font-size: 24px;
+}
+.queue-row span {
+	display: block;
+	margin-top: 4px;
+	color: var(--muted);
+	font-weight: 700;
+}
+.pump-manage-row {
+	align-items: flex-end;
+}
+.pump-manage-fields {
+	display: grid;
+	grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) 90px;
+	gap: 14px;
+	flex: 1;
+}
+.pump-manage-fields .term-input {
+	min-height: 48px;
+	font-size: 18px;
+}
+.staff-manage-row .state-message {
+	margin: 0;
+	padding: 10px 14px;
+	white-space: nowrap;
+}
+.staff-manage-row .state-message .icon {
+	width: 18px;
+	height: 18px;
+}
+.review-row {
+	align-items: flex-start;
+}
+.review-row strong {
+	color: var(--warning);
+	font-size: 24px;
+	letter-spacing: 0;
+}
+.review-row p {
+	max-width: 42ch;
+	margin: 0;
+	color: var(--ink);
+	font-weight: 700;
+}
+.btn-like {
+	min-height: 52px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border: 0;
+	background: var(--success);
+	color: #FFFFFF;
+	padding: 0 18px;
+	font-weight: 800;
+}
+
 
 /* ==========================================================================
    Responsive: tablet down to phone. The 980px break drops the two-column
@@ -704,4 +796,14 @@ h1 {
 	.fill-result .weight { font-size: clamp(40px, 14vw, 56px); }
 	.amount-row .value,
 	.cash-held strong { font-size: 28px; }
+
+	.queue-row,
+	.pump-manage-row,
+	.staff-manage-row {
+		align-items: stretch;
+		flex-direction: column;
+	}
+	.pump-manage-fields {
+		grid-template-columns: 1fr;
+	}
 }

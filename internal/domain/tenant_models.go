@@ -54,6 +54,7 @@ type User struct {
 	Active         bool      `json:"active"`
 	CanEditPrice   bool      `json:"can_edit_price"`
 	CanManageStaff bool      `json:"can_manage_staff"`
+	CanManagePumps bool      `json:"can_manage_pumps"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
@@ -72,6 +73,7 @@ type Shift struct {
 	PlantID         uuid.UUID  `json:"plant_id"`
 	UserID          uuid.UUID  `json:"user_id"`
 	DeviceID        *string    `json:"device_id"`
+	PumpID          *uuid.UUID `json:"pump_id"`
 	OpenedAt        time.Time  `json:"opened_at"`
 	ClosedAt        *time.Time `json:"closed_at"`
 	OpeningCashKobo int64      `json:"opening_cash_kobo"`
@@ -84,34 +86,39 @@ type Shift struct {
 }
 
 type Ticket struct {
-	ID                uuid.UUID  `json:"id"`
-	PlantID           uuid.UUID  `json:"plant_id"`
-	Reference         string     `json:"reference"`
-	Code              string     `json:"code"`
-	CustomerName      *string    `json:"customer_name"`
-	CustomerPhone     *string    `json:"customer_phone"`
-	SizeGrams         int        `json:"size_grams"`
-	RatePerKg         int64      `json:"rate_per_kg"`
-	PriceID           *uuid.UUID `json:"price_id"`
-	Amount            int64      `json:"amount"`
-	Channel           string     `json:"channel"`
-	Status            string     `json:"status"`
-	NetGrams          *int       `json:"net_grams"`
-	EmptyWeightGrams  *int       `json:"empty_weight_grams"`
-	FilledWeightGrams *int       `json:"filled_weight_grams"`
-	FilledAt          *time.Time `json:"filled_at"`
-	FilledShiftID     *uuid.UUID `json:"filled_shift_id"`
-	ConfirmedAt       *time.Time `json:"confirmed_at"`
-	PaidAt            *time.Time `json:"paid_at"`
-	ExpiresAt         *time.Time `json:"expires_at"`
-	SoldBy            *uuid.UUID `json:"sold_by"`
-	ShiftID           *uuid.UUID `json:"shift_id"`
-	VoidReason        *string    `json:"void_reason"`
-	VoidedBy          *uuid.UUID `json:"voided_by"`
-	VoidedAt          *time.Time `json:"voided_at"`
-	IdempotencyKey    *string    `json:"idempotency_key"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
+	ID                  uuid.UUID  `json:"id"`
+	PlantID             uuid.UUID  `json:"plant_id"`
+	Reference           string     `json:"reference"`
+	Code                string     `json:"code"`
+	CustomerName        *string    `json:"customer_name"`
+	CustomerPhone       *string    `json:"customer_phone"`
+	SizeGrams           int        `json:"size_grams"`
+	RatePerKg           int64      `json:"rate_per_kg"`
+	PriceID             *uuid.UUID `json:"price_id"`
+	Amount              int64      `json:"amount"`
+	Channel             string     `json:"channel"`
+	Status              string     `json:"status"`
+	NetGrams            *int       `json:"net_grams"`
+	EmptyWeightGrams    *int       `json:"empty_weight_grams"`
+	FilledWeightGrams   *int       `json:"filled_weight_grams"`
+	FilledAt            *time.Time `json:"filled_at"`
+	FilledShiftID       *uuid.UUID `json:"filled_shift_id"`
+	ConfirmedAt         *time.Time `json:"confirmed_at"`
+	PaidAt              *time.Time `json:"paid_at"`
+	ExpiresAt           *time.Time `json:"expires_at"`
+	SoldBy              *uuid.UUID `json:"sold_by"`
+	ShiftID             *uuid.UUID `json:"shift_id"`
+	PumpID              *uuid.UUID `json:"pump_id"`
+	DispensingStartedAt *time.Time `json:"dispensing_started_at"`
+	DispensingStartedBy *uuid.UUID `json:"dispensing_started_by"`
+	ClosedBy            *uuid.UUID `json:"closed_by"`
+	CloseNote           *string    `json:"close_note"`
+	VoidReason          *string    `json:"void_reason"`
+	VoidedBy            *uuid.UUID `json:"voided_by"`
+	VoidedAt            *time.Time `json:"voided_at"`
+	IdempotencyKey      *string    `json:"idempotency_key"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
 }
 
 type CashMovement struct {

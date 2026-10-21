@@ -49,11 +49,13 @@ type Data struct {
 	// ShiftID is set only for staff terminal sessions (cashier/operator),
 	// once a shift has been opened. Empty until then.
 	ShiftID string `json:"shift_id,omitempty"`
+	PumpID  string `json:"pump_id,omitempty"`
 	// Phone is set only for RoleCustomer sessions -- the verified phone
 	// number this session is allowed to see/confirm tickets for.
 	Phone          string    `json:"phone,omitempty"`
 	CanEditPrice   bool      `json:"can_edit_price,omitempty"`
 	CanManageStaff bool      `json:"can_manage_staff,omitempty"`
+	CanManagePumps bool      `json:"can_manage_pumps,omitempty"`
 	CreatedAt      time.Time `json:"created_at"`
 }
 

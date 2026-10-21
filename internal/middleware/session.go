@@ -24,10 +24,12 @@ type Actor struct {
 	Role           session.Role
 	PlantID        *uuid.UUID // nil for admin sessions (see session.Data.PlantID)
 	ShiftID        *uuid.UUID // set only for staff terminal sessions (RequireStaffSession)
+	PumpID         *uuid.UUID // set only for staff terminal sessions clocked into a pump
 	Phone          string     // set only for customer receipts sessions (RequireReceiptSession); UserID is uuid.Nil for these -- there's no users-table row
 	Token          string     // the raw session token -- needed for logout
 	CanEditPrice   bool
 	CanManageStaff bool
+	CanManagePumps bool
 }
 
 // GetActor returns the authenticated actor for this request, or nil if
@@ -96,7 +98,7 @@ func RequireOwnerSession(store *session.Store) func(http.Handler) http.Handler {
 			session.WriteCookie(w, session.CookieOwner, token, session.OwnerTTL)
 
 			plantID := plant.ID
-			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, Token: token, CanEditPrice: data.CanEditPrice, CanManageStaff: data.CanManageStaff}
+			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, Token: token, CanEditPrice: data.CanEditPrice, CanManageStaff: data.CanManageStaff, CanManagePumps: data.CanManagePumps}
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
 		})
 	}
@@ -182,6 +184,16 @@ func RequireStaffSession(store *session.Store) func(http.Handler) http.Handler {
 				writeSessionError(w, http.StatusUnauthorized, "session invalid")
 				return
 			}
+			var pumpID *uuid.UUID
+			if data.PumpID != "" {
+				parsedPumpID, err := uuid.Parse(data.PumpID)
+				if err != nil {
+					session.ClearCookie(w, session.CookieStaff)
+					writeSessionError(w, http.StatusUnauthorized, "session invalid")
+					return
+				}
+				pumpID = &parsedPumpID
+			}
 
 			// Renews the leak-prevention backstop, not a primary expiry --
 			// see session.StaffBackstopTTL's doc comment. The session is
@@ -191,7 +203,7 @@ func RequireStaffSession(store *session.Store) func(http.Handler) http.Handler {
 			session.WriteCookie(w, session.CookieStaff, token, session.StaffBackstopTTL)
 
 			plantID := plant.ID
-			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, ShiftID: &shiftID, Token: token, CanEditPrice: data.CanEditPrice, CanManageStaff: data.CanManageStaff}
+			actor := &Actor{UserID: userID, Name: data.Name, Role: data.Role, PlantID: &plantID, ShiftID: &shiftID, PumpID: pumpID, Token: token, CanEditPrice: data.CanEditPrice, CanManageStaff: data.CanManageStaff, CanManagePumps: data.CanManagePumps}
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ActorContextKey, actor)))
 		})
 	}

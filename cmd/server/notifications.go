@@ -79,6 +79,34 @@ func notifyPlantApproved(ctx context.Context, s *Server, n plantApprovalNotifica
 	}
 }
 
+type dispensingNotification struct {
+	PlantName      string
+	TermiiSenderID string
+	CustomerPhone  string
+	Code           string
+	SizeLabel      string
+	PumpName       string
+}
+
+func notifyDispensingStarted(ctx context.Context, s *Server, n dispensingNotification) {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	phone := strings.TrimSpace(n.CustomerPhone)
+	if phone == "" {
+		log.Println("dispensing notification: skipped sms, customer phone missing")
+		return
+	}
+	pump := strings.TrimSpace(n.PumpName)
+	if pump == "" {
+		pump = "your assigned pump"
+	}
+	message := n.PlantName + ": gas dispensing has started for code " + n.Code + ". You paid for " + n.SizeLabel + ". Your pump is " + pump + "."
+	if err := sms.SendWithSenderID(ctx, s.SMS, n.TermiiSenderID, phone, message); err != nil {
+		log.Println("dispensing notification: sms failed:", err)
+	}
+}
+
 func tenantAbsoluteURL(appBaseURL, slug, path string) string {
 	base := strings.TrimRight(strings.TrimSpace(appBaseURL), "/")
 	u, err := url.Parse(base)

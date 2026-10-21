@@ -12,16 +12,18 @@ import (
 
 	"gatstogo/internal/audit"
 	"gatstogo/internal/auth"
+	"gatstogo/internal/hours"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/prices"
+	"gatstogo/internal/pumps"
 	"gatstogo/internal/session"
-	"gatstogo/internal/shifts"
 	"gatstogo/internal/staff"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/internal/uploads"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 var ownerHexColorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
@@ -44,7 +46,13 @@ func ownerSetPriceHandler(s *Server) http.HandlerFunc {
 			http.Error(w, "Not found", http.StatusNotFound)
 			return
 		}
-		if actor.Role != session.RoleOwner && !actor.CanEditPrice {
+		allowed, err := ownerActorCan(r.Context(), s, plant.ID, actor, "can_edit_price")
+		if err != nil {
+			log.Println("owner set price: permission lookup failed:", err)
+			http.Redirect(w, r, "/owner?error=price-permission#settings", http.StatusSeeOther)
+			return
+		}
+		if !allowed {
 			http.Redirect(w, r, "/owner?error=price-permission#settings", http.StatusSeeOther)
 			return
 		}
@@ -85,7 +93,13 @@ func ownerCreateStaffHandler(s *Server) http.HandlerFunc {
 			http.Error(w, "Not found", http.StatusNotFound)
 			return
 		}
-		if actor.Role != session.RoleOwner && !actor.CanManageStaff {
+		allowed, err := ownerActorCan(r.Context(), s, plant.ID, actor, "can_manage_staff")
+		if err != nil {
+			log.Println("owner create staff: permission lookup failed:", err)
+			http.Redirect(w, r, "/owner?error=staff-permission#staff", http.StatusSeeOther)
+			return
+		}
+		if !allowed {
 			http.Redirect(w, r, "/owner?error=staff-permission#staff", http.StatusSeeOther)
 			return
 		}
@@ -102,7 +116,7 @@ func ownerCreateStaffHandler(s *Server) http.HandlerFunc {
 		}
 
 		var newID uuid.UUID
-		err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			id, err := staff.Create(ctx, q, plant.ID, params)
 			if err != nil {
 				return err
@@ -138,7 +152,13 @@ func ownerStaffStatusHandler(s *Server) http.HandlerFunc {
 			http.Error(w, "Not found", http.StatusNotFound)
 			return
 		}
-		if actor.Role != session.RoleOwner && !actor.CanManageStaff {
+		allowed, err := ownerActorCan(r.Context(), s, plant.ID, actor, "can_manage_staff")
+		if err != nil {
+			log.Println("owner staff status: permission lookup failed:", err)
+			http.Redirect(w, r, "/owner?error=staff-permission#staff", http.StatusSeeOther)
+			return
+		}
+		if !allowed {
 			http.Redirect(w, r, "/owner?error=staff-permission#staff", http.StatusSeeOther)
 			return
 		}
@@ -201,16 +221,18 @@ func ownerStaffPermissionsHandler(s *Server) http.HandlerFunc {
 		}
 		canEditPrice := r.FormValue("can_edit_price") == "true"
 		canManageStaff := r.FormValue("can_manage_staff") == "true"
+		canManagePumps := r.FormValue("can_manage_pumps") == "true"
 
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			tag, err := q.Exec(ctx, `
 				UPDATE users
 				SET can_edit_price = $3,
-				    can_manage_staff = $4
+				    can_manage_staff = $4,
+				    can_manage_pumps = $5
 				WHERE id = $1
 				  AND plant_id = $2
 				  AND role = 'manager'
-			`, userID, plant.ID, canEditPrice, canManageStaff)
+			`, userID, plant.ID, canEditPrice, canManageStaff, canManagePumps)
 			if err != nil {
 				return err
 			}
@@ -220,6 +242,7 @@ func ownerStaffPermissionsHandler(s *Server) http.HandlerFunc {
 			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "staff.permissions_updated", userID.String(), map[string]any{
 				"can_edit_price":   canEditPrice,
 				"can_manage_staff": canManageStaff,
+				"can_manage_pumps": canManagePumps,
 			})
 		})
 		if err != nil {
@@ -228,69 +251,6 @@ func ownerStaffPermissionsHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		http.Redirect(w, r, "/owner#staff", http.StatusSeeOther)
-	}
-}
-
-// ---- POST /owner/cash-movements ----
-
-func ownerCashMovementHandler(s *Server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		plant := middleware.GetPlant(r.Context())
-		actor := middleware.GetActor(r.Context())
-		if plant == nil || actor == nil {
-			http.Error(w, "Not found", http.StatusNotFound)
-			return
-		}
-		if err := r.ParseForm(); err != nil {
-			http.Redirect(w, r, "/owner?error=form#operations", http.StatusSeeOther)
-			return
-		}
-		countedNaira, err := strconv.ParseFloat(strings.TrimSpace(r.FormValue("amount")), 64)
-		if err != nil || countedNaira < 0 {
-			http.Redirect(w, r, "/owner?error=cash#operations", http.StatusSeeOther)
-			return
-		}
-		countedKobo := int64(math.Round(countedNaira * 100))
-		kind := r.FormValue("kind")
-		note := strings.TrimSpace(r.FormValue("note"))
-
-		// amount_kobo's sign follows the column's own convention
-		// (positive = in, negative = out): a deposit or payout both
-		// remove physical cash from the drawer (to the bank, or to pay
-		// for something), so both go in negative. A 'count' entry is a
-		// snapshot, not a flow -- amount stays 0, counted_kobo carries the
-		// actual counted figure for reconciliation against what was
-		// expected.
-		var amountKobo int64
-		var countedPtr *int64
-		switch kind {
-		case "deposit", "payout":
-			amountKobo = -countedKobo
-		case "count":
-			countedPtr = &countedKobo
-		default:
-			http.Redirect(w, r, "/owner?error=cash#operations", http.StatusSeeOther)
-			return
-		}
-
-		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
-			shiftID, err := shifts.MostRecentOpenShiftID(ctx, q, plant.ID)
-			if err != nil {
-				return err
-			}
-			if err := shifts.RecordCashMovement(ctx, q, plant.ID, shiftID, kind, amountKobo, countedPtr, actor.UserID, note); err != nil {
-				return err
-			}
-			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "cash.recorded", kind, map[string]any{
-				"amount_kobo": amountKobo,
-			})
-		})
-		if err != nil {
-			log.Println("owner cash movement:", err)
-			http.Redirect(w, r, "/owner?error=cash#operations", http.StatusSeeOther)
-			return
-		}
-		http.Redirect(w, r, "/owner#operations", http.StatusSeeOther)
 	}
 }
 
@@ -380,6 +340,155 @@ func ownerUpdateSettingsHandler(s *Server) http.HandlerFunc {
 		}
 		http.Redirect(w, r, "/owner#settings", http.StatusSeeOther)
 	}
+}
+
+// ---- POST /owner/hours ----
+
+func ownerHoursHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		actor := middleware.GetActor(r.Context())
+		if plant == nil || actor == nil {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		allowed, err := ownerActorCan(r.Context(), s, plant.ID, actor, "can_manage_pumps")
+		if err != nil {
+			log.Println("owner hours: permission lookup failed:", err)
+			http.Redirect(w, r, "/owner?error=pump-permission#operations", http.StatusSeeOther)
+			return
+		}
+		if !allowed {
+			http.Redirect(w, r, "/owner?error=pump-permission#operations", http.StatusSeeOther)
+			return
+		}
+		if err := r.ParseForm(); err != nil {
+			http.Redirect(w, r, "/owner?error=form#operations", http.StatusSeeOther)
+			return
+		}
+		segments := hours.ParseWeekForm(r.FormValue)
+		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			if err := hours.ReplaceWeek(ctx, q, plant.ID, segments); err != nil {
+				return err
+			}
+			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "plant.hours_updated", plant.ID.String(), map[string]any{"segments": len(segments)})
+		})
+		if err != nil {
+			log.Println("owner hours:", err)
+			http.Redirect(w, r, "/owner?error=hours#operations", http.StatusSeeOther)
+			return
+		}
+		http.Redirect(w, r, "/owner#operations", http.StatusSeeOther)
+	}
+}
+
+// ---- POST /owner/pumps ----
+
+func ownerPumpHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		actor := middleware.GetActor(r.Context())
+		if plant == nil || actor == nil {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		allowed, err := ownerActorCan(r.Context(), s, plant.ID, actor, "can_manage_pumps")
+		if err != nil {
+			log.Println("owner pump: permission lookup failed:", err)
+			http.Redirect(w, r, "/owner?error=pump-permission#operations", http.StatusSeeOther)
+			return
+		}
+		if !allowed {
+			http.Redirect(w, r, "/owner?error=pump-permission#operations", http.StatusSeeOther)
+			return
+		}
+		if err := r.ParseForm(); err != nil {
+			http.Redirect(w, r, "/owner?error=form#operations", http.StatusSeeOther)
+			return
+		}
+		var id *uuid.UUID
+		if rawID := strings.TrimSpace(r.FormValue("id")); rawID != "" {
+			parsed, err := uuid.Parse(rawID)
+			if err != nil {
+				http.Redirect(w, r, "/owner?error=pump#operations", http.StatusSeeOther)
+				return
+			}
+			id = &parsed
+		}
+		sortOrder, _ := strconv.Atoi(strings.TrimSpace(r.FormValue("sort_order")))
+		name := r.FormValue("name")
+		status := r.FormValue("status")
+
+		var pumpID uuid.UUID
+		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			id, err := pumps.Upsert(ctx, q, plant.ID, id, name, status, sortOrder)
+			if err != nil {
+				return err
+			}
+			pumpID = id
+			return audit.Log(ctx, q, &plant.ID, &actor.UserID, "pump.updated", pumpID.String(), map[string]any{
+				"name":   strings.TrimSpace(name),
+				"status": status,
+			})
+		})
+		if err != nil {
+			log.Println("owner pump:", err)
+			http.Redirect(w, r, "/owner?error=pump#operations", http.StatusSeeOther)
+			return
+		}
+		http.Redirect(w, r, "/owner#operations", http.StatusSeeOther)
+	}
+}
+
+func ownerActorCan(ctx context.Context, s *Server, plantID uuid.UUID, actor *middleware.Actor, permission string) (bool, error) {
+	if actor.Role == session.RoleOwner {
+		return true, nil
+	}
+	if actor.Role != session.RoleManager {
+		return false, nil
+	}
+
+	var query string
+	switch permission {
+	case "can_edit_price":
+		query = `
+			SELECT can_edit_price
+			FROM users
+			WHERE id = $1
+			  AND plant_id = $2
+			  AND role = 'manager'
+			  AND active = TRUE
+		`
+	case "can_manage_staff":
+		query = `
+			SELECT can_manage_staff
+			FROM users
+			WHERE id = $1
+			  AND plant_id = $2
+			  AND role = 'manager'
+			  AND active = TRUE
+		`
+	case "can_manage_pumps":
+		query = `
+			SELECT can_manage_pumps
+			FROM users
+			WHERE id = $1
+			  AND plant_id = $2
+			  AND role = 'manager'
+			  AND active = TRUE
+		`
+	default:
+		return false, nil
+	}
+
+	var allowed bool
+	err := tenantdb.WithTenant(ctx, s.AppDB, plantID, func(ctx context.Context, q tenantdb.Querier) error {
+		return q.QueryRow(ctx, query, actor.UserID, plantID).Scan(&allowed)
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	return allowed, err
 }
 
 func ownerHexColorOrDefault(value, fallback string) (string, bool) {

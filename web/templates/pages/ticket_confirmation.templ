@@ -5,12 +5,12 @@ import (
 	"gatstogo/web/templates/components"
 )
 
-templ TicketConfirmation(plant *domain.Plant, paid bool, code string, amount string, sizeKg string) {
+templ TicketConfirmation(plant *domain.Plant, paid bool, code string, amount string, sizeKg string, pump string) {
 	{{ theme := customerTheme(plant) }}
-	@customerPageShell(theme, theme.Name+" | Payment", ticketConfirmationContent(theme, paid, code, amount, sizeKg))
+	@customerPageShell(theme, theme.Name+" | Payment", ticketConfirmationContent(theme, paid, code, amount, sizeKg, pump))
 }
 
-templ ticketConfirmationContent(theme customerHomeTheme, paid bool, code string, amount string, sizeKg string) {
+templ ticketConfirmationContent(theme customerHomeTheme, paid bool, code string, amount string, sizeKg string, pump string) {
 	<div class="page">
 		<div class="wrap">
 			<header class="site-header">
@@ -28,7 +28,7 @@ templ ticketConfirmationContent(theme customerHomeTheme, paid bool, code string,
 						@components.Icon("check-circle")
 					</div>
 					<h1 class="page-headline">Payment received</h1>
-					<p class="lede">You paid { amount }. That covers { sizeKg } of gas. Show this code to the attendant when you reach the front.</p>
+					<p class="lede">You paid { amount }. That covers { sizeKg } of gas. Go to the station and show code { code }. Your pump is { pump }.</p>
 					<div class="after-payment">
 						<div class="section-eyebrow">Your code</div>
 						<div class="code-row">

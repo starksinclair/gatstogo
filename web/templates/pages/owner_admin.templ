@@ -71,6 +71,56 @@ func themedSelectIndexOf(options []themedSelectOption, selected string) int {
 	return 0
 }
 
+func colorInputValue(value string, fallback string) string {
+	value = strings.TrimSpace(value)
+	if len(value) == 6 {
+		value = "#" + value
+	}
+	if validOwnerHexColor(value) {
+		return value
+	}
+	return fallback
+}
+
+func validOwnerHexColor(value string) bool {
+	value = strings.TrimSpace(value)
+	if len(value) != 7 || !strings.HasPrefix(value, "#") {
+		return false
+	}
+	for _, r := range value[1:] {
+		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')) {
+			return false
+		}
+	}
+	return true
+}
+
+templ brandColorField(label string, name string, value string, fallback string) {
+	<div class="field color-field" data-color-field>
+		<label>{ label }</label>
+		<div class="color-input-row">
+			<input
+				class="color-text"
+				type="text"
+				name={ name }
+				value={ value }
+				placeholder={ fallback }
+				pattern="#?[0-9A-Fa-f]{6}"
+				maxlength="7"
+				title="Use a 6-digit hex color, like #006B4D or 006B4D"
+				data-color-text
+			/>
+			<input
+				class="color-picker"
+				type="color"
+				value={ colorInputValue(value, fallback) }
+				aria-label={ label + " picker" }
+				data-color-picker
+			/>
+		</div>
+	</div>
+}
+
 // stateSelectOptions builds the "Create plant" panel's State dropdown from
 // plants.NigerianStates -- the single source of truth also used to
 // validate the submitted value server-side (internal/plants.go's
@@ -155,12 +205,17 @@ type OwnerDashboardData struct {
 	Shifts          []OwnerShiftRow
 	CashMovements   []OwnerCashRow
 	PriceHistory    []OwnerPriceRow
+	Hours           []OwnerHoursDay
+	Pumps           []OwnerPumpRow
+	Reviews         []OwnerReviewRow
+	ReviewCount     int64
+	ReviewAverage   string
 	Activity        []OwnerActivityRow
 	CSRFToken       string
 	ErrorMessage    string
-	HasOpenShift    bool
 	CanEditPrice    bool
 	CanManageStaff  bool
+	CanManagePumps  bool
 	CanGrantManagerPermissions bool
 }
 
@@ -174,6 +229,7 @@ type OwnerTicketRow struct {
 	Rate      string
 	Amount    string
 	Channel   string
+	Pump      string
 	Status    string
 	When      string
 	PaidAt    string
@@ -208,6 +264,7 @@ type OwnerStaffRow struct {
 	Active      bool
 	CanEditPrice bool
 	CanManageStaff bool
+	CanManagePumps bool
 	// CanToggleActive is false for the owner's own row (and any
 	// platform-admin row that happens to share this plant_id) --
 	// internal/staff.SetActive already refuses those server-side, but the
@@ -221,9 +278,41 @@ type OwnerStaffRow struct {
 	BadgeCSS        string
 }
 
+type OwnerHoursDay struct {
+	DayOfWeek int
+	Label     string
+	Closed    bool
+	Open1     string
+	Close1    string
+	Open2     string
+	Close2    string
+	Summary   string
+}
+
+type OwnerPumpRow struct {
+	ID        string
+	Name      string
+	Status    string
+	StatusRaw string
+	SortOrder int
+	BusyCount int
+	OpenShift bool
+	BadgeCSS  string
+}
+
+type OwnerReviewRow struct {
+	Ticket      string
+	Phone       string
+	Rating      int
+	Stars       string
+	Note        string
+	SubmittedAt string
+}
+
 type OwnerShiftRow struct {
 	Staff          string
 	Device         string
+	Pump           string
 	Opened         string
 	Closed         string
 	Tickets        int64
@@ -654,6 +743,39 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 						});
 					});
 				});
+
+				// Brand color fields keep a human-editable hex input and a
+				// native color picker in sync. The text field remains the
+				// only named/submitted control, so server-side validation
+				// still goes through ownerHexColorOrDefault.
+				document.addEventListener("DOMContentLoaded", function () {
+					var hex = /^#?[0-9A-Fa-f]{6}$/;
+					function normalizeHex(value) {
+						value = (value || "").trim().toUpperCase();
+						if (value.length === 6) value = "#" + value;
+						return value;
+					}
+					document.querySelectorAll("[data-color-field]").forEach(function (field) {
+						var text = field.querySelector("[data-color-text]");
+						var picker = field.querySelector("[data-color-picker]");
+						if (!text || !picker) return;
+
+						text.addEventListener("input", function () {
+							var value = normalizeHex(text.value);
+							if (hex.test(text.value.trim())) picker.value = value;
+						});
+						picker.addEventListener("input", function () {
+							text.value = picker.value.toUpperCase();
+							text.setCustomValidity("");
+						});
+						text.addEventListener("blur", function () {
+							var raw = text.value.trim();
+							var value = normalizeHex(raw);
+							text.value = value;
+							text.setCustomValidity(raw === "" || hex.test(raw) ? "" : "Use a 6-digit hex color, like #006B4D");
+						});
+					});
+				});
 			</script>
 		</head>
 		<body>
@@ -755,6 +877,7 @@ templ ownerNav() {
 	<nav class="rail-nav" aria-label="Owner sections">
 		@navButton(true, "overview", "squares-four", "Overview")
 		@navButton(false, "sales", "receipt", "Sales")
+		@navButton(false, "reviews", "check-circle", "Reviews")
 		@navButton(false, "operations", "money", "Operations")
 		@navButton(false, "staff", "users", "Staff")
 		@navButton(false, "settings", "gear", "Settings")
@@ -871,14 +994,14 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 		<div class="section-title"><h2>Sales</h2></div>
 		<div class="table-wrap">
 			<table style="min-width:1240px">
-				<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th class="num">Paid kg</th><th class="num">Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Status</th><th>Created</th><th></th></tr></thead>
+				<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th class="num">Paid kg</th><th class="num">Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Pump</th><th>Status</th><th>Created</th><th></th></tr></thead>
 				<tbody>
 					if len(data.RecentTickets) == 0 {
-						<tr><td colspan="10">@emptyState("sales", "No sales yet. Paid customer tickets will show reference, code, weight, payment method, and status here.")</td></tr>
+						<tr><td colspan="11">@emptyState("sales", "No sales yet. Paid customer tickets will show reference, code, weight, payment method, pump, and status here.")</td></tr>
 					}
 					for _, row := range data.RecentTickets {
 						<tr>
-							<td class="mono" title={ row.Reference }>{ shortTicketRef(row.Reference, data.PlantSlug) }</td><td>{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="num">{ row.Kg }</td><td class="num">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td>
+							<td class="mono" title={ row.Reference }>{ shortTicketRef(row.Reference, data.PlantSlug) }</td><td>{ row.Customer }<div class="muted mono">{ row.Phone }</div></td><td class="mono">{ row.Code }</td><td class="num">{ row.Kg }</td><td class="num">{ row.NetKg }</td><td class="num">{ row.Amount }</td><td>{ row.Channel }</td><td>{ row.Pump }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.When }</td>
 							<td class="action-strip table-actions">
 								if row.Status == "PENDING" || row.Status == "PAID" {
 									<form
@@ -900,58 +1023,144 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			</table>
 		</div>
 	</section>
+	<section class="tab-panel" data-tab-panel="reviews">
+		<div class="kpi-row">
+			<div class="kpi-item">@kpiLabel("check-circle", "Average rating")<div class="kpi">{ data.ReviewAverage }</div><div class="kpi-small">From submitted reviews</div></div>
+			<div class="kpi-item">@kpiLabel("receipt", "Review count")<div class="kpi">{ strconv.FormatInt(data.ReviewCount, 10) }</div><div class="kpi-small">Customers who responded</div></div>
+			<div class="kpi-item">@kpiLabel("gas-pump", "Trigger")<div class="kpi">Code</div><div class="kpi-small">Sent after dispensing starts</div></div>
+			<div class="kpi-item">@kpiLabel("shield-check", "Privacy")<div class="kpi">Phone</div><div class="kpi-small">No login or account required</div></div>
+		</div>
+		<div class="section-title"><h2>Customer reviews</h2></div>
+		<div class="table-wrap">
+			<table style="min-width:900px">
+				<thead><tr><th>Ticket</th><th>Customer phone</th><th>Rating</th><th>Message</th><th>Submitted</th></tr></thead>
+				<tbody>
+					if len(data.Reviews) == 0 {
+						<tr><td colspan="5">@emptyState("activity", "No reviews yet. When customers submit review links, their ratings and notes will appear here.")</td></tr>
+					}
+					for _, row := range data.Reviews {
+						<tr>
+							<td class="mono">{ row.Ticket }</td>
+							<td class="mono">{ row.Phone }</td>
+							<td>
+								<span class="review-stars">{ row.Stars }</span>
+								<span class="muted mono">{ strconv.Itoa(row.Rating) }/5</span>
+							</td>
+							<td>{ row.Note }</td>
+							<td>{ row.SubmittedAt }</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</section>
 	<section class="tab-panel" data-tab-panel="operations">
-		<div class="dashboard-grid">
+		<div>
+			<div class="section-title"><h2>Cash drawer</h2></div>
+			<p class="muted">Cash is recorded from the staff terminal: opening cash when a shift starts, cash sales during the shift, and closing cash when the shift ends.</p>
+			<div class="table-wrap section-spaced">
+				<table style="min-width:860px">
+					<thead><tr><th>When</th><th>Kind</th><th class="num">Amount</th><th class="num">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead>
+					<tbody>
+						if len(data.CashMovements) == 0 {
+							<tr><td colspan="7">@emptyState("cash", "No cash entries yet. Opening cash, cash sales, and closing records from the terminal will appear here.")</td></tr>
+						}
+						for _, row := range data.CashMovements {
+							<tr><td>{ row.When }</td><td>{ row.Kind }</td><td class="num">{ row.Amount }</td><td class="num">{ row.Counted }</td><td>{ row.Recorder }</td><td class="mono">{ row.Ticket }</td><td>{ row.Note }</td></tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="dashboard-grid section-spaced">
 			<div>
-				<div class="section-title"><h2>Cash drawer</h2></div>
-				<div class="table-wrap">
-					<table style="min-width:860px">
-						<thead><tr><th>When</th><th>Kind</th><th class="num">Amount</th><th class="num">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead>
-						<tbody>
-							if len(data.CashMovements) == 0 {
-								<tr><td colspan="7">@emptyState("cash", "No cash entries yet. Opening float, cash sales, payouts, counts, and closing records will appear here.")</td></tr>
-							}
-							for _, row := range data.CashMovements {
-								<tr><td>{ row.When }</td><td>{ row.Kind }</td><td class="num">{ row.Amount }</td><td class="num">{ row.Counted }</td><td>{ row.Recorder }</td><td class="mono">{ row.Ticket }</td><td>{ row.Note }</td></tr>
-							}
-						</tbody>
-					</table>
-				</div>
+				<div class="section-title"><h2>Opening hours</h2></div>
+				<form method="post" action="/owner/hours">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="table-wrap">
+						<table style="min-width:760px">
+							<thead><tr><th>Day</th><th>First open</th><th>First close</th><th>Second open</th><th>Second close</th><th>Closed</th><th>Current</th></tr></thead>
+							<tbody>
+								for _, day := range data.Hours {
+									<tr>
+										<td><strong>{ day.Label }</strong></td>
+										<td><input class="table-input mono" type="time" name={ "open_" + strconv.Itoa(day.DayOfWeek) + "_1" } value={ day.Open1 }/></td>
+										<td><input class="table-input mono" type="time" name={ "close_" + strconv.Itoa(day.DayOfWeek) + "_1" } value={ day.Close1 }/></td>
+										<td><input class="table-input mono" type="time" name={ "open_" + strconv.Itoa(day.DayOfWeek) + "_2" } value={ day.Open2 }/></td>
+										<td><input class="table-input mono" type="time" name={ "close_" + strconv.Itoa(day.DayOfWeek) + "_2" } value={ day.Close2 }/></td>
+										<td>
+											<label class="check-row compact-check">
+												if day.Closed {
+													<input type="checkbox" name={ "closed_" + strconv.Itoa(day.DayOfWeek) } value="true" checked/>
+												} else {
+													<input type="checkbox" name={ "closed_" + strconv.Itoa(day.DayOfWeek) } value="true"/>
+												}
+												<span>Closed</span>
+											</label>
+										</td>
+										<td>{ day.Summary }</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					if data.CanManagePumps {
+						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save hours</button></div>
+					} else {
+						<p class="muted">Only the owner, or a manager granted pump-management permission, can save opening hours.</p>
+					}
+				</form>
 			</div>
 			<div class="dash-aside">
-				<div class="section-title"><h2>Record cash count</h2></div>
-				if data.HasOpenShift {
-					<form method="post" action="/owner/cash-movements">
+				<div class="section-title"><h2>Pumps</h2></div>
+				<div class="split-list">
+					if len(data.Pumps) == 0 {
+						@emptyState("activity", "No pumps yet. Add the first pump below.")
+					}
+					for _, pump := range data.Pumps {
+						<form method="post" action="/owner/pumps" class="pump-edit-row">
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<input type="hidden" name="id" value={ pump.ID }/>
+							<div class="field"><label>Name</label><input type="text" name="name" value={ pump.Name } required/></div>
+							<div class="field"><label>Order</label><input type="number" name="sort_order" value={ strconv.Itoa(pump.SortOrder) } min="1"/></div>
+							<div class="field">
+								<label>Status</label>
+								@themedSelect("status", []themedSelectOption{
+									{Value: "working", Label: "Working"},
+									{Value: "not_working", Label: "Not working"},
+									{Value: "maintenance", Label: "Under maintenance"},
+								}, pump.StatusRaw)
+							</div>
+							<div class="info-row"><span>Queue</span><strong>{ strconv.Itoa(pump.BusyCount) } unfilled</strong></div>
+							if data.CanManagePumps {
+								<button class="btn compact" type="submit">Save</button>
+							}
+						</form>
+					}
+				</div>
+				if data.CanManagePumps {
+					<form method="post" action="/owner/pumps" class="section-spaced">
 						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 						<div class="form-grid">
-							<div class="field"><label>Counted cash</label><input type="text" name="amount" placeholder="0" inputmode="decimal" required/></div>
-							<div class="field">
-								<label>Kind</label>
-								@themedSelect("kind", []themedSelectOption{
-									{Value: "count", Label: "Closing count"},
-									{Value: "deposit", Label: "Deposit"},
-									{Value: "payout", Label: "Payout"},
-								}, "")
-							</div>
-							<div class="field" style="grid-column: 1 / -1;"><label>Note</label><textarea name="note" placeholder="Optional note for the owner"></textarea></div>
+							<div class="field"><label>New pump name</label><input type="text" name="name" placeholder="Pump 2" required/></div>
+							<div class="field"><label>Order</label><input type="number" name="sort_order" placeholder="2" min="1"/></div>
+							<input type="hidden" name="status" value="working"/>
 						</div>
-						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save count</button></div>
+						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Add pump</button></div>
 					</form>
-				} else {
-					<p class="muted">No shift is open right now. A cash entry needs an open shift to attach to. This targets the most recently opened shift if more than one is open at once.</p>
 				}
 			</div>
 		</div>
 		<div class="section-title section-spaced"><h2>Shift register</h2></div>
 		<div class="table-wrap">
 			<table style="min-width:980px">
-				<thead><tr><th>Staff</th><th>Device</th><th>Opened</th><th>Closed</th><th class="num">Tickets</th><th class="num">Tokens</th><th class="num">Opening</th><th class="num">Closing</th><th>Status</th><th>Notes</th></tr></thead>
+				<thead><tr><th>Staff</th><th>Device</th><th>Pump</th><th>Opened</th><th>Closed</th><th class="num">Tickets</th><th class="num">Tokens</th><th class="num">Opening</th><th class="num">Closing</th><th>Status</th><th>Notes</th></tr></thead>
 				<tbody>
 					if len(data.Shifts) == 0 {
-						<tr><td colspan="10">@emptyState("shifts", "No shifts yet. Once a cashier opens a shift, cash float, token count, sales, and closing cash will appear here.")</td></tr>
+						<tr><td colspan="11">@emptyState("shifts", "No shifts yet. Once a cashier opens a shift, cash float, token count, sales, and closing cash will appear here.")</td></tr>
 					}
 					for _, row := range data.Shifts {
-						<tr><td>{ row.Staff }</td><td class="mono">{ row.Device }</td><td>{ row.Opened }</td><td>{ row.Closed }</td><td class="num">{ row.Tickets }</td><td class="num">{ row.TokensIssued } / { row.TokensReturned }</td><td class="num">{ row.OpeningCash }</td><td class="num">{ row.ClosingCash }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Notes }</td></tr>
+						<tr><td>{ row.Staff }</td><td class="mono">{ row.Device }</td><td>{ row.Pump }</td><td>{ row.Opened }</td><td>{ row.Closed }</td><td class="num">{ row.Tickets }</td><td class="num">{ row.TokensIssued } / { row.TokensReturned }</td><td class="num">{ row.OpeningCash }</td><td class="num">{ row.ClosingCash }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Notes }</td></tr>
 					}
 				</tbody>
 			</table>
@@ -985,6 +1194,11 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 													} else {
 														<span class="permission-chip">Staff</span>
 													}
+													if row.CanManagePumps {
+														<span class="permission-chip enabled">@components.Icon("check") Pumps</span>
+													} else {
+														<span class="permission-chip">Pumps</span>
+													}
 												</div>
 												<details class="permission-menu">
 													<summary>Manage</summary>
@@ -998,14 +1212,22 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 															}
 															<span><strong>Edit gas price: </strong><em>Can update the live customer and terminal rate.</em></span>
 														</label>
-														// <label class="check-row">
-														// 	if row.CanManageStaff {
-														// 		<input type="checkbox" name="can_manage_staff" value="true" checked/>
-														// 	} else {
-														// 		<input type="checkbox" name="can_manage_staff" value="true"/>
-														// 	}
-														// 	<span><strong>Manage staff: </strong><em>Can create staff and deactivate terminal access.</em></span>
-														// </label>
+														<label class="check-row">
+															if row.CanManageStaff {
+																<input type="checkbox" name="can_manage_staff" value="true" checked/>
+															} else {
+																<input type="checkbox" name="can_manage_staff" value="true"/>
+															}
+															<span><strong>Manage staff: </strong><em>Can create staff and deactivate terminal access.</em></span>
+														</label>
+														<label class="check-row">
+															if row.CanManagePumps {
+																<input type="checkbox" name="can_manage_pumps" value="true" checked/>
+															} else {
+																<input type="checkbox" name="can_manage_pumps" value="true"/>
+															}
+															<span><strong>Manage pumps: </strong><em>Can rename pumps, change pump status, and update opening hours.</em></span>
+														</label>
 														<button class="btn compact primary" type="submit">Save permission</button>
 													</form>
 												</details>
@@ -1018,7 +1240,10 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 												if row.CanManageStaff {
 													<span class="permission-chip enabled">@components.Icon("check") Staff</span>
 												}
-												if !row.CanEditPrice && !row.CanManageStaff {
+												if row.CanManagePumps {
+													<span class="permission-chip enabled">@components.Icon("check") Pumps</span>
+												}
+												if !row.CanEditPrice && !row.CanManageStaff && !row.CanManagePumps {
 													<span class="permission-chip">No extra access</span>
 												}
 											</div>
@@ -1137,10 +1362,10 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					</div>
 					<div class="section-title section-spaced"><h2>Brand kit</h2></div>
 					<div class="form-grid">
-						<div class="field"><label>Primary color</label><input type="text" name="primary_color" value={ data.PlantPrimaryColorValue } placeholder="#006B4D"/></div>
-						<div class="field"><label>Button color</label><input type="text" name="button_color" value={ data.PlantButtonColorValue } placeholder="#006B4D"/></div>
-						<div class="field"><label>Secondary color</label><input type="text" name="secondary_color" value={ data.PlantSecondaryColorValue } placeholder="#10B981"/></div>
-						<div class="field"><label>Button text color</label><input type="text" name="button_text_color" value={ data.PlantButtonTextColorValue } placeholder="#F8FAFC"/></div>
+						@brandColorField("Primary color", "primary_color", data.PlantPrimaryColorValue, "#006B4D")
+						@brandColorField("Button color", "button_color", data.PlantButtonColorValue, "#006B4D")
+						@brandColorField("Secondary color", "secondary_color", data.PlantSecondaryColorValue, "#10B981")
+						@brandColorField("Button text color", "button_text_color", data.PlantButtonTextColorValue, "#F8FAFC")
 						<div class="field" style="grid-column: 1 / -1;">
 							<label>Logo</label>
 							<div class="file-field" data-file-input>

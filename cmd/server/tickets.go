@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -12,8 +13,10 @@ import (
 	"strings"
 
 	"gatstogo/internal/audit"
+	"gatstogo/internal/hours"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/payments"
+	"gatstogo/internal/pumps"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/internal/tickets"
 	"gatstogo/web/templates/pages"
@@ -21,6 +24,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
+
+var errPlantClosed = errors.New("plant is currently closed")
 
 // loadCurrentPrice returns the plant's latest price row -- the same query
 // the owner dashboard already uses for its "Current price" tile, now also
@@ -155,6 +160,13 @@ func buyGasSubmitHandler(s *Server) http.HandlerFunc {
 
 		var ticket *tickets.Ticket
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
+			openStatus, err := hours.StatusNow(ctx, q, plant.ID, plant.Timezone)
+			if err != nil {
+				return fmt.Errorf("load plant hours: %w", err)
+			}
+			if !openStatus.IsOpen {
+				return errPlantClosed
+			}
 			priceID, pricePerKg, err := loadCurrentPrice(ctx, q, plant.ID)
 			if err != nil {
 				return fmt.Errorf("load current price: %w", err)
@@ -190,6 +202,10 @@ func buyGasSubmitHandler(s *Server) http.HandlerFunc {
 			})
 		})
 		if err != nil {
+			if errors.Is(err, errPlantClosed) {
+				http.Redirect(w, r, "/?error=closed", http.StatusSeeOther)
+				return
+			}
 			log.Println("buy gas: create ticket failed:", err)
 			http.Redirect(w, r, "/?error=server", http.StatusSeeOther)
 			return
@@ -246,8 +262,8 @@ func ticketCallbackHandler(s *Server) http.HandlerFunc {
 		verify, verifyErr := s.Paystack.Verify(r.Context(), reference)
 
 		var (
-			code, amountLabel, sizeLabel string
-			paid                         bool
+			code, amountLabel, sizeLabel, pumpLabel string
+			paid                                    bool
 		)
 		txErr := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			var (
@@ -278,6 +294,11 @@ func ticketCallbackHandler(s *Server) http.HandlerFunc {
 			if !ok {
 				return nil
 			}
+			if assignedPump, err := pumps.AssignLeastBusy(ctx, q, plant.ID, ticketID); err == nil {
+				pumpLabel = assignedPump.Name
+			} else {
+				log.Println("ticket callback: pump assignment failed:", err)
+			}
 			return audit.Log(ctx, q, &plant.ID, nil, "ticket.paid", reference, map[string]any{"via": "callback"})
 		})
 		if txErr != nil {
@@ -285,8 +306,11 @@ func ticketCallbackHandler(s *Server) http.HandlerFunc {
 			http.Error(w, "Something went wrong confirming your payment.", http.StatusInternalServerError)
 			return
 		}
+		if pumpLabel == "" {
+			pumpLabel = "being assigned"
+		}
 
-		if err := pages.TicketConfirmation(plant, paid, code, amountLabel, sizeLabel).Render(r.Context(), w); err != nil {
+		if err := pages.TicketConfirmation(plant, paid, code, amountLabel, sizeLabel, pumpLabel).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -361,6 +385,9 @@ func paystackWebhookHandler(s *Server) http.HandlerFunc {
 			}
 			if !ok {
 				return nil
+			}
+			if _, err := pumps.AssignLeastBusy(ctx, q, plantID, ticketID); err != nil {
+				log.Println("paystack webhook: pump assignment failed:", err)
 			}
 			return audit.Log(ctx, q, &plantID, nil, "ticket.paid", event.Data.Reference, map[string]any{
 				"via":              "webhook",

@@ -6,10 +6,9 @@
    separated by whitespace and thin hairline rules, structure comes from
    typography and a numbered-step/eyebrow-label vocabulary instead. Color
    is deliberately scarce: near-black ink on white for everything, and the
-   tenant's own brand color (--brand-button, set inline per plant -- see
-   customerCSSVars in customer_home.templ) reserved for exactly three
-   things -- the primary action button, the selected payment-method tile,
-   and a focus ring -- not tints, not chips, not icon fills throughout.
+   tenant's own brand colors (set inline per plant -- see customerCSSVars
+   in customer_home.templ) reserved for primary actions plus a few small
+   identity cues -- not tints, not chips, not icon fills throughout.
 
    Loads after tokens.css, and reuses its --font-display/--font-body/
    --font-mono and --space-* scale; the neutral color scale below is this
@@ -59,7 +58,7 @@ body {
 button, input, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
-	outline: 2px solid var(--ink);
+	outline: 2px solid var(--brand-button);
 	outline-offset: 2px;
 }
 [x-cloak] { display: none !important; }
@@ -132,7 +131,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	border-bottom: 1.5px solid transparent;
 }
 .site-nav a:hover { border-bottom-color: var(--ink); }
-.site-nav .icon { color: var(--muted); }
+.site-nav .icon { color: var(--brand-secondary); }
 
 /* ---- Headings / body copy ---- */
 .page-headline {
@@ -211,7 +210,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 }
-.section-eyebrow .icon { font-size: 14px; }
+.section-eyebrow .icon { color: var(--brand-secondary); font-size: 14px; }
 
 /* ---- Buttons -- a small, restrained radius (tokens.css's
    --radius-sm), consistent with every other surface. Two kinds: a
@@ -324,12 +323,69 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .amount-field input::-webkit-outer-spin-button,
 .amount-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .amount-field input[type=number] { -moz-appearance: textfield; }
+.amount-clear {
+	flex: none;
+	align-self: center;
+	display: inline-flex;
+	padding: 4px;
+	border: 0;
+	background: transparent;
+	color: var(--faint);
+	font-size: 22px;
+	cursor: pointer;
+}
+.amount-clear:hover { color: var(--ink-soft); }
+.amount-clear:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 50%; }
 .kg-preview {
 	margin: 14px 0 0;
 	color: var(--muted);
 	font-size: 14px;
 }
+.kg-preview.has-kg {
+	padding: 12px 14px;
+	background: var(--brand-tint);
+	border-left: 3px solid var(--brand);
+	color: var(--ink-soft);
+}
+.kg-preview-result {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+}
 .kg-preview strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.kg-preview.has-kg strong {
+	font-family: var(--font-mono, monospace);
+	font-size: 20px;
+}
+
+.preset-list {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 8px;
+	margin-top: 14px;
+}
+.preset {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	padding: 10px 4px;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
+	background: #fff;
+	color: var(--ink-soft);
+	cursor: pointer;
+}
+.preset-kg { font-size: 12px; color: var(--muted); }
+.preset-amount { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.preset:hover { border-color: var(--ink); }
+.preset.is-selected {
+	border-color: var(--brand);
+	background: var(--brand-tint);
+	box-shadow: inset 0 0 0 1px var(--brand);
+}
+.preset:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .field-grid {
 	display: grid;
@@ -357,6 +413,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .field-underline input:focus { border-bottom-color: var(--ink); }
 .field-underline input::placeholder { color: var(--faint); }
+.phone-field {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	border-bottom: 1.5px solid var(--line-strong);
+}
+.phone-field:focus-within { border-bottom-color: var(--ink); }
+.phone-field input,
+.phone-field input:focus { border-bottom: 0; }
+.phone-prefix {
+	flex: none;
+	color: var(--muted);
+	font-family: var(--font-mono, monospace);
+	font-size: 15px;
+	font-weight: 600;
+}
 
 .payment-list {
 	display: grid;
@@ -410,7 +482,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	font-weight: 700;
 	color: var(--ink);
 }
-.summary-price .icon { font-size: 18px; color: var(--muted); }
+.summary-price .icon { font-size: 18px; color: var(--brand-secondary); }
 .summary-price span { color: var(--muted); font-size: 13px; font-weight: 600; }
 .summary-rows { margin-bottom: 24px; }
 .summary-row {
@@ -473,6 +545,109 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .copy-button .icon { font-size: 15px; }
 .copy-button.is-copied { border-color: var(--success); color: var(--success); }
 
+/* ---- Review page ---- */
+.narrow-wrap { max-width: 760px; }
+.review-hero {
+	padding-top: 36px;
+	border-top: 1px solid var(--line);
+}
+.review-hero h1 {
+	max-width: 11ch;
+	margin: 0 0 12px;
+	font-family: var(--font-display, inherit);
+	font-size: clamp(38px, 9vw, 72px);
+	line-height: 0.95;
+	letter-spacing: -0.02em;
+}
+.review-form {
+	display: grid;
+	gap: 28px;
+	margin-top: 36px;
+}
+.star-field {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+.star-field legend,
+.review-form .field label {
+	display: block;
+	margin-bottom: 10px;
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+.star-options {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 1px;
+	background: var(--line);
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
+	overflow: hidden;
+	direction: rtl;
+}
+.star-options input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+.star-options label {
+	display: flex;
+	min-height: 86px;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	background: #fff;
+	color: var(--ink);
+	cursor: pointer;
+	direction: ltr;
+}
+.star-options label:has(input:checked) {
+	background: var(--brand-button);
+	color: var(--brand-button-text);
+}
+.star-options span {
+	font-size: clamp(20px, 4vw, 30px);
+	letter-spacing: 0;
+	white-space: nowrap;
+}
+.star-options em {
+	color: inherit;
+	font-style: normal;
+	font-family: var(--font-mono, monospace);
+	font-size: 12px;
+	font-weight: 800;
+}
+.review-form textarea {
+	width: 100%;
+	min-height: 140px;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm, 6px);
+	background: #fff;
+	color: var(--ink);
+	padding: 14px;
+	resize: vertical;
+	outline: none;
+}
+.review-form textarea:focus { border-color: var(--ink); }
+.review-form textarea::placeholder { color: var(--faint); }
+.review-complete {
+	margin: 32px 0;
+	padding: 24px 0;
+	border-top: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+}
+.review-stars-display {
+	font-size: clamp(30px, 7vw, 52px);
+	line-height: 1;
+	color: var(--brand-button);
+}
+.link-action { text-decoration: none; }
+
 /* ==========================================================================
    Lookup / verify (receipts phone entry, OTP entry) and payment
    confirmation -- all single-column, centered; there's nothing to put
@@ -495,9 +670,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 	width: 56px;
 	height: 56px;
 	margin: 0 auto 24px;
-	border: 1.5px solid var(--line-strong);
+	border: 1.5px solid var(--brand-secondary);
 	border-radius: var(--radius-sm, 6px);
-	color: var(--ink);
+	color: var(--brand);
 }
 .lookup-icon .icon { font-size: 24px; }
 .lookup-icon-success { border-color: var(--success); color: var(--success); }
@@ -692,6 +867,7 @@ a.receipt-item:last-child { border-bottom: 1px solid var(--line); }
 	.button-primary { width: 100%; min-height: 56px; }
 }
 @media (max-width: 420px) {
+	.preset-amount { font-size: 12px; }
 	.payment { padding: 16px 4px; font-size: 12px; }
 	.payment .icon { font-size: 19px; }
 }

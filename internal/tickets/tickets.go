@@ -229,6 +229,8 @@ type RedeemedTicket struct {
 	SizeGrams  int
 	AmountKobo int64
 	Channel    string
+	PumpID     *uuid.UUID
+	PumpName   string
 }
 
 // Redeem-specific errors -- distinguished (unlike the client-side-only
@@ -258,14 +260,17 @@ func Redeem(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, code str
 		amountKobo   int64
 		channel      string
 		status       string
+		pumpID       *uuid.UUID
+		pumpName     string
 	)
 	err := q.QueryRow(ctx, `
-		SELECT id, customer_name, size_grams, amount, channel, status
-		FROM tickets
-		WHERE plant_id = $1 AND code = $2
-		ORDER BY created_at DESC
+		SELECT t.id, t.customer_name, t.size_grams, t.amount, t.channel, t.status, t.pump_id, COALESCE(p.name, '')
+		FROM tickets t
+		LEFT JOIN pumps p ON p.id = t.pump_id AND p.plant_id = t.plant_id
+		WHERE t.plant_id = $1 AND t.code = $2
+		ORDER BY t.created_at DESC
 		LIMIT 1
-	`, plantID, code).Scan(&id, &customerName, &sizeGrams, &amountKobo, &channel, &status)
+	`, plantID, code).Scan(&id, &customerName, &sizeGrams, &amountKobo, &channel, &status, &pumpID, &pumpName)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrCodeNotFound
 	}
@@ -276,7 +281,7 @@ func Redeem(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, code str
 	switch status {
 	case "paid":
 		// redeemable
-	case "filled":
+	case "dispensing", "filled":
 		return nil, ErrCodeAlreadyRedeemed
 	default: // pending, voided, expired
 		return nil, ErrCodeNotPayable
@@ -288,28 +293,62 @@ func Redeem(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID, code str
 		SizeGrams:  sizeGrams,
 		AmountKobo: amountKobo,
 		Channel:    channel,
+		PumpID:     pumpID,
+		PumpName:   pumpName,
 	}, nil
 }
 
-// Fill transitions a paid ticket to filled. Unlike MarkPaid, this is not
-// idempotent-by-design -- there's no race between two independent
-// confirmation paths here, just one deliberate staff action, so filling an
-// already-filled (or otherwise non-paid) ticket is treated as an error
-// rather than silently accepted.
-//
-// net_grams/empty_weight_grams/filled_weight_grams are deliberately left
-// unset: the terminal has no weighing-scale input step (matching the
-// mockup this replaces, which only ever showed the entitled kg, not an
-// actual dispensed weight) -- capturing real dispensed weight would need a
-// scale integration this build-out doesn't include. Until that exists,
-// filled tickets show "Awaiting fill" for net weight on the owner
-// dashboard (cmd/server/main.go's loadOwnerTickets already handles a NULL
-// net_grams this way).
+func StartDispensing(ctx context.Context, q tenantdb.Querier, plantID, ticketID, actorID uuid.UUID) error {
+	tag, err := q.Exec(ctx, `
+		UPDATE tickets
+		SET status = 'dispensing', dispensing_started_at = now(), dispensing_started_by = $3
+		WHERE id = $1 AND plant_id = $2 AND status = 'paid'
+	`, ticketID, plantID, actorID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("tickets: not found, or not currently paid")
+	}
+	return nil
+}
+
+func CloseFilled(ctx context.Context, q tenantdb.Querier, plantID, ticketID, shiftID, actorID uuid.UUID, note string) error {
+	tag, err := q.Exec(ctx, `
+		UPDATE tickets
+		SET status = 'filled', filled_at = now(), filled_shift_id = $3, closed_by = $4, close_note = $5,
+		    net_grams = COALESCE(net_grams, size_grams)
+		WHERE id = $1 AND plant_id = $2 AND status = 'dispensing'
+	`, ticketID, plantID, shiftID, actorID, nullIfEmpty(note))
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("tickets: not found, or not currently dispensing")
+	}
+	return nil
+}
+
+func BulkCloseFilled(ctx context.Context, q tenantdb.Querier, plantID, pumpID, shiftID, actorID uuid.UUID, note string) (int64, error) {
+	tag, err := q.Exec(ctx, `
+		UPDATE tickets
+		SET status = 'filled', filled_at = now(), filled_shift_id = $3, closed_by = $4, close_note = $5,
+		    net_grams = COALESCE(net_grams, size_grams)
+		WHERE plant_id = $1 AND pump_id = $2 AND status = 'dispensing'
+	`, plantID, pumpID, shiftID, actorID, nullIfEmpty(note))
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
+// Fill is retained for older call sites; new code should call
+// StartDispensing then CloseFilled/BulkCloseFilled.
 func Fill(ctx context.Context, q tenantdb.Querier, plantID, ticketID, shiftID uuid.UUID) error {
 	tag, err := q.Exec(ctx, `
 		UPDATE tickets
-		SET status = 'filled', filled_at = now(), filled_shift_id = $3
-		WHERE id = $1 AND plant_id = $2 AND status = 'paid'
+		SET status = 'filled', filled_at = now(), filled_shift_id = $3, net_grams = COALESCE(net_grams, size_grams)
+		WHERE id = $1 AND plant_id = $2 AND status IN ('paid', 'dispensing')
 	`, ticketID, plantID, shiftID)
 	if err != nil {
 		return err
@@ -352,7 +391,7 @@ func MarkPaid(ctx context.Context, q tenantdb.Querier, plantID, ticketID uuid.UU
 		return false, err
 	}
 	switch status {
-	case "paid", "filled":
+	case "paid", "dispensing", "filled":
 		return true, nil
 	case "pending":
 		if _, err := q.Exec(ctx, `UPDATE tickets SET status = 'paid', paid_at = now() WHERE id = $1 AND plant_id = $2`, ticketID, plantID); err != nil {
@@ -429,11 +468,11 @@ var ErrTicketNotConfirmable = errors.New("tickets: not found, not filled, or not
 // /receipts page's list panel. Deliberately smaller than Receipt (the
 // detail view): just enough to render the list and link into a detail.
 type ReceiptSummary struct {
-	Reference   string
-	Status      string
-	SizeGrams   int
-	AmountKobo  int64
-	CreatedAt   time.Time
+	Reference  string
+	Status     string
+	SizeGrams  int
+	AmountKobo int64
+	CreatedAt  time.Time
 	// ConfirmedAt distinguishes a 'filled' ticket the customer has already
 	// tapped "Confirm received" on from one still awaiting that tap --
 	// both share the same tickets.status value, so the list view needs
@@ -489,6 +528,41 @@ type Receipt struct {
 	CreatedAt     time.Time
 	FilledAt      *time.Time
 	ConfirmedAt   *time.Time
+}
+
+type PumpQueueTicket struct {
+	ID         uuid.UUID
+	Code       string
+	Initials   string
+	SizeGrams  int
+	AmountKobo int64
+	Channel    string
+	StartedAt  time.Time
+}
+
+func ListDispensingForPump(ctx context.Context, q tenantdb.Querier, plantID, pumpID uuid.UUID) ([]PumpQueueTicket, error) {
+	rows, err := q.Query(ctx, `
+		SELECT id, code, customer_name, size_grams, amount, channel, COALESCE(dispensing_started_at, updated_at)
+		FROM tickets
+		WHERE plant_id = $1 AND pump_id = $2 AND status = 'dispensing'
+		ORDER BY dispensing_started_at NULLS LAST, created_at
+	`, plantID, pumpID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []PumpQueueTicket
+	for rows.Next() {
+		var t PumpQueueTicket
+		var customerName *string
+		if err := rows.Scan(&t.ID, &t.Code, &customerName, &t.SizeGrams, &t.AmountKobo, &t.Channel, &t.StartedAt); err != nil {
+			return nil, err
+		}
+		t.Initials = initialsFromName(customerName)
+		out = append(out, t)
+	}
+	return out, rows.Err()
 }
 
 // GetReceipt loads one ticket's full detail for the receipts page, scoped

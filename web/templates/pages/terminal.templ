@@ -27,6 +27,11 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					var root = document.querySelector("[data-terminal]");
 					var init = JSON.parse(document.getElementById("terminal-init").textContent);
 					var staff = init.staff || [];
+					var manageStaff = init.manageStaff || [];
+					var pumps = init.pumps || [];
+					var reviews = init.reviews || [];
+					var reviewAverage = init.reviewAverage || "No reviews yet";
+					var reviewCount = init.reviewCount || 0;
 					var pricePerKgNaira = init.pricePerKgKobo / 100;
 					// Keep in sync with components.BrandMarkReversed (dark terminal chrome).
 					var brandMarkReversed = "/static/images/gatstogo-logo/svg/gatstogo-mark-reversed.svg";
@@ -61,6 +66,8 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					var state = {
 						screen: "start",
 						employeeId: "",
+						pumpId: "",
+						pumpName: "",
 						pin: "",
 						openingCash: "",
 						busy: false,
@@ -72,11 +79,13 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						// populated by a successful POST /terminal/pin:
 						sessionCsrfToken: "",
 						shiftId: "",
+						userId: "",
 						name: "",
 						role: "",
 						config: "combined",
 						canEditPrice: false,
 						canManageStaff: false,
+						canManagePumps: false,
 						priceInput: String(Math.round(pricePerKgNaira || 0)),
 
 						tab: "fill",
@@ -84,10 +93,16 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						revealed: null,
 						message: "",
 						messageKind: "",
+						messageTab: "",
 
 						fills: 0,
 						gramsDispensed: 0,
 						cashHeldKobo: 0,
+						pumpQueue: [],
+						closeNote: "",
+						newPumpName: "",
+						newPumpStatus: "working",
+						newPumpSort: "",
 						cashAmount: "",
 						phone: "",
 						closingCash: "",
@@ -126,13 +141,17 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					function applySessionData(d) {
 						state.sessionCsrfToken = d.csrf_token;
 						state.shiftId = d.shift_id;
+						state.userId = d.user_id;
 						state.name = d.name;
 						state.role = d.role;
 						state.config = configForRole(d.role);
 						state.canEditPrice = !!d.can_edit_price;
 						state.canManageStaff = !!d.can_manage_staff;
+						state.canManagePumps = !!d.can_manage_pumps;
 						state.priceInput = String(Math.round(pricePerKgNaira || 0));
-						state.tab = "fill";
+						state.pumpId = d.pump_id || state.pumpId;
+						state.pumpName = d.pump_name || state.pumpName;
+						state.tab = d.role === "operator" ? "queue" : "fill";
 						state.fills = d.fills_completed || 0;
 						state.gramsDispensed = d.grams_dispensed || 0;
 						state.cashHeldKobo = d.cash_held_kobo || 0;
@@ -182,6 +201,23 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						if (kind === "wrong") return icon("x-circle");
 						return icon("warning-circle");
 					}
+					function setMessage(tab, message, kind) {
+						state.messageTab = tab;
+						state.message = message;
+						state.messageKind = kind || "confirmed";
+					}
+					function clearMessage(tab) {
+						if (!tab || state.messageTab === tab) {
+							state.message = "";
+							state.messageKind = "";
+							state.messageTab = "";
+						}
+					}
+					function messageHtml(tab, fallbackKind) {
+						if (!state.message || state.messageTab !== tab) return "";
+						var kind = state.messageKind || fallbackKind || "confirmed";
+						return '<div class="state-message ' + kind + '">' + stateMessageIcon(kind) + escapeHtml(state.message) + '</div>';
+					}
 
 					async function postForm(path, fields) {
 						var body = new URLSearchParams();
@@ -194,8 +230,18 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						return { ok: res.ok, status: res.status, data: data };
 					}
 
+					function selectedEmployee() {
+						return staff.find(function (m) { return m.id === state.employeeId; }) || null;
+					}
+					function selectedRole() {
+						var selected = selectedEmployee();
+						return selected ? selected.role : "";
+					}
+					function pumpRequiredForStart() {
+						return selectedRole() === "operator";
+					}
 					function canStartShift() {
-						return state.employeeId !== "" && state.pin.length === 4 && state.openingCash.trim() !== "" && !state.busy && Date.now() >= state.lockedUntil;
+						return state.employeeId !== "" && (!pumpRequiredForStart() || state.pumpId !== "") && state.pin.length === 4 && state.openingCash.trim() !== "" && !state.busy && Date.now() >= state.lockedUntil;
 					}
 					function syncStartButton() {
 						var button = root.querySelector('[data-action="start-shift"]');
@@ -224,6 +270,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 
 						var result = await postForm("/terminal/pin", {
 							user_id: state.employeeId,
+							pump_id: state.pumpId,
 							pin: state.pin,
 							opening_cash: state.openingCash,
 							device_id: "",
@@ -253,6 +300,15 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 
 					function setEmployee(id) {
 						state.employeeId = id;
+						if (selectedRole() !== "operator") {
+							state.startError = "";
+						}
+						render();
+					}
+					function setPump(id) {
+						state.pumpId = id;
+						var p = pumps.find(function (pump) { return pump.id === id; });
+						state.pumpName = p ? p.name : "";
 						render();
 					}
 					function setTab(tab) {
@@ -265,10 +321,16 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						// which silently broke the End shift button for
 						// operators (setTab("end") was refused the same as
 						// setTab("cash") would have been).
-						if (state.config === "operator" && tab === "cash") return;
+						if (state.config === "operator" && (tab === "cash" || tab === "fill")) return;
+						if (tab === "queue" && (!state.pumpId || !(state.role === "manager" || state.role === "operator"))) return;
 						if (tab === "price" && !(state.role === "manager" && state.canEditPrice)) return;
+						if (tab === "pumps" && !(state.role === "manager" && state.canManagePumps)) return;
+						if (tab === "staff" && !(state.role === "manager" && state.canManageStaff)) return;
+						if (tab === "reviews" && state.role !== "manager") return;
+						if (state.messageTab && state.messageTab !== tab) clearMessage();
 						state.tab = tab;
 						render();
+						if (tab === "queue") loadPumpQueue();
 					}
 					function appendPin(value) {
 						if (state.pin.length < 4) state.pin += value;
@@ -288,14 +350,13 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					function backCode() {
 						if (state.busy || state.revealed) return;
 						state.code = state.code.slice(0, -1);
-						state.message = "";
+						clearMessage("fill");
 						render();
 					}
 					function clearCode() {
 						state.code = "";
 						state.revealed = null;
-						state.message = "";
-						state.messageKind = "";
+						clearMessage("fill");
 						render();
 					}
 
@@ -307,24 +368,20 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 
 						if (result.ok) {
 							state.revealed = result.data;
-							state.message = "";
-							state.messageKind = "";
+							clearMessage("fill");
 							render();
 							return;
 						}
 						if (result.status === 409) {
-							state.message = "This code has already been filled.";
-							state.messageKind = "used";
+							setMessage("fill", "This code has already been filled.", "used");
 						} else {
-							state.message = "Incorrect code.";
-							state.messageKind = "wrong";
+							setMessage("fill", "Incorrect code.", "wrong");
 						}
 						state.code = "";
 						render();
 						setTimeout(function () {
-							if (state.messageKind === "used" || state.messageKind === "wrong") {
-								state.message = "";
-								state.messageKind = "";
+							if (state.messageTab === "fill" && (state.messageKind === "used" || state.messageKind === "wrong")) {
+								clearMessage("fill");
 								render();
 							}
 						}, 1200);
@@ -338,20 +395,16 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						state.busy = false;
 
 						if (!result.ok) {
-							state.message = (result.data && result.data.error) || "Could not confirm fill.";
-							state.messageKind = "wrong";
+							setMessage("fill", (result.data && result.data.error) || "Could not confirm fill.", "wrong");
 							render();
 							return;
 						}
-						state.fills = result.data.fills_completed;
-						state.gramsDispensed = result.data.grams_dispensed;
 						state.revealed = null;
 						state.code = "";
-						state.message = "Fill confirmed. Ready for the next customer.";
-						state.messageKind = "confirmed";
+						setMessage("fill", "Dispensing started. Ready for the next customer.", "confirmed");
 						render();
 						setTimeout(function () {
-							if (state.messageKind === "confirmed") { state.message = ""; state.messageKind = ""; render(); }
+							if (state.messageTab === "fill" && state.messageKind === "confirmed") { clearMessage("fill"); render(); }
 						}, 1600);
 					}
 
@@ -366,8 +419,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						state.busy = false;
 
 						if (!result.ok) {
-							state.message = (result.data && result.data.error) || "Could not record cash sale.";
-							state.messageKind = "wrong";
+							setMessage("cash", (result.data && result.data.error) || "Could not record cash sale.", "wrong");
 							render();
 							return;
 						}
@@ -375,12 +427,58 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						state.cashHeldKobo = d.cash_held_kobo;
 						state.phone = "";
 						state.cashAmount = "";
-						state.message = "Cash recorded for " + d.size_kg + ". Fill queued. Code: " + d.code + ".";
-						state.messageKind = "confirmed";
+						setMessage("cash", "Cash recorded for " + d.size_kg + ". Code: " + d.code + ". Pump: " + (d.pump || "assigned") + ".", "confirmed");
 						render();
 						setTimeout(function () {
-							if (state.messageKind === "confirmed") { state.message = ""; state.messageKind = ""; render(); }
+							if (state.messageTab === "cash" && state.messageKind === "confirmed") { clearMessage("cash"); render(); }
 						}, 3200);
+					}
+
+					async function loadPumpQueue() {
+						if (!state.sessionCsrfToken || !state.pumpId) return;
+						var res = await fetch("/terminal/pump-queue", { headers: { "X-CSRF-Token": state.sessionCsrfToken } });
+						var data = {};
+						try { data = await res.json(); } catch (e) {}
+						if (res.ok) {
+							state.pumpQueue = data.tickets || [];
+							render();
+						}
+					}
+
+					async function closeReceipt(ticketId) {
+						if (state.busy) return;
+						state.busy = true;
+						render();
+						var result = await postForm("/terminal/receipt/close", { ticket_id: ticketId, note: state.closeNote });
+						state.busy = false;
+						if (!result.ok) {
+							setMessage("queue", (result.data && result.data.error) || "Could not close receipt.", "wrong");
+							render();
+							return;
+						}
+						state.fills = result.data.fills_completed;
+						state.gramsDispensed = result.data.grams_dispensed;
+						state.closeNote = "";
+						setMessage("queue", "Receipt closed.", "confirmed");
+						await loadPumpQueue();
+					}
+
+					async function bulkCloseReceipts() {
+						if (state.busy || !state.pumpQueue.length) return;
+						state.busy = true;
+						render();
+						var result = await postForm("/terminal/receipt/bulk-close", { note: state.closeNote });
+						state.busy = false;
+						if (!result.ok) {
+							setMessage("queue", (result.data && result.data.error) || "Could not close receipts.", "wrong");
+							render();
+							return;
+						}
+						state.fills = result.data.fills_completed;
+						state.gramsDispensed = result.data.grams_dispensed;
+						state.closeNote = "";
+						setMessage("queue", "Closed " + result.data.count + " receipts.", "confirmed");
+						await loadPumpQueue();
 					}
 
 					async function savePrice() {
@@ -390,16 +488,87 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						var result = await postForm("/terminal/price", { price_per_kg: state.priceInput });
 						state.busy = false;
 						if (!result.ok) {
-							state.message = (result.data && result.data.error) || "Could not save price.";
-							state.messageKind = "wrong";
+							setMessage("price", (result.data && result.data.error) || "Could not save price.", "wrong");
 							render();
 							return;
 						}
 						pricePerKgNaira = result.data.price_per_kg_kobo / 100;
 						init.pricePerKgKobo = result.data.price_per_kg_kobo;
 						state.priceInput = String(Math.round(pricePerKgNaira));
-						state.message = "Price updated to " + result.data.price + ".";
-						state.messageKind = "confirmed";
+						setMessage("price", "Price updated to " + result.data.price + ".", "confirmed");
+						render();
+					}
+
+					function pumpStatusLabel(status) {
+						if (status === "not_working") return "Not working";
+						if (status === "maintenance") return "Maintenance";
+						return "Working";
+					}
+
+					function updatePumpsFromResponse(data) {
+						pumps = data.pumps || pumps;
+						var active = pumps.find(function (p) { return p.id === state.pumpId; });
+						if (active) state.pumpName = active.name;
+					}
+
+					function updateManageStaffFromResponse(data) {
+						manageStaff = data.manage_staff || manageStaff;
+						staff = manageStaff.filter(function (m) {
+							return !!m.active;
+						}).map(function (m) {
+							return { id: m.id, name: m.name, role: m.role };
+						});
+					}
+
+					async function savePump(id) {
+						if (state.busy || !(state.role === "manager" && state.canManagePumps)) return;
+						var p = id ? pumps.find(function (pump) { return pump.id === id; }) : {
+							id: "",
+							name: state.newPumpName,
+							status: state.newPumpStatus,
+							sort_order: state.newPumpSort
+						};
+						if (!p) return;
+						state.busy = true;
+						render();
+						var result = await postForm("/terminal/pumps", {
+							pump_id: p.id || "",
+							name: p.name || "",
+							status: p.status || "working",
+							sort_order: p.sort_order || ""
+						});
+						state.busy = false;
+						if (!result.ok) {
+							setMessage("pumps", (result.data && result.data.error) || "Could not save pump.", "wrong");
+							render();
+							return;
+						}
+						updatePumpsFromResponse(result.data || {});
+						if (!id) {
+							state.newPumpName = "";
+							state.newPumpStatus = "working";
+							state.newPumpSort = "";
+						}
+						setMessage("pumps", "Pump saved.", "confirmed");
+						render();
+					}
+
+					async function saveStaffStatus(id, active) {
+						if (state.busy || !(state.role === "manager" && state.canManageStaff) || id === state.userId) return;
+						state.busy = true;
+						render();
+						var result = await postForm("/terminal/staff/status", {
+							user_id: id,
+							active: active ? "true" : "false"
+						});
+						state.busy = false;
+						if (!result.ok) {
+							setMessage("staff", (result.data && result.data.error) || "Could not update staff.", "wrong");
+							render();
+							return;
+						}
+						updateManageStaffFromResponse(result.data || {});
+						setMessage("staff", active ? "Staff member reactivated." : "Staff member deactivated.", "confirmed");
 						render();
 					}
 
@@ -410,8 +579,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						var result = await postForm("/terminal/logout", {});
 						state.busy = false;
 						if (!result.ok) {
-							state.message = (result.data && result.data.error) || "Could not log out.";
-							state.messageKind = "wrong";
+							setMessage(state.tab || "fill", (result.data && result.data.error) || "Could not log out.", "wrong");
 							render();
 							return;
 						}
@@ -426,8 +594,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						state.busy = false;
 
 						if (!result.ok) {
-							state.message = (result.data && result.data.error) || "Could not close shift.";
-							state.messageKind = "wrong";
+							setMessage("end", (result.data && result.data.error) || "Could not close shift.", "wrong");
 							render();
 							return;
 						}
@@ -439,9 +606,10 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						state = {
 							screen: "start", employeeId: "", pin: "", openingCash: "", busy: false, startError: "", startNotice: notice || "",
 							lockedUntil: 0, lockTimer: null,
-							sessionCsrfToken: "", shiftId: "", name: "", role: "", config: "combined", canEditPrice: false, canManageStaff: false, priceInput: String(Math.round(pricePerKgNaira || 0)),
-							tab: "fill", code: "", revealed: null, message: "", messageKind: "",
-							fills: 0, gramsDispensed: 0, cashHeldKobo: 0, cashAmount: "", phone: "",
+							sessionCsrfToken: "", shiftId: "", userId: "", name: "", role: "", config: "combined", canEditPrice: false, canManageStaff: false, canManagePumps: false, priceInput: String(Math.round(pricePerKgNaira || 0)),
+							pumpId: "", pumpName: "",
+							tab: "fill", code: "", revealed: null, message: "", messageKind: "", messageTab: "",
+							fills: 0, gramsDispensed: 0, cashHeldKobo: 0, pumpQueue: [], closeNote: "", newPumpName: "", newPumpStatus: "working", newPumpSort: "", cashAmount: "", phone: "",
 							closingCash: "", shiftNotes: ""
 						};
 						render();
@@ -467,13 +635,15 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					function renderStart() {
 						var canStart = canStartShift();
 						var locked = Date.now() < state.lockedUntil;
-						var selected = staff.find(function (m) { return m.id === state.employeeId; });
+						var needsPump = pumpRequiredForStart();
 						return '<main class="term-layout">' +
 							'<div class="term-main">' +
 								'<div class="section-eyebrow">Shift start</div>' +
 								'<h1>Start terminal shift</h1>' +
-								'<p class="helper-text">Pick your name, enter your PIN, then count opening cash.</p>' +
+								'<p class="helper-text">Pick your name, enter your PIN, then count opening cash. Operators must choose their pump.</p>' +
 								(staff.length === 0 ? '<p class="helper-text">No staff are set up for this plant yet. Ask an owner to add staff from the owner dashboard.</p>' : '<div class="staff-grid">' + staff.map(employeeButton).join("") + '</div>') +
+								'<div class="section-eyebrow section-spaced">Pump ' + (needsPump ? '<span class="required-note">Required</span>' : '<span class="required-note">Optional</span>') + '</div>' +
+								(pumps.length === 0 ? '<p class="helper-text">No pumps are set up yet. Ask an owner to add a pump.</p>' : '<div class="staff-grid pump-grid">' + pumps.map(pumpButton).join("") + '</div>') +
 								(state.startNotice ? '<div class="state-message confirmed">' + icon("check-circle") + state.startNotice + '</div>' : '') +
 								'<div class="term-field">' +
 									'<label class="field-label" for="opening-cash">Opening cash drawer</label>' +
@@ -493,12 +663,18 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 					function employeeButton(m) {
 						return '<button class="staff-tile ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span class="avatar">' + escapeHtml(initialsOf(m.name)) + '</span><strong>' + escapeHtml(m.name) + '</strong><em>' + roleLabel(m.role) + '</em>' + (m.shiftOpenSince ? '<span class="shift-open-note">Open since ' + escapeHtml(m.shiftOpenSince) + '</span>' : '') + '</button>';
 					}
+					function pumpButton(p) {
+						var disabled = p.status !== "working";
+						var detail = p.status === "working" ? (p.open_shift ? "In use" : (p.busy_count || 0) + " unfilled") : p.status.replace("_", " ");
+						return '<button class="staff-tile ' + (state.pumpId === p.id ? "active" : "") + '" type="button" data-action="pump" data-value="' + p.id + '" ' + (disabled ? "disabled" : "") + '><span class="avatar">' + escapeHtml((p.name || "P").slice(0, 2).toUpperCase()) + '</span><strong>' + escapeHtml(p.name) + '</strong><em>' + escapeHtml(detail) + '</em></button>';
+					}
 
 					function renderMain() {
 						return '<header class="terminal-top">' +
 							'<div class="brand-row"><img class="brand-mark" src="' + brandMarkReversed + '" alt="GatsToGo"><strong>GATSTOGO</strong><span class="plant-name">' + escapeHtml(init.plantName) + '</span></div>' +
 							'<div class="shift-strip">' +
 								'<div class="stat"><span>Staff</span><strong>' + escapeHtml(state.name) + '</strong></div>' +
+								'<div class="stat"><span>Pump</span><strong>' + escapeHtml(state.pumpName || "Pump") + '</strong></div>' +
 								'<div class="stat"><span>Fills</span><strong class="mono">' + state.fills + '</strong></div>' +
 								'<div class="stat"><span>Dispensed</span><strong class="mono">' + kg(state.gramsDispensed) + '</strong></div>' +
 								'<button type="button" data-action="logout">' + icon("sign-out") + 'Log out</button>' +
@@ -506,12 +682,16 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 							'</div>' +
 						'</header>' +
 						'<nav class="terminal-tabs">' +
-							tabButton("fill", "Fill") +
+							(state.config === "operator" ? "" : tabButton("fill", "Fill")) +
 							(state.config === "operator" ? "" : tabButton("cash", "Cash sale")) +
+							(state.pumpId && (state.role === "manager" || state.role === "operator") ? tabButton("queue", "Pump receipts") : "") +
 							(state.role === "manager" && state.canEditPrice ? tabButton("price", "Set price") : "") +
+							(state.role === "manager" && state.canManagePumps ? tabButton("pumps", "Pumps") : "") +
+							(state.role === "manager" && state.canManageStaff ? tabButton("staff", "Staff") : "") +
+							(state.role === "manager" ? tabButton("reviews", "Reviews") : "") +
 							tabButton("end", "End shift") +
 						'</nav>' +
-						'<main>' + (state.tab === "fill" ? renderFill() : state.tab === "cash" ? renderCash() : state.tab === "price" ? renderPrice() : renderEnd()) + '</main>';
+						'<main>' + (state.tab === "fill" ? renderFill() : state.tab === "cash" ? renderCash() : state.tab === "queue" ? renderQueue() : state.tab === "price" ? renderPrice() : state.tab === "pumps" ? renderPumps() : state.tab === "staff" ? renderStaff() : state.tab === "reviews" ? renderReviews() : renderEnd()) + '</main>';
 					}
 					function tabButton(id, label) {
 						return '<button class="' + (state.tab === id ? "active" : "") + '" type="button" data-action="tab" data-value="' + id + '">' + label + '</button>';
@@ -527,7 +707,8 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 									'<div class="weight mono">' + t.size_kg + '</div>' +
 									'<div class="proof-row"><span>Amount paid</span><strong class="mono">' + t.amount + '</strong></div>' +
 									'<div class="proof-row"><span>Method</span><strong>' + t.channel + '</strong></div>' +
-									'<button class="primary-action valve" type="button" data-action="confirm-fill" ' + (state.busy ? "disabled" : "") + '>' + (state.busy ? "Confirming…" : "Open valve") + '</button>' +
+									'<div class="proof-row"><span>Pump</span><strong>' + escapeHtml(t.pump || "Assigned pump") + '</strong></div>' +
+									'<button class="primary-action valve" type="button" data-action="confirm-fill" ' + (state.busy ? "disabled" : "") + '>' + (state.busy ? "Starting…" : "Start dispensing") + '</button>' +
 								'</div>' +
 								'<aside class="term-aside">' +
 									'<div class="section-eyebrow">Privacy</div>' +
@@ -541,7 +722,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 								'<div class="section-eyebrow">Fill</div>' +
 								'<h1>Enter customer code</h1>' +
 								'<div class="code-boxes">' + [0,1,2,3].map(function (i) { return '<span class="mono' + (state.code[i] ? " filled" : "") + '">' + (state.code[i] || "–") + '</span>'; }).join("") + '</div>' +
-								(state.message ? '<div class="state-message ' + state.messageKind + '">' + stateMessageIcon(state.messageKind) + state.message + '</div>' : '') +
+								messageHtml("fill") +
 								'<div class="keypad">' + keypad("code") + '</div>' +
 							'</div>' +
 							'<aside class="term-aside">' +
@@ -575,13 +756,41 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 								'</div>' +
 								(blocked ? '<div class="state-message used">' + icon("warning-circle") + 'Cash limit reached. Record a deposit before taking more cash.</div>' : '') +
 								'<button class="primary-action" type="button" data-action="record-cash" ' + (canRecord ? "" : "disabled") + '>' + (state.busy ? "Recording…" : "Record cash and queue fill") + '</button>' +
-								(state.message ? '<div class="state-message ' + (state.messageKind || "confirmed") + '">' + stateMessageIcon(state.messageKind || "confirmed") + state.message + '</div>' : '') +
+								messageHtml("cash") +
 							'</div>' +
 							'<aside class="term-aside">' +
 								'<div class="section-eyebrow">Cash holding</div>' +
 								'<div class="cash-held ' + cashClass() + '"><strong class="mono">' + naira(state.cashHeldKobo) + '</strong><span>' + (cashClass() === "ok" ? "Normal" : cashClass() === "warn" ? "Deposit soon" : "Deposit required") + '</span></div>' +
 								'<p class="helper-text">Cash sales create a customer code for the fill queue.</p>' +
 							'</aside>' +
+						'</div>';
+					}
+					function renderQueue() {
+						var rows = state.pumpQueue || [];
+						return '<div class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Pump receipts</div>' +
+								'<h1>' + escapeHtml(state.pumpName || "Pump") + '</h1>' +
+								'<p class="helper-text">Close receipts after dispensing is done. Notes are optional and saved on the receipt.</p>' +
+								'<div class="term-field">' +
+									'<label class="field-label" for="close-note">Close note optional</label>' +
+									'<textarea id="close-note" class="term-input term-textarea" placeholder="Optional note for these receipts" data-action="close-note">' + escapeHtml(state.closeNote) + '</textarea>' +
+								'</div>' +
+								(rows.length === 0 ? '<div class="state-message confirmed">' + icon("check-circle") + 'No dispensing receipts for this pump.</div>' : '<div class="queue-list">' + rows.map(queueRow).join("") + '</div>') +
+								messageHtml("queue") +
+							'</div>' +
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Bulk close</div>' +
+								'<div class="stat-block"><div class="stat-value mono">' + rows.length + '</div><div class="stat-label">Open receipts</div></div>' +
+								'<button class="primary-action" type="button" data-action="bulk-close" ' + (!rows.length || state.busy ? "disabled" : "") + '>Close all for this pump</button>' +
+								'<button class="secondary-action" type="button" data-action="refresh-queue">Refresh</button>' +
+							'</aside>' +
+						'</div>';
+					}
+					function queueRow(row) {
+						return '<div class="queue-row">' +
+							'<div><strong class="mono">' + escapeHtml(row.code) + '</strong><span>' + escapeHtml(row.initials || "—") + ' · ' + escapeHtml(row.size_kg) + ' · ' + escapeHtml(row.amount) + '</span></div>' +
+							'<button class="btn-like" type="button" data-action="close-receipt" data-value="' + escapeHtml(row.ticket_id) + '">' + icon("check-circle") + 'Filled</button>' +
 						'</div>';
 					}
 					function renderPrice() {
@@ -597,13 +806,100 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 									'<span class="label">Current published price<em class="note">Used for cash sales and customer checkout</em></span>' +
 									'<strong class="value mono">' + naira(pricePerKgNaira * 100) + '/kg</strong>' +
 								'</div>' +
-								(state.message ? '<div class="state-message ' + (state.messageKind || "confirmed") + '">' + stateMessageIcon(state.messageKind || "confirmed") + state.message + '</div>' : '') +
+								messageHtml("price") +
 								'<button class="primary-action" type="button" data-action="save-price" ' + (state.busy ? "disabled" : "") + '>' + (state.busy ? "Saving…" : "Save gas price") + '</button>' +
 							'</div>' +
 							'<aside class="term-aside">' +
 								'<div class="section-eyebrow">Tracked action</div>' +
 								'<p class="privacy-note">' + icon("shield-check") + 'Every price change is saved to the plant activity log with your staff account.</p>' +
 							'</aside>' +
+						'</div>';
+					}
+					function renderPumps() {
+						return '<div class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Manager permission</div>' +
+								'<h1>Pump management</h1>' +
+								'<p class="helper-text">Rename pumps and take a pump out of rotation when it is not working.</p>' +
+								(pumps.length === 0 ? '<div class="state-message used">' + icon("warning-circle") + 'No pumps found. Add the first pump below.</div>' : '<div class="queue-list">' + pumps.map(pumpManageRow).join("") + '</div>') +
+								messageHtml("pumps") +
+							'</div>' +
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Add pump</div>' +
+								'<div class="term-field"><label class="field-label" for="new-pump-name">Pump name</label><input id="new-pump-name" class="term-input" value="' + escapeHtml(state.newPumpName) + '" placeholder="Pump 2" data-action="new-pump-name"/></div>' +
+								'<div class="term-field"><label class="field-label" for="new-pump-status">Status</label><select id="new-pump-status" class="term-input" data-action="new-pump-status">' + statusOptions(state.newPumpStatus) + '</select></div>' +
+								'<div class="term-field"><label class="field-label" for="new-pump-sort">Order</label><input id="new-pump-sort" class="term-input mono" value="' + escapeHtml(state.newPumpSort) + '" placeholder="' + (pumps.length + 1) + '" inputmode="numeric" data-action="new-pump-sort"/></div>' +
+								'<button class="primary-action" type="button" data-action="save-new-pump" ' + (state.busy || state.newPumpName.trim() === "" ? "disabled" : "") + '>Add pump</button>' +
+								'<p class="privacy-note">' + icon("shield-check") + 'Every pump change is saved to the plant activity log.</p>' +
+							'</aside>' +
+						'</div>';
+					}
+					function statusOptions(selected) {
+						var opts = [
+							["working", "Working"],
+							["not_working", "Not working"],
+							["maintenance", "Maintenance"]
+						];
+						return opts.map(function (opt) {
+							return '<option value="' + opt[0] + '" ' + (selected === opt[0] ? "selected" : "") + '>' + opt[1] + '</option>';
+						}).join("");
+					}
+					function pumpManageRow(p) {
+						return '<div class="queue-row pump-manage-row">' +
+							'<div class="pump-manage-fields">' +
+								'<input class="term-input" value="' + escapeHtml(p.name) + '" placeholder="Pump name" data-action="pump-name" data-value="' + escapeHtml(p.id) + '"/>' +
+								'<select class="term-input" data-action="pump-status" data-value="' + escapeHtml(p.id) + '">' + statusOptions(p.status) + '</select>' +
+								'<input class="term-input mono" value="' + escapeHtml(p.sort_order || "") + '" placeholder="Order" inputmode="numeric" data-action="pump-sort" data-value="' + escapeHtml(p.id) + '"/>' +
+							'</div>' +
+							'<div><strong>' + escapeHtml(pumpStatusLabel(p.status)) + '</strong><span>' + (p.open_shift ? "In use now" : ((p.busy_count || 0) + " unfilled")) + '</span></div>' +
+							'<button class="btn-like" type="button" data-action="save-pump" data-value="' + escapeHtml(p.id) + '">' + icon("check-circle") + 'Save</button>' +
+						'</div>';
+					}
+					function renderStaff() {
+						return '<div class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Manager permission</div>' +
+								'<h1>Staff access</h1>' +
+								'<p class="helper-text">Deactivate staff who should no longer use the terminal. You cannot deactivate your own account here.</p>' +
+								(manageStaff.length === 0 ? '<div class="state-message used">' + icon("warning-circle") + 'No terminal staff found.</div>' : '<div class="queue-list">' + manageStaff.map(staffManageRow).join("") + '</div>') +
+								messageHtml("staff") +
+							'</div>' +
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Tracked action</div>' +
+								'<p class="privacy-note">' + icon("shield-check") + 'Every staff access change is saved to the plant activity log.</p>' +
+							'</aside>' +
+						'</div>';
+					}
+					function staffManageRow(row) {
+						var self = row.id === state.userId;
+						var nextActive = !row.active;
+						var label = row.active ? "Deactivate" : "Activate";
+						var statusClass = row.active ? "confirmed" : "used";
+						return '<div class="queue-row staff-manage-row">' +
+							'<div><strong>' + escapeHtml(row.name) + '</strong><span>' + roleLabel(row.role) + ' · ' + (row.active ? "Active" : "Inactive") + '</span></div>' +
+							'<div class="state-message ' + statusClass + '">' + (row.active ? icon("check-circle") + 'Active' : icon("warning-circle") + 'Inactive') + '</div>' +
+							'<button class="btn-like" type="button" data-action="staff-status" data-value="' + escapeHtml(row.id) + '" data-active="' + (nextActive ? "true" : "false") + '" ' + (self || state.busy ? "disabled" : "") + '>' + label + '</button>' +
+						'</div>';
+					}
+					function renderReviews() {
+						return '<div class="term-layout">' +
+							'<div class="term-main">' +
+								'<div class="section-eyebrow">Customer feedback</div>' +
+								'<h1>Reviews</h1>' +
+								'<p class="helper-text">Ratings customers submit after their dispensing starts.</p>' +
+								(reviews.length === 0 ? '<div class="state-message used">' + icon("warning-circle") + 'No customer reviews yet.</div>' : '<div class="queue-list">' + reviews.map(reviewRow).join("") + '</div>') +
+							'</div>' +
+							'<aside class="term-aside">' +
+								'<div class="section-eyebrow">Average</div>' +
+								'<div class="stat-block"><div class="stat-value mono">' + escapeHtml(reviewAverage) + '</div><div class="stat-label">Customer rating</div></div>' +
+								'<div class="stat-block"><div class="stat-value mono">' + reviewCount + '</div><div class="stat-label">Submitted reviews</div></div>' +
+							'</aside>' +
+						'</div>';
+					}
+					function reviewRow(row) {
+						return '<div class="queue-row review-row">' +
+							'<div><strong class="review-stars">' + escapeHtml(row.stars || "") + '</strong><span>' + escapeHtml(row.ticket || "Ticket") + ' · ' + escapeHtml(row.phone || "No phone") + ' · ' + escapeHtml(row.submitted_at || "") + '</span></div>' +
+							'<p>' + escapeHtml(row.note || "No note") + '</p>' +
 						'</div>';
 					}
 					function renderEnd() {
@@ -622,7 +918,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 									'<label class="field-label" for="shift-notes">Shift note optional</label>' +
 									'<textarea id="shift-notes" class="term-input term-textarea" placeholder="Short note for owner dashboard" data-action="shift-notes">' + escapeHtml(state.shiftNotes) + '</textarea>' +
 								'</div>' +
-								(state.message ? '<div class="state-message ' + (state.messageKind || "wrong") + '">' + stateMessageIcon(state.messageKind || "wrong") + state.message + '</div>' : '') +
+								messageHtml("end", "wrong") +
 								'<button class="primary-action" type="button" data-action="finish-shift" ' + (state.busy ? "disabled" : "") + '>' + (state.busy ? "Closing…" : "Submit and end shift") + '</button>' +
 							'</div>' +
 							'<aside class="term-aside">' +
@@ -645,6 +941,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						var action = target.dataset.action;
 						var value = target.dataset.value;
 						if (action === "employee") setEmployee(value);
+						if (action === "pump") setPump(value);
 						if (action === "start-shift") startShift();
 						if (action === "tab") setTab(value);
 						if (action === "pin-digit") appendPin(value);
@@ -656,6 +953,12 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						if (action === "confirm-fill") confirmFill();
 						if (action === "record-cash") recordCash();
 						if (action === "save-price") savePrice();
+						if (action === "save-pump") savePump(value);
+						if (action === "save-new-pump") savePump("");
+						if (action === "staff-status") saveStaffStatus(value, target.dataset.active === "true");
+						if (action === "refresh-queue") loadPumpQueue();
+						if (action === "close-receipt") closeReceipt(value);
+						if (action === "bulk-close") bulkCloseReceipts();
 						if (action === "logout") logoutTerminal();
 						if (action === "end-screen") setTab("end");
 						if (action === "finish-shift") finishShift();
@@ -666,11 +969,32 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						if (action === "cash-amount") { state.cashAmount = event.target.value; updateCashPreview(); }
 						if (action === "phone") state.phone = event.target.value;
 						if (action === "price-input") state.priceInput = event.target.value;
+						if (action === "pump-name" || action === "pump-status" || action === "pump-sort") {
+							var pump = pumps.find(function (p) { return p.id === event.target.dataset.value; });
+							if (pump && action === "pump-name") pump.name = event.target.value;
+							if (pump && action === "pump-status") pump.status = event.target.value;
+							if (pump && action === "pump-sort") pump.sort_order = event.target.value;
+						}
+						if (action === "new-pump-name") state.newPumpName = event.target.value;
+						if (action === "new-pump-status") state.newPumpStatus = event.target.value;
+						if (action === "new-pump-sort") state.newPumpSort = event.target.value;
+						if (action === "close-note") state.closeNote = event.target.value;
 						if (action === "closing-cash") state.closingCash = event.target.value;
 						if (action === "shift-notes") state.shiftNotes = event.target.value;
 					});
+					root.addEventListener("change", function (event) {
+						var action = event.target.dataset.action;
+						if (action === "pump-status") {
+							var pump = pumps.find(function (p) { return p.id === event.target.dataset.value; });
+							if (pump) pump.status = event.target.value;
+						}
+						if (action === "new-pump-status") state.newPumpStatus = event.target.value;
+					});
 
-					if (init.currentSession) applySessionData(init.currentSession);
+					if (init.currentSession) {
+						applySessionData(init.currentSession);
+						if (state.tab === "queue") loadPumpQueue();
+					}
 					render();
 				});
 			</script>

@@ -131,6 +131,7 @@ func ListStaff(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID) ([]St
 type Shift struct {
 	ID              uuid.UUID
 	UserID          uuid.UUID
+	PumpID          *uuid.UUID
 	OpenedAt        time.Time
 	OpeningCashKobo int64
 	TokensIssued    int
@@ -142,10 +143,10 @@ func findOpen(ctx context.Context, q tenantdb.Querier, plantID, userID uuid.UUID
 	var s Shift
 	var tokensReturned *int
 	err := q.QueryRow(ctx, `
-		SELECT id, opened_at, opening_cash_kobo, tokens_issued, tokens_returned
+		SELECT id, pump_id, opened_at, opening_cash_kobo, tokens_issued, tokens_returned
 		FROM shifts
 		WHERE plant_id = $1 AND user_id = $2 AND closed_at IS NULL
-	`, plantID, userID).Scan(&s.ID, &s.OpenedAt, &s.OpeningCashKobo, &s.TokensIssued, &tokensReturned)
+	`, plantID, userID).Scan(&s.ID, &s.PumpID, &s.OpenedAt, &s.OpeningCashKobo, &s.TokensIssued, &tokensReturned)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
@@ -196,7 +197,7 @@ func OpenShiftStarts(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID)
 // on (plant_id, user_id) WHERE closed_at IS NULL), but checking first
 // gives a clean "resumed" result instead of a constraint-violation error
 // on an ordinary reload.
-func StartOrResume(ctx context.Context, q tenantdb.Querier, plantID, userID uuid.UUID, openingCashKobo int64, deviceID string) (shift *Shift, resumed bool, err error) {
+func StartOrResume(ctx context.Context, q tenantdb.Querier, plantID, userID uuid.UUID, openingCashKobo int64, deviceID string, pumpID *uuid.UUID) (shift *Shift, resumed bool, err error) {
 	existing, err := findOpen(ctx, q, plantID, userID)
 	if err != nil {
 		return nil, false, err
@@ -213,10 +214,10 @@ func StartOrResume(ctx context.Context, q tenantdb.Querier, plantID, userID uuid
 	var id uuid.UUID
 	var openedAt time.Time
 	if err := q.QueryRow(ctx, `
-		INSERT INTO shifts (plant_id, user_id, device_id, opening_cash_kobo)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO shifts (plant_id, user_id, device_id, opening_cash_kobo, pump_id)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, opened_at
-	`, plantID, userID, device, openingCashKobo).Scan(&id, &openedAt); err != nil {
+	`, plantID, userID, device, openingCashKobo, pumpID).Scan(&id, &openedAt); err != nil {
 		return nil, false, err
 	}
 
@@ -227,7 +228,7 @@ func StartOrResume(ctx context.Context, q tenantdb.Querier, plantID, userID uuid
 		return nil, false, err
 	}
 
-	return &Shift{ID: id, UserID: userID, OpenedAt: openedAt, OpeningCashKobo: openingCashKobo}, false, nil
+	return &Shift{ID: id, UserID: userID, PumpID: pumpID, OpenedAt: openedAt, OpeningCashKobo: openingCashKobo}, false, nil
 }
 
 // Close ends a shift: sets closed_at/closing_cash_kobo/notes and records a
@@ -339,7 +340,7 @@ func MostRecentOpenShiftID(ctx context.Context, q tenantdb.Querier, plantID uuid
 }
 
 // ErrNoOpenShift is returned by MostRecentOpenShiftID when a plant has no
-// currently-open shift for an owner-initiated cash entry to attach to.
+// currently-open shift for a manual cash entry to attach to.
 var ErrNoOpenShift = errors.New("shifts: no open shift to record this against")
 
 // cashMovementKinds a manual, owner-initiated entry may use.
@@ -347,13 +348,13 @@ var ErrNoOpenShift = errors.New("shifts: no open shift to record this against")
 // cash-sale handler, and Close respectively -- never through this path.
 var cashMovementKinds = map[string]bool{"deposit": true, "payout": true, "count": true}
 
-// RecordCashMovement inserts a manual cash_movements row -- the owner
-// dashboard's "Record cash count" panel. amountKobo's sign follows the
-// column's own convention (positive = in, negative = out): a deposit or
-// payout both remove physical cash from the drawer (to the bank, or to
-// pay for something), so callers should pass a negative amount for
-// those; a 'count' entry is a snapshot rather than a flow, so it's
-// typically 0 with countedKobo carrying the actual counted figure.
+// RecordCashMovement inserts a manual cash_movements row. amountKobo's
+// sign follows the column's own convention (positive = in, negative =
+// out): a deposit or payout both remove physical cash from the drawer
+// (to the bank, or to pay for something), so callers should pass a
+// negative amount for those; a 'count' entry is a snapshot rather than a
+// flow, so it's typically 0 with countedKobo carrying the actual counted
+// figure.
 func RecordCashMovement(ctx context.Context, q tenantdb.Querier, plantID, shiftID uuid.UUID, kind string, amountKobo int64, countedKobo *int64, recordedBy uuid.UUID, note string) error {
 	if !cashMovementKinds[kind] {
 		return fmt.Errorf("shifts: %q is not a valid manual cash movement kind", kind)

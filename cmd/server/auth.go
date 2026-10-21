@@ -88,15 +88,16 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 			active         bool
 			canEditPrice   bool
 			canManageStaff bool
+			canManagePumps bool
 			found          bool
 		)
 		err := tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			row := q.QueryRow(ctx, `
-				SELECT id, name, role, password_hash, active, can_edit_price, can_manage_staff
+				SELECT id, name, role, password_hash, active, can_edit_price, can_manage_staff, can_manage_pumps
 				FROM users
 				WHERE plant_id = $1 AND phone = $2 AND role IN ('owner', 'manager')
 			`, plant.ID, phone)
-			switch scanErr := row.Scan(&userID, &name, &role, &passwordHash, &active, &canEditPrice, &canManageStaff); scanErr {
+			switch scanErr := row.Scan(&userID, &name, &role, &passwordHash, &active, &canEditPrice, &canManageStaff, &canManagePumps); scanErr {
 			case nil:
 				found = true
 				return nil
@@ -129,6 +130,7 @@ func ownerLoginSubmitHandler(s *Server) http.HandlerFunc {
 			PlantID:        plant.ID.String(),
 			CanEditPrice:   canEditPrice,
 			CanManageStaff: canManageStaff,
+			CanManagePumps: canManagePumps,
 		}, session.OwnerTTL)
 		if err != nil {
 			log.Println("owner login: create session failed:", err)

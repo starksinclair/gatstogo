@@ -55,6 +55,34 @@
 	--red: #B3261E;
 	--red-bg: #FBEEED;
 }
+
+.table-input {
+	width: 100%;
+	min-width: 96px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	padding: 9px 10px;
+	background: #FFFFFF;
+	color: var(--ink);
+	font: inherit;
+}
+.compact-check {
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+.pump-edit-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 92px minmax(150px, 1fr);
+	gap: 10px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--line);
+}
+.pump-edit-row .btn { justify-self: start; }
+
+@media (max-width: 760px) {
+	.pump-edit-row { grid-template-columns: 1fr; }
+}
 * { box-sizing: border-box; }
 [x-cloak], .tab-panel { display: none; }
 .tab-panel.active { display: block; }
@@ -435,6 +463,15 @@ td {
 	vertical-align: top;
 }
 .num { text-align: right; font-family: var(--font-mono, "IBM Plex Mono", monospace); white-space: nowrap; }
+.review-stars {
+	display: inline-block;
+	margin-right: 8px;
+	color: var(--amber);
+	font-family: var(--font-mono, "IBM Plex Mono", monospace);
+	font-size: 16px;
+	letter-spacing: 0;
+	white-space: nowrap;
+}
 /* Empty states: a small looping illustration (one of the lotties in
    web/static/lottie, picked per section -- a magnifying glass over a
    scroll for Sales, a handshake for Shifts, a seedling for Plants,
@@ -490,6 +527,27 @@ td {
 	border-color: var(--ink);
 }
 .field textarea { min-height: 86px; resize: vertical; }
+.color-input-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 48px;
+	gap: 8px;
+	align-items: stretch;
+}
+.field input.color-picker {
+	min-height: 42px;
+	height: 42px;
+	padding: 3px;
+	cursor: pointer;
+}
+.field input.color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+.field input.color-picker::-webkit-color-swatch {
+	border: 0;
+	border-radius: calc(var(--radius-sm, 6px) - 2px);
+}
+.field input.color-picker::-moz-color-swatch {
+	border: 0;
+	border-radius: calc(var(--radius-sm, 6px) - 2px);
+}
 /* Custom file input trigger (the "Create plant" panel's Logo field) --
    input[type=file]'s native "Choose File" button has no cross-browser way
    to restyle directly, so instead: visually hide the real <input> (still
