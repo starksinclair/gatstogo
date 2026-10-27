@@ -20,8 +20,8 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 			@components.BrandFavicons()
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-			<link rel="stylesheet" href="/static/css/tokens.css"/>
-			<link rel="stylesheet" href="/static/css/terminal.css"/>
+			<link rel="stylesheet" href={ cssURL("tokens.css") }/>
+			<link rel="stylesheet" href={ cssURL("terminal.css") }/>
 			<script>
 				document.addEventListener("DOMContentLoaded", function () {
 					var root = document.querySelector("[data-terminal]");
@@ -165,17 +165,6 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						if (role === "manager") return "Manager";
 						return role;
 					}
-					// Two-letter initials for the staff-tile avatar chip (there's no
-					// per-person photo in this app) -- "Amaka Obi" -> "AO", a
-					// single-word name -> its first two letters, falls back to "?"
-					// for an empty/missing name rather than rendering blank.
-					function initialsOf(name) {
-						var parts = (name || "").trim().split(/\s+/).filter(Boolean);
-						if (parts.length === 0) return "?";
-						if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-						return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-					}
-
 					// A small, hand-copied subset of the same Phosphor icon path
 					// data web/templates/components/icon_paths.go embeds for
 					// every templ-rendered page -- this page's UI is built by
@@ -636,7 +625,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						var canStart = canStartShift();
 						var locked = Date.now() < state.lockedUntil;
 						var needsPump = pumpRequiredForStart();
-						return '<main class="term-layout">' +
+						return '<main class="term-layout term-start">' +
 							'<div class="term-main">' +
 								'<div class="section-eyebrow">Shift start</div>' +
 								'<h1>Start terminal shift</h1>' +
@@ -649,8 +638,10 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 									'<label class="field-label" for="opening-cash">Opening cash drawer</label>' +
 									'<input id="opening-cash" class="term-input mono" value="' + state.openingCash + '" placeholder="₦20,000" inputmode="numeric" data-action="opening-cash" ' + (locked ? "disabled" : "") + '/>' +
 								'</div>' +
-								(state.startError ? '<div class="state-message wrong">' + icon("x-circle") + state.startError + (locked ? ' (' + lockSecondsRemaining() + 's)' : '') + '</div>' : '') +
-								'<button class="primary-action" type="button" data-action="start-shift" ' + (canStart ? "" : "disabled") + '>' + (state.busy ? "Starting…" : "Start shift") + '</button>' +
+								'<div class="start-actions">' +
+									(state.startError ? '<div class="state-message wrong">' + icon("x-circle") + state.startError + (locked ? ' (' + lockSecondsRemaining() + 's)' : '') + '</div>' : '') +
+									'<button class="primary-action" type="button" data-action="start-shift" ' + (canStart ? "" : "disabled") + '>' + (state.busy ? "Starting…" : "Start shift") + '</button>' +
+								'</div>' +
 							'</div>' +
 							'<aside class="term-aside">' +
 								'<div class="section-eyebrow">Employee PIN</div>' +
@@ -661,12 +652,12 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						'<div class="term-meta">' + escapeHtml(init.plantName) + '<span class="sep"></span>' + init.todayLabel + '<span class="sep"></span>Selling at ' + naira(init.pricePerKgKobo) + '/kg today</div>';
 					}
 					function employeeButton(m) {
-						return '<button class="staff-tile ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span class="avatar">' + escapeHtml(initialsOf(m.name)) + '</span><strong>' + escapeHtml(m.name) + '</strong><em>' + roleLabel(m.role) + '</em>' + (m.shiftOpenSince ? '<span class="shift-open-note">Open since ' + escapeHtml(m.shiftOpenSince) + '</span>' : '') + '</button>';
+						return '<button class="staff-tile ' + (state.employeeId === m.id ? "active" : "") + '" type="button" data-action="employee" data-value="' + m.id + '"><span class="avatar avatar-logo"><img src="' + escapeHtml(init.plantLogo) + '" alt=""></span><strong>' + escapeHtml(m.name) + '</strong><em>' + roleLabel(m.role) + '</em>' + (m.shiftOpenSince ? '<span class="shift-open-note">Open since ' + escapeHtml(m.shiftOpenSince) + '</span>' : '') + '</button>';
 					}
 					function pumpButton(p) {
 						var disabled = p.status !== "working";
 						var detail = p.status === "working" ? (p.open_shift ? "In use" : (p.busy_count || 0) + " unfilled") : p.status.replace("_", " ");
-						return '<button class="staff-tile ' + (state.pumpId === p.id ? "active" : "") + '" type="button" data-action="pump" data-value="' + p.id + '" ' + (disabled ? "disabled" : "") + '><span class="avatar">' + escapeHtml((p.name || "P").slice(0, 2).toUpperCase()) + '</span><strong>' + escapeHtml(p.name) + '</strong><em>' + escapeHtml(detail) + '</em></button>';
+						return '<button class="staff-tile ' + (state.pumpId === p.id ? "active" : "") + '" type="button" data-action="pump" data-value="' + p.id + '" ' + (disabled ? "disabled" : "") + '><span class="avatar avatar-logo"><img src="' + escapeHtml(init.plantLogo) + '" alt=""></span><strong>' + escapeHtml(p.name) + '</strong><em>' + escapeHtml(detail) + '</em></button>';
 					}
 
 					function renderMain() {

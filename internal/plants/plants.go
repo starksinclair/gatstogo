@@ -12,6 +12,7 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"time"
 
 	"gatstogo/internal/audit"
 	"gatstogo/internal/auth"
@@ -172,6 +173,12 @@ type CreateParams struct {
 	OwnerPassword string
 
 	StartingPriceKobo int64
+
+	// TermsAcceptedAt is when the applicant ticked "I agree to the Terms
+	// of Service and Privacy Policy" on the public signup form. Recorded in
+	// the plant.created audit entry as the consent record (Nigeria Data
+	// Protection Act). Zero for plants an admin creates directly.
+	TermsAcceptedAt time.Time
 
 	// Status is the plant's initial lifecycle status. Empty means
 	// "active" -- the historical behavior, and still correct for the
@@ -383,7 +390,11 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 	// describes, and provisioning a new tenant with real login credentials
 	// and a real settlement path is not the place to be the one exception
 	// to that.
-	if err := audit.Log(ctx, tx, &plantID, actorID, "plant.created", v.slug, nil); err != nil {
+	var createdDetail map[string]any
+	if !p.TermsAcceptedAt.IsZero() {
+		createdDetail = map[string]any{"terms_accepted_at": p.TermsAcceptedAt.UTC().Format(time.RFC3339)}
+	}
+	if err := audit.Log(ctx, tx, &plantID, actorID, "plant.created", v.slug, createdDetail); err != nil {
 		return nil, err
 	}
 

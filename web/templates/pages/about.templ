@@ -1,31 +1,193 @@
 package pages
 
+import "gatstogo/web/templates/components"
+
 // About takes the real contact inbox (Server.NotificationEmail) rather
 // than hardcoding it here -- same address cmd/server/tickets.go already
 // uses as the base for Paystack's required customer-email field, kept
 // configurable via the one TICKET_NOTIFICATION_EMAIL env var rather than
 // duplicated as a literal in this template too.
+//
+// Every claim on this page is either how the product actually works (see
+// pricing.templ's comment for the payment terms) or sourced: the market
+// figure is NMDPRA's December 2025 average daily LPG consumption. No
+// invented customers, team, or company numbers.
+//
+// Photos (web/static/images/about), both free under the Unsplash License,
+// which needs no on-page credit:
+//   lagos-street-*.jpg   Fahd Aminu (@fahd_), Lagos, Nigeria
+//                        https://unsplash.com/photos/RgDIV-QJTI8
+//   lpg-cylinders-*.jpg  Marina Zvada (@zvada_photo)
+//                        https://unsplash.com/photos/zENzDOsA2XA
 templ About(contactEmail string) {
 	@marketingPageShell("About | GatsToGo", aboutContent(contactEmail))
 }
 
 templ aboutContent(contactEmail string) {
-	<main class="article-layout">
-		<div class="section-eyebrow">About</div>
-		<h1>Built for how LPG plants actually run</h1>
-		<p class="lede">GatsToGo started from a simple observation: most LPG plants run on cash, memory, and a notebook. Sales, shifts, and cash reconciliation all happen by hand, at the end of a long day. We built GatsToGo to make that real-time instead: a branded page for customers to buy gas online, a terminal for staff to redeem and fill orders, and a dashboard that shows an owner exactly what's happening, as it happens.</p>
+	<main class="about-page">
+		<section class="about-hero">
+			<div class="wrap">
+				<div class="section-eyebrow">About GatsToGo</div>
+				<h1>Every kilogram and every naira, accounted for.</h1>
+				<p class="about-lede">GatsToGo is the operating system for LPG plants in Nigeria. One place where customers buy gas online, staff redeem and fill orders, and owners see every sale, shift, and naira of cash as it happens.</p>
+				<figure class="about-banner">
+					<img
+						src="/static/images/about/lagos-street-1200.jpg"
+						srcset="/static/images/about/lagos-street-1200.jpg 1200w, /static/images/about/lagos-street-2400.jpg 2400w"
+						sizes="(max-width: 1120px) 100vw, 1064px"
+						width="2400"
+						height="1000"
+						alt="Aerial view of a busy Lagos street: yellow danfo buses, kekes, and traders under umbrellas"
+						fetchpriority="high"
+					/>
+				</figure>
+			</div>
+		</section>
 
-		<h2>Get in touch</h2>
-		<div class="contact-row">
-			<span>Email</span>
-			<a href={ templ.SafeURL("mailto:" + contactEmail) }>{ contactEmail }</a>
-		</div>
-		<div class="contact-row">
-			<span>New to GatsToGo</span>
-			<a href="/get-started">Get started</a>
-		</div>
+		<section class="mkt-section">
+			<div class="wrap about-split">
+				<div class="about-why-head">
+					<div class="mkt-section-head">
+						<div class="section-eyebrow">Why we exist</div>
+						<h2>Cooking gas is everyday business. Running a plant shouldn't be guesswork.</h2>
+					</div>
+					<figure class="about-side-photo">
+						<img
+							src="/static/images/about/lpg-cylinders-640.jpg"
+							srcset="/static/images/about/lpg-cylinders-640.jpg 640w, /static/images/about/lpg-cylinders-1100.jpg 1100w"
+							sizes="(max-width: 900px) 100vw, 420px"
+							width="1100"
+							height="1375"
+							alt="Rows of LPG cylinders waiting to be refilled"
+							loading="lazy"
+							decoding="async"
+						/>
+					</figure>
+				</div>
+				<div class="about-prose">
+					<p>Nigeria uses thousands of tonnes of LPG every day, and much of it moves through neighbourhood refilling plants. Yet at most plants the day still runs on cash, memory, and a notebook. Sales, shifts, and cash are reconciled by hand at the end of a long day, and when the numbers don't match, there's no record to check.</p>
+					<p>We built GatsToGo to make that real time: customers pay before they reach the counter, staff fill exactly what was paid for, and the owner sees it all live, from anywhere.</p>
+					<div class="about-stat">
+						<strong>4,380</strong>
+						<span>tonnes of LPG used in Nigeria every day, on average, in December 2025.</span>
+						<a class="about-source" href="https://www.nigeriastartupact.ng/nigeria-lpg-supply-hits-5-2k-mt-day-in-december-2025/" target="_blank" rel="noopener noreferrer">Source: NMDPRA figures, via Nigeria Startup Act</a>
+					</div>
+				</div>
+			</div>
+		</section>
 
-		<h2>Already a GatsToGo customer?</h2>
-		<p>Log in from your own plant's page: the link your team was given when your plant was set up, followed by <span class="mono">/owner/login</span>. If you can't find it, reach out to the email above.</p>
+		<section class="mkt-section">
+			<div class="wrap">
+				<div class="mkt-section-head">
+					<div class="section-eyebrow">What we built</div>
+					<h2>Three tools, one plant.</h2>
+				</div>
+				<div class="about-pillars">
+					<div class="about-pillar">
+						<span class="about-pillar-label">For customers</span>
+						<h3>A branded buy-gas page</h3>
+						<p>Your plant's own page, in your colors. Customers pay by transfer, card, or USSD and get a 4-digit code by SMS. No app, no account.</p>
+					</div>
+					<div class="about-pillar">
+						<span class="about-pillar-label">For staff</span>
+						<h3>A terminal at the counter</h3>
+						<p>Cashiers and operators sign in with a PIN, redeem codes, record cash sales, and close their shift with a cash count.</p>
+					</div>
+					<div class="about-pillar">
+						<span class="about-pillar-label">For owners</span>
+						<h3>A live dashboard</h3>
+						<p>Sales, gas paid for versus gas filled, cash by shift, staff, pumps, prices, and customer reviews, updated as it happens.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="mkt-section">
+			<div class="wrap">
+				<div class="mkt-section-head">
+					<div class="section-eyebrow">What we stand for</div>
+					<h2>Principles we build by.</h2>
+				</div>
+				<div class="about-principles">
+					<div>
+						<span class="about-num">01</span>
+						<h3>Your money goes straight to you</h3>
+						<p>Online payments are split by Paystack at the moment of payment. Your share settles to your own bank account. GatsToGo never holds it.</p>
+					</div>
+					<div>
+						<span class="about-num">02</span>
+						<h3>Real numbers only</h3>
+						<p>Every sale, fill, shift, and cash movement is recorded as it happens, so the end of the day is a check, not a reconstruction.</p>
+					</div>
+					<div>
+						<span class="about-num">03</span>
+						<h3>Built for the counter</h3>
+						<p>PINs instead of passwords, 4-digit codes instead of printouts, and screens that work on the phone or tablet already in your plant.</p>
+					</div>
+					<div>
+						<span class="about-num">04</span>
+						<h3>Fair, simple pricing</h3>
+						<p>No setup fee and no monthly fee. 1.5% on online sales, nothing on cash. <a href="/pricing">See pricing</a>.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="mkt-section">
+			<div class="wrap about-split">
+				<div class="mkt-section-head">
+					<div class="section-eyebrow">Trust and safety</div>
+					<h2>Serious about who sells, and how.</h2>
+				</div>
+				<ul class="about-trust">
+					<li>
+						@components.Icon("shield-check")
+						<div><strong>Verified plants only</strong> Every plant is reviewed before going live: CAC registration, NMDPRA licence, and a bank account confirmed in the business's name.</div>
+					</li>
+					<li>
+						@components.Icon("lock")
+						<div><strong>Payments by Paystack</strong> Customer card and bank details are handled by Paystack, never stored by GatsToGo.</div>
+					</li>
+					<li>
+						@components.Icon("identification-badge")
+						<div><strong>Your data, handled with care</strong> We collect only what running your plant needs. Read our <a href="/privacy">Privacy Policy</a>.</div>
+					</li>
+				</ul>
+			</div>
+		</section>
+
+		<section class="mkt-section">
+			<div class="wrap about-split">
+				<div class="mkt-section-head">
+					<div class="section-eyebrow">Contact</div>
+					<h2>Talk to us.</h2>
+				</div>
+				<div class="about-contact">
+					<div class="about-contact-row">
+						<span>Email</span>
+						<a href={ templ.SafeURL("mailto:" + contactEmail) }>{ contactEmail }</a>
+					</div>
+					<div class="about-contact-row">
+						<span>Run a plant?</span>
+						<a href="/get-started">Apply to get started</a>
+					</div>
+					<div class="about-contact-row">
+						<span>Already a customer?</span>
+						<p>Log in from your plant's own page: the link you were given at setup, followed by <span class="mono">/owner/login</span>. Can't find it? Email us.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="cta-band">
+			<div class="wrap">
+				<h2>Bring your plant online.</h2>
+				<p>No setup fee, no monthly fee. We review every application.</p>
+				<a class="button-primary" href="/get-started">
+					Get started
+					@components.Icon("arrow-right")
+				</a>
+			</div>
+		</section>
 	</main>
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/plants"
@@ -193,6 +194,14 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			renderSignupForm(s, w, r, "Those passwords don't match.")
 			return
 		}
+		if len(password) < ownerMinPasswordLength {
+			renderSignupForm(s, w, r, "Your password needs at least 8 characters.")
+			return
+		}
+		if r.FormValue("accept_terms") != "yes" {
+			renderSignupForm(s, w, r, "Please agree to the Terms of Service and Privacy Policy to submit your application.")
+			return
+		}
 
 		startingPriceNaira, priceErr := strconv.ParseFloat(strings.TrimSpace(r.FormValue("starting_price")), 64)
 		startingPriceKobo := int64(math.Round(startingPriceNaira * 100))
@@ -218,6 +227,7 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			OwnerEmail:          r.FormValue("owner_email"),
 			OwnerPassword:       password,
 			Status:              "provisioning",
+			TermsAcceptedAt:     time.Now(),
 		}
 		if priceErr == nil {
 			params.StartingPriceKobo = startingPriceKobo

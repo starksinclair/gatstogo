@@ -27,8 +27,8 @@ templ marketingPageShell(title string, content templ.Component) {
 			@components.BrandFavicons()
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-			<link rel="stylesheet" href="/static/css/tokens.css"/>
-			<link rel="stylesheet" href="/static/css/marketing.css"/>
+			<link rel="stylesheet" href={ cssURL("tokens.css") }/>
+			<link rel="stylesheet" href={ cssURL("marketing.css") }/>
 			<script>
 				// Themed <select> replacement -- see themedSelect
 				// (owner_admin.templ) for the shared markup this wires up
@@ -163,32 +163,56 @@ templ marketingHeader() {
 templ marketingFooter() {
 	<footer class="mkt-footer">
 		<div class="wrap">
-			<div class="mkt-footer-top">
-				<div class="brand-lockup">
-					@components.BrandMark("brand-mark", "primary", "GatsToGo")
-					<strong>GATSTOGO</strong>
+			<div class="ft-top">
+				<div class="ft-brand">
+					<a class="brand-lockup" href="/">
+						@components.BrandMark("brand-mark", "primary", "GatsToGo")
+						<strong>GATSTOGO</strong>
+					</a>
+					<p>Sell gas online and run your LPG plant from one dashboard: a branded page for customers, a terminal for staff, and live numbers for owners.</p>
 				</div>
-				<p class="mkt-footer-tagline">Sales, staff, and receipts for LPG plants, in one place: a branded page for customers to buy gas, a terminal for staff to redeem and fill, and a live dashboard for owners.</p>
+				<div class="ft-cta">
+					<strong>Run an LPG plant?</strong>
+					<span>No setup fee. No monthly fee.</span>
+					<a class="button-primary" href="/get-started">
+						Get started
+						@components.Icon("arrow-right")
+					</a>
+				</div>
 			</div>
-			<div class="mkt-footer-cols">
+			<nav class="ft-cols" aria-label="Footer">
 				<div>
-					<div class="mkt-footer-heading">Product</div>
+					<div class="ft-heading">Product</div>
 					<a href="/#how-it-works">How it works</a>
 					<a href="/pricing">Pricing</a>
+					<a href="/pricing#calculator">Fee calculator</a>
 					<a href="/get-started">Get started</a>
 				</div>
 				<div>
-					<div class="mkt-footer-heading">Company</div>
-					<a href="/about">About</a>
+					<div class="ft-heading">For plants</div>
+					<a href="/login">Owner sign in</a>
+					<a href="/help/getting-started">Owner help</a>
+					<a href="/help/buying-gas">Customer help</a>
 				</div>
 				<div>
-					<div class="mkt-footer-heading">Legal</div>
+					<div class="ft-heading">Company</div>
+					<a href="/about">About</a>
+					<a href="/contact">Contact</a>
+					<a href="/help">Help centre</a>
+				</div>
+				<div>
+					<div class="ft-heading">Legal</div>
 					<a href="/terms">Terms of Service</a>
 					<a href="/privacy">Privacy Policy</a>
 				</div>
-			</div>
-			<div class="mkt-footer-bottom">
+			</nav>
+			<div class="ft-bottom">
 				<span>© { currentYear() } GatsToGo. All rights reserved.</span>
+				<span class="ft-trust">
+					@components.Icon("lock")
+					Payments secured by Paystack
+				</span>
+				<span>Made for Nigerian LPG plants</span>
 			</div>
 		</div>
 	</footer>

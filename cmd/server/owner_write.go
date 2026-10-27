@@ -12,6 +12,7 @@ import (
 
 	"gatstogo/internal/audit"
 	"gatstogo/internal/auth"
+	"gatstogo/internal/csrf"
 	"gatstogo/internal/hours"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/prices"
@@ -20,6 +21,7 @@ import (
 	"gatstogo/internal/staff"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/internal/uploads"
+	"gatstogo/web/templates/pages"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -530,7 +532,7 @@ func ownerChangePasswordHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		if err := r.ParseForm(); err != nil {
-			http.Redirect(w, r, "/owner?error=password-form#settings", http.StatusSeeOther)
+			http.Redirect(w, r, "/owner/password?error=password-form", http.StatusSeeOther)
 			return
 		}
 		currentPassword := r.FormValue("current_password")
@@ -538,11 +540,19 @@ func ownerChangePasswordHandler(s *Server) http.HandlerFunc {
 		confirm := r.FormValue("new_password_confirm")
 
 		if currentPassword == "" || newPassword == "" || confirm == "" {
-			http.Redirect(w, r, "/owner?error=password-missing#settings", http.StatusSeeOther)
+			http.Redirect(w, r, "/owner/password?error=password-missing", http.StatusSeeOther)
 			return
 		}
 		if newPassword != confirm {
-			http.Redirect(w, r, "/owner?error=password-mismatch#settings", http.StatusSeeOther)
+			http.Redirect(w, r, "/owner/password?error=password-mismatch", http.StatusSeeOther)
+			return
+		}
+		if len(newPassword) < ownerMinPasswordLength {
+			http.Redirect(w, r, "/owner/password?error=password-short", http.StatusSeeOther)
+			return
+		}
+		if newPassword == currentPassword {
+			http.Redirect(w, r, "/owner/password?error=password-same", http.StatusSeeOther)
 			return
 		}
 
@@ -570,13 +580,40 @@ func ownerChangePasswordHandler(s *Server) http.HandlerFunc {
 		})
 		if err != nil {
 			if errors.Is(err, errCurrentPasswordWrong) {
-				http.Redirect(w, r, "/owner?error=password-current#settings", http.StatusSeeOther)
+				http.Redirect(w, r, "/owner/password?error=password-current", http.StatusSeeOther)
 				return
 			}
 			log.Println("owner change password:", err)
-			http.Redirect(w, r, "/owner?error=password-form#settings", http.StatusSeeOther)
+			http.Redirect(w, r, "/owner/password?error=password-form", http.StatusSeeOther)
 			return
 		}
-		http.Redirect(w, r, "/owner#settings", http.StatusSeeOther)
+		http.Redirect(w, r, "/owner/password?done=1", http.StatusSeeOther)
+	}
+}
+
+// ownerMinPasswordLength is the shortest new password the change-password
+// page accepts (the page's live checklist shows the same rule).
+const ownerMinPasswordLength = 8
+
+// ---- GET /owner/password ----
+
+// ownerChangePasswordPageHandler renders the dedicated change-password
+// page (Settings links here). ?error= shows a message from
+// ownerErrorMessage; ?done=1 shows the "Password updated" confirmation.
+func ownerChangePasswordPageHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		plant := middleware.GetPlant(r.Context())
+		actor := middleware.GetActor(r.Context())
+		if plant == nil || actor == nil {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		csrfToken, _ := csrf.Token(actor.Token)
+		errorMsg := ownerErrorMessage(r.URL.Query().Get("error"))
+		done := r.URL.Query().Get("done") == "1" && errorMsg == ""
+		w.Header().Set("Cache-Control", "no-store")
+		if err := pages.OwnerChangePassword(plant.Name, errorMsg, done, csrfToken).Render(r.Context(), w); err != nil {
+			log.Println("render owner change password:", err)
+		}
 	}
 }

@@ -10,11 +10,18 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "gatstogo/web/templates/components"
 
-// Pricing describes how GatsToGo is priced in prose rather than a fixed
-// plan table -- there's no billing/subscription system built anywhere in
-// this app yet (plants are onboarded manually, see internal/plants.Create),
-// so a table of invented tiers/numbers here would just be fiction. This
-// says that plainly rather than pretending otherwise.
+// Pricing states GatsToGo's real terms, which are set in code:
+//   - no setup or monthly fee (there is no subscription system);
+//   - GatsToGo keeps 1.5% of each online sale via Paystack split payment
+//     (internal/payments.PlantSettlementPercentage = 98.5, the plant's share);
+//   - Paystack's own processing fee comes out of the plant's share
+//     (cmd/server/tickets.go passes bearer "subaccount");
+//   - cash sales at the terminal never touch Paystack, so no GatsToGo fee.
+//
+// Paystack's local rate (1.5% + NGN 100, NGN 100 waived under NGN 2,500,
+// capped at NGN 2,000, all local channels) is from Paystack's own support
+// article "Transactions pricing". If any of these change, update this page
+// and the calculator constants below together.
 func Pricing() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -65,7 +72,7 @@ func pricingContent() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main class=\"article-layout\"><div class=\"section-eyebrow\">Pricing</div><h1>Straightforward pricing, set up with you</h1><p class=\"lede\">GatsToGo is early stage, working directly with a small number of plants. We haven't published a fixed plan table yet. Pricing is set up with you directly when your plant is onboarded, based on your size and how you take payments.</p><div class=\"pricing-row\"><span>Setting up your plant</span> <span>Included, as part of onboarding</span></div><div class=\"pricing-row\"><span>Branded customer page + terminal</span> <span>Included for every plant</span></div><div class=\"pricing-row\"><span>Online payments</span> <span>Processed by Paystack. Standard transaction fees apply</span></div><div class=\"pricing-row\"><span>Support</span> <span>Direct line to our team while we're onboarding new plants</span></div><h2>Want the details for your plant?</h2><p>Tell us about your plant through Get Started and we'll walk you through pricing when we set you up.</p><a class=\"button-primary\" href=\"/get-started\">Get started")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main class=\"pricing-page\"><section class=\"pricing-hero\"><div class=\"wrap\"><div class=\"section-eyebrow\">Pricing</div><h1>Pay only when you sell gas online.</h1><p class=\"pricing-lede\">No setup fee. No monthly fee. GatsToGo keeps 1.5% of each online sale, split automatically by Paystack. Cash sales at your counter are free.</p><div class=\"pricing-hero-ctas\"><a class=\"button-primary\" href=\"/get-started\">Get started")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -73,7 +80,151 @@ func pricingContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</a></main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</a> <a class=\"text-button\" href=\"#calculator\">Estimate your fees</a></div></div></section><section class=\"pricing-plan-section\"><div class=\"wrap\"><div class=\"pricing-plan\"><div class=\"pricing-plan-price\"><div class=\"pricing-plan-name\">One plan, everything included</div><div class=\"pricing-big\"><span class=\"pricing-big-number\">1.5%</span> <span class=\"pricing-big-unit\">per online sale</span></div><p class=\"pricing-plan-note\">Plus Paystack's standard processing fee on each online payment. Nothing on cash sales.</p><a class=\"button-primary pricing-plan-cta\" href=\"/get-started\">Put your plant online")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("arrow-right").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</a></div><div class=\"pricing-plan-features\"><div class=\"pricing-features-title\">Everything your plant needs</div><ul class=\"pricing-features\"><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "Branded buy-gas page for your customers</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "Bank transfer, card, and USSD payments</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Payouts straight to your bank account</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "Staff terminal for cash sales and fills</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "Owner dashboard with live sales and cash</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "Shift and cash drawer records</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "Pump and opening hours management</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "SMS receipts and customer reviews</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "Unlimited staff, pumps, and sales</li><li>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "Your own colors and logo</li></ul></div></div><div class=\"pricing-zero\" aria-label=\"What you don't pay\"><div class=\"pricing-zero-item\"><strong>₦0</strong><span>Setup</span></div><div class=\"pricing-zero-item\"><strong>₦0</strong><span>Monthly fee</span></div><div class=\"pricing-zero-item\"><strong>₦0</strong><span>Per staff or pump</span></div><div class=\"pricing-zero-item\"><strong>₦0</strong><span>On cash sales</span></div></div></div></section><section class=\"mkt-section pricing-calc-section\" id=\"calculator\"><div class=\"wrap\"><div class=\"mkt-section-head\"><div class=\"section-eyebrow\">Fee calculator</div><h2>See exactly what reaches your bank.</h2></div><div class=\"pricing-calc\" data-pricing-calc><div class=\"pricing-calc-inputs\"><div class=\"pricing-field\"><label for=\"calc-amount\">Average online sale</label><div class=\"pricing-input\"><span>₦</span> <input id=\"calc-amount\" type=\"number\" inputmode=\"numeric\" min=\"100\" step=\"100\" value=\"15000\" data-calc-amount></div><div class=\"pricing-chips\" role=\"group\" aria-label=\"Common sale amounts\"><button type=\"button\" data-calc-preset=\"7500\">₦7,500</button> <button type=\"button\" data-calc-preset=\"15000\">₦15,000</button> <button type=\"button\" data-calc-preset=\"18750\">₦18,750</button> <button type=\"button\" data-calc-preset=\"37500\">₦37,500</button></div></div><div class=\"pricing-field\"><label for=\"calc-sales\">Online sales per day <output data-calc-sales-out>40</output></label> <input id=\"calc-sales\" class=\"pricing-range\" type=\"range\" min=\"1\" max=\"300\" value=\"40\" data-calc-sales><div class=\"pricing-range-scale\"><span>1</span><span>300</span></div></div></div><div class=\"pricing-calc-result\" aria-live=\"polite\"><div class=\"pricing-calc-label\">Per sale</div><dl class=\"pricing-breakdown\"><div><dt>Customer pays</dt><dd data-calc-out=\"amount\">₦15,000</dd></div><div><dt>Paystack fee</dt><dd data-calc-out=\"paystack\">−₦325</dd></div><div><dt>GatsToGo fee (1.5%)</dt><dd data-calc-out=\"gatstogo\">−₦225</dd></div><div class=\"pricing-breakdown-total\"><dt>You receive</dt><dd data-calc-out=\"net\">₦14,450</dd></div></dl><div class=\"pricing-monthly\"><div class=\"pricing-calc-label\">Over 30 days</div><div class=\"pricing-monthly-net\" data-calc-out=\"monthNet\">₦17,340,000</div><div class=\"pricing-monthly-sub\">to your bank from <span data-calc-out=\"monthSales\">1,200</span> online sales. Total fees <span data-calc-out=\"monthFees\">₦660,000</span>.</div></div></div></div><p class=\"pricing-footnote\">Paystack's standard Nigerian rate is 1.5% + ₦100 per payment, capped at ₦2,000, with the ₦100 waived under ₦2,500. Estimates only; Paystack sets its own fees.</p></div></section><section class=\"mkt-section\"><div class=\"wrap\"><div class=\"mkt-section-head\"><div class=\"section-eyebrow\">How payouts work</div><h2>Your money never sits with us.</h2></div><ol class=\"pricing-steps\"><li><strong>Customer pays online</strong><p>By bank transfer, card, or USSD on your branded page, and gets a code for the counter.</p></li><li><strong>Paystack splits the payment</strong><p>At the moment of payment, 98.5% is set aside for your plant and 1.5% for GatsToGo. No invoices, no manual payouts.</p></li><li><strong>Your share lands in your bank</strong><p>Paystack settles straight into the account you registered, on its normal settlement schedule.</p></li></ol></div></section><section class=\"mkt-section\"><div class=\"wrap pricing-faq-wrap\"><div class=\"mkt-section-head\"><div class=\"section-eyebrow\">Questions</div><h2>Pricing, answered.</h2></div><div class=\"pricing-faq\"><details open><summary><span>Are there any setup or monthly fees?</span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("caret-down").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</summary><p>No. Setting up your plant, your branded buy-gas page, the staff terminal, and the owner dashboard cost nothing. You only pay when a customer pays online.</p></details> <details><summary><span>What exactly is the 1.5%?</span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("caret-down").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</summary><p>GatsToGo keeps 1.5% of each online sale. Paystack splits it automatically when the customer pays, so 98.5% of the sale is your plant's from the start.</p></details> <details><summary><span>Who pays Paystack's fee?</span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("caret-down").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</summary><p>It comes out of your plant's share, at Paystack's standard rate: 1.5% + ₦100 per payment, capped at ₦2,000, and the ₦100 is waived on payments under ₦2,500. The calculator above includes it.</p></details> <details><summary><span>Do you charge on cash sales?</span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("caret-down").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</summary><p>No. Cash paid at your counter and recorded on the staff terminal never goes through Paystack, so there is no GatsToGo fee on it.</p></details> <details><summary><span>When does the money reach my bank?</span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("caret-down").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</summary><p>Paystack pays your share directly into the bank account you registered at sign-up, on its normal settlement schedule. GatsToGo never holds your money.</p></details> <details><summary><span>Are there limits on staff, pumps, or sales?</span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("caret-down").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</summary><p>No. Add as many staff and pumps as your plant has, and sell as much as you can. The price is the same 1.5% on every online sale.</p></details></div></div></section><section class=\"cta-band\"><div class=\"wrap\"><h2>Start selling online this week.</h2><p>Tell us about your plant. No setup fee, no monthly fee.</p><a class=\"button-primary\" href=\"/get-started\">Get started")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("arrow-right").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</a></div></section><script>\n\t\t\t(function () {\n\t\t\t\t// Keep in sync with internal/payments (GatsToGo share) and\n\t\t\t\t// Paystack's published local rate (see Pricing's comment).\n\t\t\t\tvar GATSTOGO_RATE = 0.015;\n\t\t\t\tvar PAYSTACK_RATE = 0.015, PAYSTACK_FLAT = 100, PAYSTACK_FLAT_FROM = 2500, PAYSTACK_CAP = 2000;\n\t\t\t\tvar root = document.querySelector(\"[data-pricing-calc]\");\n\t\t\t\tif (!root) return;\n\t\t\t\tvar amountInput = root.querySelector(\"[data-calc-amount]\");\n\t\t\t\tvar salesInput = root.querySelector(\"[data-calc-sales]\");\n\t\t\t\tvar salesOut = root.querySelector(\"[data-calc-sales-out]\");\n\t\t\t\tfunction naira(n) { return \"₦\" + Math.round(n).toLocaleString(\"en-NG\"); }\n\t\t\t\tfunction out(key, text) { var el = root.querySelector('[data-calc-out=\"' + key + '\"]'); if (el) el.textContent = text; }\n\t\t\t\tfunction paystackFee(amount) {\n\t\t\t\t\tvar fee = amount * PAYSTACK_RATE + (amount >= PAYSTACK_FLAT_FROM ? PAYSTACK_FLAT : 0);\n\t\t\t\t\treturn Math.min(fee, PAYSTACK_CAP);\n\t\t\t\t}\n\t\t\t\tfunction update() {\n\t\t\t\t\tvar amount = Math.max(0, Number(amountInput.value) || 0);\n\t\t\t\t\tvar perDay = Number(salesInput.value) || 0;\n\t\t\t\t\t// round each fee to whole naira first, so the rows shown\n\t\t\t\t\t// always add up exactly to \"You receive\"\n\t\t\t\t\tvar ps = Math.round(paystackFee(amount));\n\t\t\t\t\tvar gg = Math.round(amount * GATSTOGO_RATE);\n\t\t\t\t\tvar net = Math.max(0, amount - ps - gg);\n\t\t\t\t\tvar sales = perDay * 30;\n\t\t\t\t\tsalesOut.textContent = perDay;\n\t\t\t\t\tout(\"amount\", naira(amount));\n\t\t\t\t\tout(\"paystack\", \"−\" + naira(ps));\n\t\t\t\t\tout(\"gatstogo\", \"−\" + naira(gg));\n\t\t\t\t\tout(\"net\", naira(net));\n\t\t\t\t\tout(\"monthNet\", naira(net * sales));\n\t\t\t\t\tout(\"monthSales\", sales.toLocaleString(\"en-NG\"));\n\t\t\t\t\tout(\"monthFees\", naira((ps + gg) * sales));\n\t\t\t\t\troot.querySelectorAll(\"[data-calc-preset]\").forEach(function (b) {\n\t\t\t\t\t\tb.classList.toggle(\"is-active\", Number(b.dataset.calcPreset) === amount);\n\t\t\t\t\t});\n\t\t\t\t\tvar pct = (perDay - salesInput.min) / (salesInput.max - salesInput.min) * 100;\n\t\t\t\t\tsalesInput.style.setProperty(\"--fill\", pct + \"%\");\n\t\t\t\t}\n\t\t\t\tamountInput.addEventListener(\"input\", update);\n\t\t\t\tsalesInput.addEventListener(\"input\", update);\n\t\t\t\troot.querySelectorAll(\"[data-calc-preset]\").forEach(function (b) {\n\t\t\t\t\tb.addEventListener(\"click\", function () { amountInput.value = b.dataset.calcPreset; update(); });\n\t\t\t\t});\n\t\t\t\tupdate();\n\t\t\t})();\n\t\t</script></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

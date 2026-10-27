@@ -67,7 +67,33 @@ func marketingPageShell(title string, content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/css/tokens.css\"><link rel=\"stylesheet\" href=\"/static/css/marketing.css\"><script>\n\t\t\t\t// Themed <select> replacement -- see themedSelect\n\t\t\t\t// (owner_admin.templ) for the shared markup this wires up\n\t\t\t\t// and why (CSS alone can restyle a <select>'s closed box\n\t\t\t\t// but never its open dropdown list cross-browser).\n\t\t\t\t// Progressive enhancement: the real <select name=\"...\">\n\t\t\t\t// stays in the DOM and is still exactly what gets\n\t\t\t\t// submitted with the form; marketing.css only hides it (in\n\t\t\t\t// favor of the custom trigger+listbox) once a shell has\n\t\t\t\t// the js-ready class this loop adds, so a page where this\n\t\t\t\t// script fails to run still has a fully working, if\n\t\t\t\t// plainer, native dropdown instead of nothing. Exact same\n\t\t\t\t// wiring as opsShell's own copy (owner_admin.templ) --\n\t\t\t\t// duplicated rather than shared, since the admin console\n\t\t\t\t// and the public marketing site don't otherwise share a\n\t\t\t\t// script file to put this in.\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-select]\").forEach(function (shell) {\n\t\t\t\t\t\tvar nativeSelect = shell.querySelector(\".select-native\");\n\t\t\t\t\t\tvar trigger = shell.querySelector(\".select-trigger\");\n\t\t\t\t\t\tvar valueLabel = shell.querySelector(\".select-value\");\n\t\t\t\t\t\tvar list = shell.querySelector(\".select-list\");\n\t\t\t\t\t\tvar items = Array.prototype.slice.call(list ? list.querySelectorAll('[role=\"option\"]') : []);\n\t\t\t\t\t\tif (!nativeSelect || !trigger || !list || !items.length) return;\n\n\t\t\t\t\t\tvar highlighted = 0;\n\n\t\t\t\t\t\tfunction syncFromNative() {\n\t\t\t\t\t\t\titems.forEach(function (li, i) {\n\t\t\t\t\t\t\t\tvar isSelected = li.dataset.value === nativeSelect.value;\n\t\t\t\t\t\t\t\tli.setAttribute(\"aria-selected\", isSelected ? \"true\" : \"false\");\n\t\t\t\t\t\t\t\tli.classList.toggle(\"selected\", isSelected);\n\t\t\t\t\t\t\t\tif (isSelected) {\n\t\t\t\t\t\t\t\t\tvalueLabel.textContent = li.textContent;\n\t\t\t\t\t\t\t\t\thighlighted = i;\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction highlightItem(index) {\n\t\t\t\t\t\t\titems.forEach(function (li, i) { li.classList.toggle(\"highlighted\", i === index); });\n\t\t\t\t\t\t\tif (items[index].scrollIntoView) items[index].scrollIntoView({ block: \"nearest\" });\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction openList() {\n\t\t\t\t\t\t\tdocument.querySelectorAll(\".select-shell.open\").forEach(function (openShell) {\n\t\t\t\t\t\t\t\tif (openShell !== shell) closeList(openShell);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\tshell.classList.add(\"open\");\n\t\t\t\t\t\t\ttrigger.setAttribute(\"aria-expanded\", \"true\");\n\t\t\t\t\t\t\tlist.hidden = false;\n\t\t\t\t\t\t\thighlightItem(highlighted);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction closeList(target) {\n\t\t\t\t\t\t\ttarget = target || shell;\n\t\t\t\t\t\t\ttarget.classList.remove(\"open\");\n\t\t\t\t\t\t\ttarget.querySelector(\".select-trigger\").setAttribute(\"aria-expanded\", \"false\");\n\t\t\t\t\t\t\ttarget.querySelector(\".select-list\").hidden = true;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction selectItem(index) {\n\t\t\t\t\t\t\tvar li = items[index];\n\t\t\t\t\t\t\tif (!li) return;\n\t\t\t\t\t\t\tnativeSelect.value = li.dataset.value;\n\t\t\t\t\t\t\tnativeSelect.dispatchEvent(new Event(\"change\", { bubbles: true }));\n\t\t\t\t\t\t\tsyncFromNative();\n\t\t\t\t\t\t\tcloseList();\n\t\t\t\t\t\t\ttrigger.focus();\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\ttrigger.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\tshell.classList.contains(\"open\") ? closeList() : openList();\n\t\t\t\t\t\t});\n\t\t\t\t\t\ttrigger.addEventListener(\"keydown\", function (event) {\n\t\t\t\t\t\t\tif (event.key === \"ArrowDown\" || event.key === \"ArrowUp\") {\n\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\tif (!shell.classList.contains(\"open\")) { openList(); return; }\n\t\t\t\t\t\t\t\tvar dir = event.key === \"ArrowDown\" ? 1 : -1;\n\t\t\t\t\t\t\t\thighlighted = (highlighted + dir + items.length) % items.length;\n\t\t\t\t\t\t\t\thighlightItem(highlighted);\n\t\t\t\t\t\t\t} else if (event.key === \"Enter\" || event.key === \" \") {\n\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\tshell.classList.contains(\"open\") ? selectItem(highlighted) : openList();\n\t\t\t\t\t\t\t} else if (event.key === \"Escape\" && shell.classList.contains(\"open\")) {\n\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\tcloseList();\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\t\t\t\t\t\titems.forEach(function (li, i) {\n\t\t\t\t\t\t\tli.addEventListener(\"click\", function () { selectItem(i); });\n\t\t\t\t\t\t\tli.addEventListener(\"mouseenter\", function () { highlighted = i; highlightItem(i); });\n\t\t\t\t\t\t});\n\t\t\t\t\t\tdocument.addEventListener(\"click\", function (event) {\n\t\t\t\t\t\t\tif (shell.classList.contains(\"open\") && !shell.contains(event.target)) closeList();\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\tsyncFromNative();\n\t\t\t\t\t\tnativeSelect.setAttribute(\"tabindex\", \"-1\");\n\t\t\t\t\t\tnativeSelect.setAttribute(\"aria-hidden\", \"true\");\n\t\t\t\t\t\tshell.classList.add(\"js-ready\");\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t</script></head><body>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link href=\"https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 templ.SafeURL
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(cssURL("tokens.css"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/marketing_shell.templ`, Line: 30, Col: 53}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><link rel=\"stylesheet\" href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 templ.SafeURL
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(cssURL("marketing.css"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/marketing_shell.templ`, Line: 31, Col: 56}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><script>\n\t\t\t\t// Themed <select> replacement -- see themedSelect\n\t\t\t\t// (owner_admin.templ) for the shared markup this wires up\n\t\t\t\t// and why (CSS alone can restyle a <select>'s closed box\n\t\t\t\t// but never its open dropdown list cross-browser).\n\t\t\t\t// Progressive enhancement: the real <select name=\"...\">\n\t\t\t\t// stays in the DOM and is still exactly what gets\n\t\t\t\t// submitted with the form; marketing.css only hides it (in\n\t\t\t\t// favor of the custom trigger+listbox) once a shell has\n\t\t\t\t// the js-ready class this loop adds, so a page where this\n\t\t\t\t// script fails to run still has a fully working, if\n\t\t\t\t// plainer, native dropdown instead of nothing. Exact same\n\t\t\t\t// wiring as opsShell's own copy (owner_admin.templ) --\n\t\t\t\t// duplicated rather than shared, since the admin console\n\t\t\t\t// and the public marketing site don't otherwise share a\n\t\t\t\t// script file to put this in.\n\t\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\t\tdocument.querySelectorAll(\"[data-select]\").forEach(function (shell) {\n\t\t\t\t\t\tvar nativeSelect = shell.querySelector(\".select-native\");\n\t\t\t\t\t\tvar trigger = shell.querySelector(\".select-trigger\");\n\t\t\t\t\t\tvar valueLabel = shell.querySelector(\".select-value\");\n\t\t\t\t\t\tvar list = shell.querySelector(\".select-list\");\n\t\t\t\t\t\tvar items = Array.prototype.slice.call(list ? list.querySelectorAll('[role=\"option\"]') : []);\n\t\t\t\t\t\tif (!nativeSelect || !trigger || !list || !items.length) return;\n\n\t\t\t\t\t\tvar highlighted = 0;\n\n\t\t\t\t\t\tfunction syncFromNative() {\n\t\t\t\t\t\t\titems.forEach(function (li, i) {\n\t\t\t\t\t\t\t\tvar isSelected = li.dataset.value === nativeSelect.value;\n\t\t\t\t\t\t\t\tli.setAttribute(\"aria-selected\", isSelected ? \"true\" : \"false\");\n\t\t\t\t\t\t\t\tli.classList.toggle(\"selected\", isSelected);\n\t\t\t\t\t\t\t\tif (isSelected) {\n\t\t\t\t\t\t\t\t\tvalueLabel.textContent = li.textContent;\n\t\t\t\t\t\t\t\t\thighlighted = i;\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction highlightItem(index) {\n\t\t\t\t\t\t\titems.forEach(function (li, i) { li.classList.toggle(\"highlighted\", i === index); });\n\t\t\t\t\t\t\tif (items[index].scrollIntoView) items[index].scrollIntoView({ block: \"nearest\" });\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction openList() {\n\t\t\t\t\t\t\tdocument.querySelectorAll(\".select-shell.open\").forEach(function (openShell) {\n\t\t\t\t\t\t\t\tif (openShell !== shell) closeList(openShell);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\tshell.classList.add(\"open\");\n\t\t\t\t\t\t\ttrigger.setAttribute(\"aria-expanded\", \"true\");\n\t\t\t\t\t\t\tlist.hidden = false;\n\t\t\t\t\t\t\thighlightItem(highlighted);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction closeList(target) {\n\t\t\t\t\t\t\ttarget = target || shell;\n\t\t\t\t\t\t\ttarget.classList.remove(\"open\");\n\t\t\t\t\t\t\ttarget.querySelector(\".select-trigger\").setAttribute(\"aria-expanded\", \"false\");\n\t\t\t\t\t\t\ttarget.querySelector(\".select-list\").hidden = true;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tfunction selectItem(index) {\n\t\t\t\t\t\t\tvar li = items[index];\n\t\t\t\t\t\t\tif (!li) return;\n\t\t\t\t\t\t\tnativeSelect.value = li.dataset.value;\n\t\t\t\t\t\t\tnativeSelect.dispatchEvent(new Event(\"change\", { bubbles: true }));\n\t\t\t\t\t\t\tsyncFromNative();\n\t\t\t\t\t\t\tcloseList();\n\t\t\t\t\t\t\ttrigger.focus();\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\ttrigger.addEventListener(\"click\", function () {\n\t\t\t\t\t\t\tshell.classList.contains(\"open\") ? closeList() : openList();\n\t\t\t\t\t\t});\n\t\t\t\t\t\ttrigger.addEventListener(\"keydown\", function (event) {\n\t\t\t\t\t\t\tif (event.key === \"ArrowDown\" || event.key === \"ArrowUp\") {\n\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\tif (!shell.classList.contains(\"open\")) { openList(); return; }\n\t\t\t\t\t\t\t\tvar dir = event.key === \"ArrowDown\" ? 1 : -1;\n\t\t\t\t\t\t\t\thighlighted = (highlighted + dir + items.length) % items.length;\n\t\t\t\t\t\t\t\thighlightItem(highlighted);\n\t\t\t\t\t\t\t} else if (event.key === \"Enter\" || event.key === \" \") {\n\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\tshell.classList.contains(\"open\") ? selectItem(highlighted) : openList();\n\t\t\t\t\t\t\t} else if (event.key === \"Escape\" && shell.classList.contains(\"open\")) {\n\t\t\t\t\t\t\t\tevent.preventDefault();\n\t\t\t\t\t\t\t\tcloseList();\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\t\t\t\t\t\titems.forEach(function (li, i) {\n\t\t\t\t\t\t\tli.addEventListener(\"click\", function () { selectItem(i); });\n\t\t\t\t\t\t\tli.addEventListener(\"mouseenter\", function () { highlighted = i; highlightItem(i); });\n\t\t\t\t\t\t});\n\t\t\t\t\t\tdocument.addEventListener(\"click\", function (event) {\n\t\t\t\t\t\t\tif (shell.classList.contains(\"open\") && !shell.contains(event.target)) closeList();\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\tsyncFromNative();\n\t\t\t\t\t\tnativeSelect.setAttribute(\"tabindex\", \"-1\");\n\t\t\t\t\t\tnativeSelect.setAttribute(\"aria-hidden\", \"true\");\n\t\t\t\t\t\tshell.classList.add(\"js-ready\");\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t</script></head><body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -83,7 +109,7 @@ func marketingPageShell(title string, content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -107,12 +133,12 @@ func marketingHeader() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<header class=\"mkt-header\"><div class=\"mkt-header-inner\"><a class=\"brand-lockup\" href=\"/\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<header class=\"mkt-header\"><div class=\"mkt-header-inner\"><a class=\"brand-lockup\" href=\"/\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -120,7 +146,7 @@ func marketingHeader() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<strong>GATSTOGO</strong></a><nav class=\"mkt-nav\"><a href=\"/#how-it-works\">How it works</a> <a href=\"/pricing\">Pricing</a> <a href=\"/about\">About</a></nav><div class=\"mkt-header-actions\"><a class=\"button-primary\" href=\"/get-started\">Get started")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<strong>GATSTOGO</strong></a><nav class=\"mkt-nav\"><a href=\"/#how-it-works\">How it works</a> <a href=\"/pricing\">Pricing</a> <a href=\"/about\">About</a></nav><div class=\"mkt-header-actions\"><a class=\"button-primary\" href=\"/get-started\">Get started")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -128,7 +154,7 @@ func marketingHeader() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</a></div></div></header>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</a></div></div></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -152,12 +178,12 @@ func marketingFooter() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<footer class=\"mkt-footer\"><div class=\"wrap\"><div class=\"mkt-footer-top\"><div class=\"brand-lockup\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<footer class=\"mkt-footer\"><div class=\"wrap\"><div class=\"ft-top\"><div class=\"ft-brand\"><a class=\"brand-lockup\" href=\"/\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -165,20 +191,36 @@ func marketingFooter() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<strong>GATSTOGO</strong></div><p class=\"mkt-footer-tagline\">Sales, staff, and receipts for LPG plants, in one place: a branded page for customers to buy gas, a terminal for staff to redeem and fill, and a live dashboard for owners.</p></div><div class=\"mkt-footer-cols\"><div><div class=\"mkt-footer-heading\">Product</div><a href=\"/#how-it-works\">How it works</a> <a href=\"/pricing\">Pricing</a> <a href=\"/get-started\">Get started</a></div><div><div class=\"mkt-footer-heading\">Company</div><a href=\"/about\">About</a></div><div><div class=\"mkt-footer-heading\">Legal</div><a href=\"/terms\">Terms of Service</a> <a href=\"/privacy\">Privacy Policy</a></div></div><div class=\"mkt-footer-bottom\"><span>© ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<strong>GATSTOGO</strong></a><p>Sell gas online and run your LPG plant from one dashboard: a branded page for customers, a terminal for staff, and live numbers for owners.</p></div><div class=\"ft-cta\"><strong>Run an LPG plant?</strong> <span>No setup fee. No monthly fee.</span> <a class=\"button-primary\" href=\"/get-started\">Get started")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(currentYear())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/marketing_shell.templ`, Line: 191, Col: 28}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		templ_7745c5c3_Err = components.Icon("arrow-right").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " GatsToGo. All rights reserved.</span></div></div></footer>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</a></div></div><nav class=\"ft-cols\" aria-label=\"Footer\"><div><div class=\"ft-heading\">Product</div><a href=\"/#how-it-works\">How it works</a> <a href=\"/pricing\">Pricing</a> <a href=\"/pricing#calculator\">Fee calculator</a> <a href=\"/get-started\">Get started</a></div><div><div class=\"ft-heading\">For plants</div><a href=\"/login\">Owner sign in</a> <a href=\"/help/getting-started\">Owner help</a> <a href=\"/help/buying-gas\">Customer help</a></div><div><div class=\"ft-heading\">Company</div><a href=\"/about\">About</a> <a href=\"/contact\">Contact</a> <a href=\"/help\">Help centre</a></div><div><div class=\"ft-heading\">Legal</div><a href=\"/terms\">Terms of Service</a> <a href=\"/privacy\">Privacy Policy</a></div></nav><div class=\"ft-bottom\"><span>© ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(currentYear())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/marketing_shell.templ`, Line: 210, Col: 28}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " GatsToGo. All rights reserved.</span> <span class=\"ft-trust\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Icon("lock").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "Payments secured by Paystack</span> <span>Made for Nigerian LPG plants</span></div></div></footer>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

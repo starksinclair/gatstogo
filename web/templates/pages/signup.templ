@@ -58,21 +58,45 @@ templ signupContent(data SignupViewData) {
 				<a class="button-primary" href="/">Back to homepage</a>
 			</div>
 		} else {
-			<div class="signup-layout">
-				<div class="section-eyebrow">Get started</div>
-				<h1>Tell us about your plant</h1>
-				<p class="lede">A few details to set up your branded page and owner login. We review every application before it goes live.</p>
-				if data.ErrorMsg != "" {
-					<div class="inline-alert">
-						@components.Icon("warning-circle")
-						{ data.ErrorMsg }
+			<div class="signup-layout signup-split">
+				<div class="signup-head">
+					<div class="section-eyebrow">Get started</div>
+					<h1>Tell us about your plant</h1>
+					<p class="lede">About 5 minutes. We set up your branded page and owner login, and review every application before it goes live.</p>
+					if data.ErrorMsg != "" {
+						<div class="inline-alert">
+							@components.Icon("warning-circle")
+							{ data.ErrorMsg }
+						</div>
+					}
+				</div>
+				<aside class="signup-aside">
+					<div class="signup-aside-block">
+						<div class="signup-aside-title">Have these ready</div>
+						<ul class="signup-ready">
+							<li>@components.Icon("identification-badge") <span><strong>CAC number</strong> RC (company) or BN (business name)</span></li>
+							<li>@components.Icon("shield-check") <span><strong>NMDPRA licence number</strong> From your Licence to Operate</span></li>
+							<li>@components.Icon("bank") <span><strong>Business bank account</strong> Where customer payments settle</span></li>
+							<li>@components.Icon("phone") <span><strong>Your phone and email</strong> For your owner login and updates</span></li>
+						</ul>
 					</div>
-				}
-				<form method="post" action="/get-started" data-account-resolve>
+					<div class="signup-aside-block signup-aside-next">
+						<div class="signup-aside-title">What happens next</div>
+						<ol class="signup-next">
+							<li><strong>We verify your details</strong> CAC, NMDPRA licence, and bank account.</li>
+							<li><strong>We contact you</strong> By email and SMS, with your login details.</li>
+							<li><strong>You go live</strong> Customers can buy gas on your page.</li>
+						</ol>
+					</div>
+					<div class="signup-aside-block signup-aside-price">
+						<strong>1.5% per online sale.</strong> No setup or monthly fee. <a href="/pricing">See pricing</a>
+					</div>
+				</aside>
+				<form class="signup-form" method="post" action="/get-started" data-account-resolve>
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="field-group">
-						<div class="field-group-heading">Plant details</div>
+						<div class="field-group-heading"><span class="step-num">01</span>Plant details</div>
 						<div class="field-underline">
 							<label for="name">Plant name</label>
 							<input id="name" type="text" name="name" value={ data.Name } placeholder="Sunrise Gas Plant" required autofocus/>
@@ -101,6 +125,78 @@ templ signupContent(data SignupViewData) {
 							<input id="starting_price" type="text" name="starting_price" value={ data.StartingPrice } placeholder="1200" inputmode="decimal" required/>
 							<p class="field-hint">You can change this any time from your dashboard once you're live.</p>
 						</div>
+					</div>
+
+					<div class="field-group">
+						<div class="field-group-heading"><span class="step-num">02</span>Business details</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="legal_business_name">Legal business name</label>
+								<input id="legal_business_name" type="text" name="legal_business_name" value={ data.LegalBusinessName } placeholder="As registered with CAC" required/>
+							</div>
+							<div class="field-underline">
+								<label for="cac_number">CAC registration number</label>
+								<input id="cac_number" type="text" name="cac_number" value={ data.CACNumber } placeholder="RC 1234567 or BN 1234567" required/>
+								<p class="field-hint">RC for a registered company, BN for a business name.</p>
+							</div>
+						</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label>State</label>
+								@themedSelect("state", stateSelectOptions(), data.State)
+							</div>
+							<div class="field-underline">
+								<label for="nmdpra_license_number">NMDPRA licence number</label>
+								<input id="nmdpra_license_number" type="text" name="nmdpra_license_number" value={ data.NMDPRALicenseNumber } placeholder="Licence number" required/>
+								<p class="field-hint">As shown on your NMDPRA Licence to Operate.</p>
+							</div>
+						</div>
+					</div>
+
+					<div class="field-group">
+						<div class="field-group-heading"><span class="step-num">03</span>Payout details</div>
+						<p class="field-hint field-group-intro">Customer payments settle straight to this account. GatsToGo keeps 1.5% automatically, no manual payouts. The account name must match your business.</p>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label>Bank</label>
+								@themedSelect("bank_code", bankSelectOptions(data.Banks), data.BankCode)
+							</div>
+							<div class="field-underline">
+								<label for="bank_account_number">Account number</label>
+								<input id="bank_account_number" type="text" name="bank_account_number" value={ data.BankAccountNumber } placeholder="0123456789" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required/>
+							</div>
+						</div>
+						<div class="account-readout" data-account-name data-state="idle">Enter your account number and bank to verify.</div>
+					</div>
+
+					<div class="field-group">
+						<div class="field-group-heading"><span class="step-num">04</span>Owner login</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="owner_name">Your name</label>
+								<input id="owner_name" type="text" name="owner_name" value={ data.OwnerName } placeholder="Ada Nwosu" required/>
+							</div>
+							<div class="field-underline">
+								<label for="owner_phone">Your phone number</label>
+								<input id="owner_phone" type="tel" name="owner_phone" value={ data.OwnerPhone } placeholder="0803 000 0000" required/>
+							</div>
+						</div>
+						<div class="field-underline">
+							<label for="owner_email">Your email</label>
+							<input id="owner_email" type="email" name="owner_email" value={ data.OwnerEmail } placeholder="ada@sunrisegas.ng" required/>
+						</div>
+						<div class="field-grid">
+							<div class="field-underline">
+								<label for="owner_password">Password</label>
+								<input id="owner_password" type="password" name="owner_password" autocomplete="new-password" minlength="8" required/>
+								<p class="field-hint">At least 8 characters.</p>
+							</div>
+							<div class="field-underline">
+								<label for="owner_password_confirm">Confirm password</label>
+								<input id="owner_password_confirm" type="password" name="owner_password_confirm" autocomplete="new-password" minlength="8" required/>
+							</div>
+						</div>
+						<p class="field-hint">This is what you'll use to log in to your plant's dashboard once it's approved: your phone number and this password, at your own plant's login page.</p>
 					</div>
 
 					<details class="advanced-group">
@@ -133,78 +229,26 @@ templ signupContent(data SignupViewData) {
 						</div>
 					</details>
 
-					<div class="field-group">
-						<div class="field-group-heading">Business details</div>
-						<div class="field-grid">
-							<div class="field-underline">
-								<label for="legal_business_name">Legal business name</label>
-								<input id="legal_business_name" type="text" name="legal_business_name" value={ data.LegalBusinessName } placeholder="As registered with CAC" required/>
-							</div>
-							<div class="field-underline">
-								<label for="cac_number">CAC registration number</label>
-								<input id="cac_number" type="text" name="cac_number" value={ data.CACNumber } placeholder="RC 1234567" required/>
-							</div>
-						</div>
-						<div class="field-grid">
-							<div class="field-underline">
-								<label>State</label>
-								@themedSelect("state", stateSelectOptions(), data.State)
-							</div>
-							<div class="field-underline">
-								<label for="nmdpra_license_number">NMDPRA license number</label>
-								<input id="nmdpra_license_number" type="text" name="nmdpra_license_number" value={ data.NMDPRALicenseNumber } placeholder="License number" required/>
-							</div>
-						</div>
-					</div>
-
-					<div class="field-group">
-						<div class="field-group-heading">Payout details</div>
-						<p class="field-hint">Customer payments settle straight to this account. GatsToGo keeps a 1.5% fee automatically, no manual payout ever needed.</p>
-						<div class="field-grid">
-							<div class="field-underline">
-								<label>Bank</label>
-								@themedSelect("bank_code", bankSelectOptions(data.Banks), data.BankCode)
-							</div>
-							<div class="field-underline">
-								<label for="bank_account_number">Account number</label>
-								<input id="bank_account_number" type="text" name="bank_account_number" value={ data.BankAccountNumber } placeholder="0123456789" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required/>
-							</div>
-						</div>
-						<div class="account-readout" data-account-name data-state="idle">Enter your account number and bank to verify.</div>
-					</div>
-
-					<div class="field-group">
-						<div class="field-group-heading">Owner login</div>
-						<div class="field-grid">
-							<div class="field-underline">
-								<label for="owner_name">Your name</label>
-								<input id="owner_name" type="text" name="owner_name" value={ data.OwnerName } placeholder="Ada Nwosu" required/>
-							</div>
-							<div class="field-underline">
-								<label for="owner_phone">Your phone number</label>
-								<input id="owner_phone" type="tel" name="owner_phone" value={ data.OwnerPhone } placeholder="0803 000 0000" required/>
-							</div>
-						</div>
-						<div class="field-underline">
-							<label for="owner_email">Your email</label>
-							<input id="owner_email" type="email" name="owner_email" value={ data.OwnerEmail } placeholder="ada@sunrisegas.ng" required/>
-						</div>
-						<div class="field-grid">
-							<div class="field-underline">
-								<label for="owner_password">Password</label>
-								<input id="owner_password" type="password" name="owner_password" autocomplete="new-password" required/>
-							</div>
-							<div class="field-underline">
-								<label for="owner_password_confirm">Confirm password</label>
-								<input id="owner_password_confirm" type="password" name="owner_password_confirm" autocomplete="new-password" required/>
-							</div>
-						</div>
-						<p class="field-hint">This is what you'll use to log in to your plant's dashboard once it's approved: your phone number and this password, at your own plant's login page.</p>
-					</div>
-
+					<label class="signup-consent">
+						<input type="checkbox" name="accept_terms" value="yes" required/>
+						<span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms of Service</a> and have read the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. I'm authorised to register this business.</span>
+					</label>
 					<button class="button-primary" type="submit" disabled>Submit application</button>
+					<p class="signup-submit-note">Submit unlocks once your bank account is verified above.</p>
 				</form>
 				@accountResolveScript()
+				<script>
+					(function () {
+						var input = document.getElementById("slug");
+						var preview = document.querySelector(".slug-preview strong");
+						if (!input || !preview) return;
+						input.addEventListener("input", function () {
+							var v = input.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+							if (v !== input.value) input.value = v;
+							preview.textContent = v || "yourname";
+						});
+					})();
+				</script>
 			</div>
 		}
 	</main>
@@ -215,7 +259,7 @@ templ signupContent(data SignupViewData) {
 // they've typed anything, so the field never reads as blank/broken.
 func slugOrPlaceholder(slug string) string {
 	if slug == "" {
-		return "yourslug"
+		return "yourname"
 	}
 	return slug
 }

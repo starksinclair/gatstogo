@@ -71,17 +71,69 @@
 	gap: 8px;
 	min-width: 0;
 }
-.pump-edit-row {
+/* ---- Pumps (Operations tab): full-width rows on one shared column
+   template, with a single header instead of a label over every field.
+   The add-pump form reuses the same columns so everything lines up. ---- */
+.pump-list { border-top: 1px solid var(--line); }
+.pump-row,
+.pump-add {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 92px minmax(150px, 1fr);
-	gap: 10px;
-	padding: 12px 0;
+	grid-template-columns: minmax(0, 2fr) 110px minmax(200px, 1.5fr) 130px 120px;
+	align-items: center;
+	gap: 16px;
+}
+.pump-row {
+	padding: 14px 0;
 	border-bottom: 1px solid var(--line);
 }
-.pump-edit-row .btn { justify-self: start; }
+.pump-head {
+	padding: 10px 0;
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+/* Desktop: the header row names the columns, so hide per-field labels
+   visually (still read by screen readers). */
+.pump-row .field > label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+.pump-queue strong { font-family: var(--font-mono, monospace); font-size: 14px; }
+.pump-action { display: flex; justify-content: flex-end; }
+.pump-action .btn { width: 100%; justify-content: center; }
+/* Same columns as the rows: name and order line up above/below, the
+   button sits in the action column. (Hidden inputs take no cell.) */
+.pump-add { align-items: end; margin-top: 24px; }
+.pump-add .pump-action { grid-column: 5; }
 
-@media (max-width: 760px) {
-	.pump-edit-row { grid-template-columns: 1fr; }
+/* Tablet: drop the header, give each pump a compact two-column card. */
+@media (max-width: 900px) {
+	.pump-head { display: none; }
+	.pump-row,
+	.pump-add {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 12px 16px;
+		align-items: end;
+	}
+	.pump-row { padding: 18px 0; }
+	.pump-row .field > label {
+		position: static;
+		width: auto;
+		height: auto;
+		overflow: visible;
+		clip: auto;
+		white-space: normal;
+	}
+	.pump-row > .field:first-of-type,
+	.pump-add > .field:first-of-type,
+	.pump-add .pump-action { grid-column: 1 / -1; }
+	.pump-queue strong { padding: 10px 0; }
 }
 * { box-sizing: border-box; }
 [x-cloak], .tab-panel { display: none; }
@@ -188,14 +240,12 @@ a { color: inherit; text-decoration: none; }
    flat, no-cards convention the rest of this file uses (.info-row and
    friends), rather than reading as a small dark card sitting inside
    the already-dark rail. */
-.rail-note {
-	margin-top: auto;
+/* Sign out sits at the bottom of the rail, under a divider. */
+.rail-signout {
+	margin: auto 0 0;
+	padding-top: 14px;
 	border-top: 1px solid #303941;
-	padding: 14px 4px 0;
-	color: #98A6B3;
 }
-.rail-note strong { display: block; color: #FFFFFF; margin-bottom: 4px; }
-.rail-signout { margin: 0; }
 .main {
 	min-width: 0;
 	padding: 32px;
@@ -494,6 +544,41 @@ td {
 	width: 96px;
 	height: 96px;
 	margin-bottom: 6px;
+}
+
+/* Owner dashboard's wide illustration (426x290 source): big on desktop,
+   shrinks with the screen on phones, always keeps its proportions. */
+.empty.empty-wide {
+	max-width: 440px;
+	gap: 8px;
+	padding: 40px 16px 48px;
+	font-size: 15px;
+	line-height: 1.5;
+}
+.empty-wide .empty-lottie {
+	width: min(360px, 78vw);
+	height: auto;
+	aspect-ratio: 426 / 290;
+	margin-bottom: 4px;
+}
+@media (max-width: 640px) {
+	.empty.empty-wide { padding: 28px 8px 36px; font-size: 14px; }
+}
+
+/* Inside a table, size the empty state to the table box's *visible*
+   width (container units) and pin it there, so on phones it isn't
+   centered across all the columns of a sideways-scrolling table and
+   pushed off-screen. */
+.table-wrap { container-type: inline-size; }
+td:has(> .empty-wide) { padding: 0; }
+td > .empty.empty-wide {
+	position: sticky;
+	left: 0;
+	width: 100cqi;
+	max-width: 100cqi;
+	box-sizing: border-box;
+	/* keep the text column ~440px wide, centered, on wide tables */
+	padding-inline: max(16px, calc((100cqi - 440px) / 2));
 }
 
 /* ---- Forms: bordered inputs stay (a dense field grid genuinely needs
@@ -855,20 +940,17 @@ td {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: 4px 14px;
 }
+/* Plain text, no pill: muted grey by default, brand green with a
+   check when the permission is on. */
 .permission-chip {
 	display: inline-flex;
 	align-items: center;
-	gap: 5px;
-	min-height: 28px;
-	border: 1px solid #D8E0DA;
-	border-radius: 999px;
-	background: #FFFFFF;
-	color: #647067;
-	padding: 0 10px;
-	font-size: 12px;
-	font-weight: 800;
+	gap: 4px;
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 600;
 	white-space: nowrap;
 }
 .permission-chip .icon {
@@ -876,12 +958,8 @@ td {
 	height: 13px;
 }
 .permission-chip.enabled {
-	border-color: #A7E3C8;
-	background: #ECFDF5;
 	color: #006B4D;
-}
-.permission-chip.terminal-only {
-	background: #F8FAFC;
+	font-weight: 700;
 }
 .muted-permissions {
 	min-width: 160px;
@@ -1257,4 +1335,640 @@ td {
 	.login-form-col { flex: 1; min-width: 0; background: #FFFFFF; }
 	.login-card { border: 0; padding: 8px; }
 	.login-brand { display: none; }
+}
+
+/* ==========================================================================
+   Owner overview: one shared 4-column grid
+   ==========================================================================
+   The KPI row, "Today's control" and the Plant basics aside all sit on
+   the same four equal columns, so every vertical hairline continues
+   straight down from the KPI row instead of each block drawing its own
+   unrelated dividers. Horizontal hairlines close each band and meet the
+   aside's line in clean T-junctions.
+   ========================================================================== */
+.kpi-row.kpi-band {
+	margin-bottom: 0;
+	padding-bottom: 28px;
+	border-bottom: 1px solid var(--line);
+}
+.overview-grid {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 0;
+	align-items: stretch;
+}
+.overview-grid > :first-child {
+	grid-column: span 3;
+	padding: 32px 32px 0 0;
+	min-width: 0;
+}
+.overview-grid > .dash-aside { padding: 32px 0 0 24px; }
+
+/* Stats span the full three columns (cancelling the column's right
+   padding) and use the KPI row's exact padding, so their dividers land
+   under the KPI dividers. */
+.overview-grid .stat-line {
+	margin: 0 -32px 0 0;
+	padding-bottom: 28px;
+	border-bottom: 1px solid var(--line);
+}
+.overview-grid .stat-line > div { padding: 0 24px; }
+.overview-grid .stat-line > div:first-child { padding-left: 0; }
+.overview-grid .section-spaced { margin-top: 28px; }
+.overview-grid .timeline > .empty-wide { padding-top: 8px; }
+
+/* Plant basics: the aside is one column wide, so stack each label above
+   its value (KPI-label style) rather than squeezing two columns. */
+.basics-list .info-row {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 6px;
+	padding: 14px 0;
+	border-top: 1px solid var(--line);
+}
+.basics-list .info-row:first-child { padding-top: 0; border-top: 0; }
+.basics-list .info-row span:first-child {
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+.basics-list .info-row strong { overflow-wrap: anywhere; }
+
+/* Tablet and phone: single column, aside drops below with a top rule. */
+@media (max-width: 1020px) {
+	.overview-grid { grid-template-columns: minmax(0, 1fr); }
+	.overview-grid > :first-child { grid-column: auto; padding: 28px 0 0; }
+	.overview-grid .stat-line { margin-right: 0; }
+	.overview-grid > .dash-aside {
+		margin-top: 28px;
+		padding: 28px 0 0;
+		border-left: 0;
+		border-top: 1px solid var(--line);
+	}
+}
+@media (max-width: 640px) {
+	.kpi-row.kpi-band { padding-bottom: 24px; }
+	.overview-grid .stat-line > div { padding: 0; }
+	.overview-grid .stat-line > div + div { padding-top: 14px; }
+}
+
+/* Sales table: hide the horizontal scrollbar. The table still scrolls
+   sideways (swipe, trackpad, shift + mouse wheel). */
+[data-tab-panel="sales"] .table-wrap {
+	scrollbar-width: none;          /* Firefox */
+	-ms-overflow-style: none;       /* old Edge */
+}
+[data-tab-panel="sales"] .table-wrap::-webkit-scrollbar { display: none; } /* Chrome, Safari */
+
+/* Opening hours: centre day names and the Closed checkbox on the time
+   inputs in each row. */
+form[action="/owner/hours"] td { vertical-align: middle; }
+
+/* ---- Add staff (Staff tab): its own full-width section under the
+   staff table, every field on one aligned row on desktop. ---- */
+.staff-add {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(170px, 1.2fr) minmax(0, 1fr) auto;
+	align-items: end;
+	gap: 16px;
+	padding-top: 20px;
+	border-top: 1px solid var(--line);
+}
+.staff-add-action .btn { white-space: nowrap; }
+
+/* Tablet: two columns, button full width underneath. */
+@media (max-width: 1020px) {
+	.staff-add { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+	.staff-add-action { grid-column: 1 / -1; }
+	.staff-add-action .btn { width: 100%; justify-content: center; }
+}
+/* Phone: one column. */
+@media (max-width: 640px) {
+	.staff-add { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Staff table: centre text, permission chips and the action button on
+   one line in each row. */
+[data-tab-panel="staff"] td { vertical-align: middle; }
+
+/* ==========================================================================
+   Settings tab: one row per topic. Title and a short explanation on the
+   left, controls on the right, hairline between rows. Stacks on phones.
+   ========================================================================== */
+.settings { border-top: 1px solid var(--line); }
+.settings > form { margin: 0; }
+.settings-section {
+	display: grid;
+	grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+	gap: 48px;
+	padding: 32px 0;
+	border-bottom: 1px solid var(--line);
+}
+.settings-intro h2 {
+	margin: 0 0 6px;
+	font-family: var(--font-display, Archivo, sans-serif);
+	font-size: 17px;
+}
+.settings-intro p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.settings-body { min-width: 0; max-width: 760px; }
+
+.settings-rate {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 20px 32px;
+}
+.settings-rate-value {
+	font-family: var(--font-mono, monospace);
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1;
+}
+.settings-rate-form { display: flex; align-items: flex-end; gap: 12px; }
+.settings-rate-form .field { width: 200px; }
+.settings-subhead {
+	margin: 28px 0 10px;
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+
+.settings-logo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.settings-logo .brand-logo-preview { margin: 0; }
+.settings-save {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 16px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--soft);
+}
+
+.settings-records {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20px 32px;
+	margin: 0;
+}
+.settings-records dt {
+	margin-bottom: 4px;
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+.settings-records dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+
+.settings-link-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+.settings-link-row strong { display: block; margin-bottom: 2px; }
+.settings-link-row .btn { white-space: nowrap; text-decoration: none; }
+
+@media (max-width: 1020px) {
+	.settings-section { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 28px 0; }
+}
+@media (max-width: 640px) {
+	.settings-rate-form { width: 100%; flex-direction: column; align-items: stretch; }
+	.settings-rate-form .field { width: auto; }
+	.settings-records { grid-template-columns: minmax(0, 1fr); }
+	.settings-save { flex-direction: column; align-items: stretch; }
+	.settings-save .muted { text-align: center; }
+	.settings-link-row { flex-direction: column; align-items: stretch; }
+	.settings-link-row .btn { justify-content: center; }
+}
+
+/* ==========================================================================
+   Change-password page: a focused page of its own (signed-in owner).
+   ========================================================================== */
+.account-body { margin: 0; min-height: 100vh; background: var(--bg, #F3F5F2); display: flex; flex-direction: column; }
+.account-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 18px 28px;
+	border-bottom: 1px solid var(--line);
+}
+.account-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--ink);
+	font-weight: 700;
+	text-decoration: none;
+}
+.account-back:hover { color: #006B4D; }
+.icon-flip { display: inline-flex; transform: scaleX(-1); }
+.account-brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	font-weight: 700;
+	color: var(--muted);
+}
+.account-brand .mark { width: 24px; height: 24px; flex: none; }
+.account-brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-main {
+	flex: 1;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding: 56px 20px 64px;
+}
+.account-card {
+	width: 100%;
+	max-width: 440px;
+	display: grid;
+	gap: 18px;
+	padding: 32px 30px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-md, 8px);
+	background: #FFFFFF;
+}
+.account-card h1 {
+	margin: 4px 0 6px;
+	font-family: var(--font-display, Archivo, sans-serif);
+	font-size: 26px;
+}
+.account-divider { height: 1px; background: var(--soft); }
+.account-secondary-link {
+	justify-self: center;
+	color: var(--muted);
+	font-size: 14px;
+	font-weight: 600;
+}
+.account-secondary-link:hover { color: var(--ink); }
+
+/* show/hide toggle: render both icons, show the right one */
+.field-password-toggle .when-shown,
+.field-password-toggle.is-shown .when-hidden { display: none; }
+.field-password-toggle.is-shown .when-shown,
+.field-password-toggle .when-hidden { display: inline-flex; }
+
+.pw-rules {
+	display: grid;
+	gap: 8px;
+	margin: -4px 0 4px;
+	padding: 0;
+	list-style: none;
+	color: var(--muted);
+	font-size: 13px;
+}
+.pw-rules li { display: flex; align-items: center; gap: 8px; transition: color var(--duration-fast, 120ms); }
+.pw-rules .icon { font-size: 16px; color: var(--line); transition: color var(--duration-fast, 120ms); }
+.pw-rules li.is-met { color: var(--ink); }
+.pw-rules li.is-met .icon { color: #10B981; }
+
+.account-done { justify-items: center; text-align: center; }
+.account-done-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background: #E7F6F1;
+	color: #006B4D;
+	font-size: 30px;
+}
+.account-done .btn { text-decoration: none; justify-content: center; }
+
+@media (max-width: 640px) {
+	.account-top { padding: 14px 16px; }
+	.account-brand span { display: none; }
+	.account-main { padding: 28px 16px 40px; }
+	.account-card { padding: 24px 20px; }
+}
+.account-card .owner-error { margin: 0; }
+
+/* Admin console empty states: same large, responsive treatment as the
+   owner dashboard, for its square animations (plants, activity). */
+.empty-wide.empty-square .empty-lottie {
+	width: min(260px, 64vw);
+	aspect-ratio: 1 / 1;
+}
+
+/* Admin overview's review checklist sits in the one-column aside of
+   the shared 4-column grid: match the overview's hairlines. */
+.overview-grid .split-list-steps .info-row {
+	padding: 14px 0;
+	border-top: 1px solid var(--line);
+}
+.overview-grid .split-list-steps .info-row:first-child { padding-top: 0; border-top: 0; }
+.overview-grid .split-list-steps .info-row span:first-child {
+	font-family: var(--font-mono, monospace);
+	color: #006B4D;
+}
+
+/* Admin plant detail (application review): KPI band, then the Settings
+   row layout. */
+.detail-band { margin-bottom: 0; }
+.detail-inline-form .field { width: 260px; }
+.detail-hint { margin: 10px 0 0; font-size: 13px; }
+@media (max-width: 640px) {
+	.detail-inline-form .field { width: auto; }
+}
+.detail-band + .settings { border-top: 0; }
+
+/* ---- Applications (admin): a list that fits the screen instead of a
+   1160px table. Four flexible columns plus actions; stacked cards on
+   narrow screens. ---- */
+.app-list { border-top: 1px solid var(--line); }
+.app-row {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+	gap: 24px;
+	align-items: center;
+	padding: 18px 0;
+	border-bottom: 1px solid var(--line);
+}
+.app-head {
+	padding: 10px 0;
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+.app-cell { display: grid; gap: 3px; min-width: 0; font-size: 14px; }
+.app-cell strong { overflow-wrap: anywhere; }
+.app-wrap { overflow-wrap: anywhere; }
+.app-label { display: none; }
+.app-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.app-actions form { margin: 0; }
+.app-actions .btn { white-space: nowrap; text-decoration: none; }
+
+@media (max-width: 1100px) {
+	.app-head { display: none; }
+	.app-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; align-items: start; }
+	.app-label {
+		display: block;
+		margin-bottom: 2px;
+		color: var(--muted);
+		font-size: 11px;
+		font-weight: 800;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+	}
+	.app-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
+@media (max-width: 640px) {
+	.app-row { grid-template-columns: minmax(0, 1fr); }
+	/* buttons share one row in equal widths, however many there are */
+	.app-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+	.app-actions .btn, .app-actions form .btn { width: 100%; justify-content: center; }
+}
+
+/* Plants list: a fixed-width action column (room for View + two status
+   buttons) so every row's columns line up with the header and each
+   other, whatever buttons a row has. */
+.plant-list .app-row { grid-template-columns: repeat(4, minmax(0, 1fr)) 300px; }
+@media (max-width: 1100px) {
+	.plant-list .app-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+	.plant-list .app-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Admin activity: action | plant | by | when, on the same list style as
+   Applications and Plants. Phones: action on top, the rest on one line. */
+.activity-row { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1fr) 140px; padding: 14px 0; }
+.activity-row.app-head { padding: 10px 0; }
+.activity-when { text-align: right; }
+@media (max-width: 1100px) {
+	.activity-row:not(.app-head) {
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 4px 16px;
+	}
+	.activity-row .app-label { display: none; }
+	.activity-row > :nth-child(1) { grid-column: 1; }
+	.activity-row > :nth-child(4) { grid-column: 2; grid-row: 1; }
+	.activity-row > :nth-child(2),
+	.activity-row > :nth-child(3) { grid-column: 1 / -1; display: inline; }
+	.activity-row > :nth-child(2) { color: var(--ink); }
+}
+/* status-coloured action label (Plant activated / suspended / closed) */
+.activity-action { display: inline-flex; align-items: center; gap: 8px; }
+.activity-action[class*="badge-"]::before {
+	content: "";
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: currentColor;
+	flex: none;
+}
+
+/* List cells (applications, plants, activity): let long names, web
+   addresses, and other monospace values wrap inside their column
+   instead of the table-style single line spilling into the next one. */
+.app-cell .mono,
+.app-cell a { white-space: normal; overflow-wrap: anywhere; }
+
+/* Owner overview "Recent activity": a 3-column grid on the same columns
+   and dividers as "Today's control" above it, instead of a narrow
+   vertical stack. 2 columns on tablets, a plain list on phones. */
+.overview-grid .activity-grid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0;
+	margin-right: -32px;
+}
+.overview-grid .activity-grid .timeline-item {
+	display: grid;
+	gap: 4px;
+	padding: 16px 24px;
+	border-left: 1px solid var(--line);
+}
+.overview-grid .activity-grid .timeline-item:nth-child(3n + 1) { padding-left: 0; border-left: 0; }
+.overview-grid .activity-grid .timeline-item:nth-child(-n + 3) { padding-top: 0; }
+.overview-grid .activity-grid .timeline-item:nth-child(n + 4) { border-top: 1px solid var(--line); }
+.overview-grid .activity-grid > .empty { grid-column: 1 / -1; }
+
+@media (max-width: 1020px) {
+	.overview-grid .activity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-right: 0; }
+	.overview-grid .activity-grid .timeline-item:nth-child(n) { padding: 16px 20px; border-left: 1px solid var(--line); border-top: 1px solid var(--line); }
+	.overview-grid .activity-grid .timeline-item:nth-child(2n + 1) { padding-left: 0; border-left: 0; }
+	.overview-grid .activity-grid .timeline-item:nth-child(-n + 2) { padding-top: 0; border-top: 0; }
+}
+@media (max-width: 640px) {
+	.overview-grid .activity-grid { grid-template-columns: minmax(0, 1fr); }
+	.overview-grid .activity-grid .timeline-item:nth-child(n) { padding: 14px 0; border-left: 0; border-top: 1px solid var(--line); }
+	.overview-grid .activity-grid .timeline-item:first-child { padding-top: 0; border-top: 0; }
+}
+
+/* Settings > Gas price: current rate and the new-price form sit in the
+   left column under the description; price history fills the right. */
+.settings-rate-now { margin-top: 24px; }
+.settings-rate-stack { display: grid; gap: 12px; margin-top: 20px; }
+.settings-rate-stack .btn { justify-content: center; }
+.settings-rate-note { margin-top: 16px; font-size: 13px; }
+.settings-subhead-first { margin-top: 0; }
+
+/* Admin overview "New applications" grid cells: name, owner, date, then
+   the two buttons; and a "See all" link under the grid. */
+.overview-grid .application-item .application-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+.overview-grid .application-item .application-actions form { margin: 0; }
+.overview-grid .application-item .btn { text-decoration: none; }
+.see-all-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 18px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #006B4D;
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+.see-all-link:hover { text-decoration: underline; }
+
+/* Record value + copy button + "Verify on ..." link (verify.templ). */
+.verify-value { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }
+.verify-value .mono { white-space: normal; overflow-wrap: anywhere; }
+.verify-actions { display: inline-flex; align-items: center; gap: 8px; }
+.verify-copy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm, 6px);
+	background: #FFFFFF;
+	color: var(--muted);
+	font-size: 15px;
+	cursor: pointer;
+}
+.verify-copy:hover { color: var(--ink); border-color: #B9C2BB; }
+.verify-copy .when-copied,
+.verify-copy.is-copied .when-idle { display: none; }
+.verify-copy.is-copied .when-copied { display: inline-flex; }
+.verify-copy.is-copied { color: #006B4D; border-color: #006B4D; }
+.verify-copy .when-idle { display: inline-flex; }
+.verify-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: #006B4D;
+	font-family: var(--font-body, sans-serif);
+	font-size: 13px;
+	font-weight: 700;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.verify-link:hover { text-decoration: underline; }
+.verify-link .icon { font-size: 14px; }
+
+/* ==========================================================================
+   Mobile header (<= 1020px), redesigned
+   ==========================================================================
+   A light, translucent app bar (content blurs underneath it, with a
+   hairline edge so it stays clearly separate) that says where you are:
+   brand mark, current section in bold, plant or console name under it.
+   The menu button sits on the right, in thumb reach. It still opens the
+   same dark side drawer as before; only the bar itself changed.
+   ========================================================================== */
+@media (max-width: 1020px) {
+	:root { --topbar-h: 60px; }
+
+	.mobile-topbar {
+		gap: 12px;
+		padding: env(safe-area-inset-top, 0px) 8px 0 16px;
+		min-height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
+		background: rgba(246, 247, 245, 0.9);
+		-webkit-backdrop-filter: saturate(180%) blur(16px);
+		backdrop-filter: saturate(180%) blur(16px);
+		border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+		color: var(--ink);
+	}
+	.mt-mark { display: inline-flex; flex: none; }
+	.mt-mark .mark { width: 30px; height: 30px; }
+	.mt-title {
+		flex: 1;
+		min-width: 0;
+		display: grid;
+		line-height: 1.2;
+	}
+	.mt-title strong {
+		font-family: var(--font-display, Archivo, sans-serif);
+		font-size: 17px;
+		font-weight: 800;
+		letter-spacing: -0.01em;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.mt-title span {
+		color: var(--muted);
+		font-size: 12px;
+		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.rail-toggle {
+		color: var(--ink);
+		border-radius: var(--radius-full, 999px);
+		transition: background-color 150ms ease;
+	}
+	.rail-toggle:hover,
+	.rail-toggle[aria-expanded="true"] { background: rgba(17, 24, 39, 0.06); }
+}
+
+/* Brand mark variants in the rail: dark-background version on desktop,
+   regular version in the light mobile drawer. */
+.rail .mark-on-dark,
+.rail .mark-on-light { display: inline-flex; flex: none; }
+.rail .mark-on-light { display: none; }
+
+/* Mobile drawer: same layout as always, light colours to match the
+   light mobile header. Desktop keeps the dark rail. */
+@media (max-width: 1020px) {
+	.rail {
+		background: #FFFFFF;
+		color: var(--ink);
+		border-right: 1px solid var(--line);
+		box-shadow: 16px 0 40px -16px rgba(16, 24, 32, 0.25);
+	}
+	.rail .mark-on-dark { display: none; }
+	.rail .mark-on-light { display: inline-flex; }
+	.rail .brand { border-bottom-color: var(--line); color: var(--ink); }
+	.rail .rail-label { color: var(--muted); }
+	.rail .nav-button { color: #3A4741; }
+	.rail .nav-button-label .icon { opacity: 1; color: var(--muted); }
+	.rail .nav-button:hover {
+		background: rgba(17, 24, 39, 0.04);
+		border-color: transparent;
+		color: var(--ink);
+	}
+	.rail .nav-button.active {
+		background: #E7F6F1;
+		border-color: #C9E9DD;
+		color: #006B4D;
+	}
+	.rail .nav-button.active .nav-button-label .icon { color: #006B4D; }
+	.rail .nav-button.active:after { background: #006B4D; }
+	.rail .rail-signout { border-top-color: var(--line); }
+	.rail .rail-signout .nav-button:hover { background: #FBEEED; color: #B3261E; }
+	.rail .rail-signout .nav-button:hover .icon { color: #B3261E; }
+	.rail-backdrop { background: rgba(15, 23, 42, 0.32); }
+}
+
+/* Mobile drawer: the header above already shows the brand, so the
+   drawer's own logo + GATSTOGO row would repeat it. Start at the label. */
+@media (max-width: 1020px) {
+	.rail > .brand { display: none; }
+	.rail { padding-top: 22px; }
 }

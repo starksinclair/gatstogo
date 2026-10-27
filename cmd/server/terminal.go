@@ -25,6 +25,7 @@ import (
 	staffsvc "gatstogo/internal/staff"
 	"gatstogo/internal/tenantdb"
 	"gatstogo/internal/tickets"
+	"gatstogo/web/templates/components"
 	"gatstogo/web/templates/pages"
 
 	"github.com/google/uuid"
@@ -57,6 +58,7 @@ var errTerminalForbidden = errors.New("terminal: forbidden")
 // baked into the JS itself.
 type terminalInitPayload struct {
 	PlantName      string                  `json:"plantName"`
+	PlantLogo      string                  `json:"plantLogo"` // plant's uploaded logo, or the GatsToGo mark
 	TodayLabel     string                  `json:"todayLabel"`
 	Staff          []terminalStaffPayload  `json:"staff"`
 	ManageStaff    []terminalManageStaff   `json:"manageStaff"`
@@ -167,8 +169,13 @@ func terminalPageHandler(s *Server) http.HandlerFunc {
 		if plantName == "" {
 			plantName = "Gas plant" // same fallback pages.StaffTerminal's own <title>/data-plant uses
 		}
+		plantLogo := components.BrandMarkPrimary
+		if plant.LogoPath != nil && strings.TrimSpace(*plant.LogoPath) != "" {
+			plantLogo = strings.TrimSpace(*plant.LogoPath)
+		}
 		payload := terminalInitPayload{
 			PlantName:      plantName,
+			PlantLogo:      plantLogo,
 			TodayLabel:     time.Now().Format("2 Jan 2006"),
 			Staff:          make([]terminalStaffPayload, len(staff)),
 			ManageStaff:    staffRows,

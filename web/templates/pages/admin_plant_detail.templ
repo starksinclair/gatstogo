@@ -56,7 +56,7 @@ type AdminPlantDetailData struct {
 }
 
 templ AdminPlantDetail(data AdminPlantDetailData) {
-	@opsShell(data.Name+" | Admin console", "Admin", adminNavLinks(), adminPlantDetailContent(data), "/admin/logout", data.CSRFToken)
+	@opsShell(data.Name+" | Admin console", "Admin", adminNavLinks(), adminPlantDetailContent(data), "/admin/logout", data.CSRFToken, "Plant review", data.Name)
 }
 
 templ adminPlantDetailContent(data AdminPlantDetailData) {
@@ -101,75 +101,101 @@ templ adminPlantDetailContent(data AdminPlantDetailData) {
 			}
 		</div>
 	</div>
-	<div class="dashboard-grid">
-		<div>
-			<div class="section-title"><h2>Business details</h2></div>
-			<div class="split-list">
-				<div class="info-row"><span>Legal business name</span><strong>{ data.LegalBusinessName }</strong></div>
-				<div class="info-row"><span>CAC number</span><strong class="mono">{ data.CACNumber }</strong></div>
-				<div class="info-row"><span>NMDPRA license</span><strong class="mono">{ data.NMDPRALicense }</strong></div>
-				<div class="info-row"><span>State</span><strong>{ data.State }</strong></div>
+	<div class="kpi-row kpi-band detail-band">
+		<div class="kpi-item">@kpiLabel("receipt", "Transactions 7d")<div class="kpi">{ formatThousands(data.Txns7d) }</div><div class="kpi-small">Last txn · { data.LastTxn }</div></div>
+		<div class="kpi-item">@kpiLabel("gas-pump", "Volume 30d")<div class="kpi">{ data.Volume30d }</div><div class="kpi-small">Paid ticket weight</div></div>
+		<div class="kpi-item">@kpiLabel("users", "Staff")<div class="kpi">{ data.StaffCount }</div><div class="kpi-small">{ data.OpenShifts } open shifts</div></div>
+		<div class="kpi-item">@kpiLabel("money", "Prices set")<div class="kpi">{ data.PriceCount }</div><div class="kpi-small">First txn · { data.FirstTxn }</div></div>
+	</div>
+	<div class="settings">
+		<section class="settings-section">
+			<div class="settings-intro">
+				<h2>Business details</h2>
+				<p>The registered business. Check these against the CAC and NMDPRA records before activating.</p>
 			</div>
-			<div class="section-title" style="margin-top:28px;"><h2>Payout details</h2></div>
-			<div class="split-list">
-				<div class="info-row"><span>Bank</span><strong>{ data.BankName }</strong></div>
-				<div class="info-row"><span>Account number</span><strong class="mono">{ data.BankAccount }</strong></div>
-				<div class="info-row"><span>Account name</span><strong>{ data.BankAccountName }</strong></div>
-				<div class="info-row"><span>Paystack subaccount</span><strong class="mono">{ data.SubaccountCode }</strong></div>
+			<div class="settings-body">
+				<dl class="settings-records">
+					<div><dt>Legal business name</dt><dd>{ data.LegalBusinessName }</dd></div>
+					<div><dt>State</dt><dd>{ data.State }</dd></div>
+					<div><dt>CAC number</dt><dd>@verifyValue(data.CACNumber, verifyCACURL, "Verify on CAC")</dd></div>
+					<div><dt>NMDPRA license</dt><dd>@verifyValue(data.NMDPRALicense, verifyNMDPRAURL, "Verify on NMDPRA")</dd></div>
+				</dl>
 			</div>
-			<div class="section-title" style="margin-top:28px;"><h2>Activity</h2></div>
-			<div class="timeline">
-				if len(data.Activity) == 0 {
-					@emptyState("activity", "No activity recorded for this plant yet.")
-				}
-				for _, row := range data.Activity {
-					<div class="timeline-item"><strong>{ row.Action }</strong><span class="muted">{ row.Detail }</span></div>
-				}
+		</section>
+		<section class="settings-section">
+			<div class="settings-intro">
+				<h2>Payout details</h2>
+				<p>Where customer payments settle. The account must belong to this plant.</p>
 			</div>
-		</div>
-		<div class="dash-aside">
-			<div class="section-title"><h2>Plant record</h2></div>
-			<div class="split-list">
-				<div class="info-row"><span>Address</span><strong>{ data.Address }</strong></div>
-				<div class="info-row"><span>Phone</span><strong>{ data.Phone }</strong></div>
-				<div class="info-row"><span>Domain status</span><strong><span class={ "badge " + data.DomainBadge }>{ data.DomainStatus }</span></strong></div>
-				<div class="info-row"><span>Custom domain</span><strong>{ data.Domain }</strong></div>
-				<div class="info-row"><span>First transaction</span><strong>{ data.FirstTxn }</strong></div>
-				<div class="info-row"><span>Updated</span><strong>{ data.UpdatedAt }</strong></div>
+			<div class="settings-body">
+				<dl class="settings-records">
+					<div><dt>Bank</dt><dd>{ data.BankName }</dd></div>
+					<div><dt>Account number</dt><dd class="mono">{ data.BankAccount }</dd></div>
+					<div><dt>Account name</dt><dd>{ data.BankAccountName }</dd></div>
+					<div><dt>Paystack subaccount</dt><dd>@verifyValue(data.SubaccountCode, paystackSubaccURL, "Open in Paystack")</dd></div>
+				</dl>
 			</div>
-			<div class="section-title" style="margin-top:28px;"><h2>Messaging</h2></div>
-			<form method="post" action={ templ.SafeURL("/admin/plants/" + data.ID + "/messaging") }>
-				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-				<div class="field">
-					<label>Termii sender ID</label>
-					<input type="text" name="termii_sender_id" value={ data.TermiiSenderID } placeholder={ data.EffectiveTermiiSenderID }/>
+		</section>
+		<section class="settings-section">
+			<div class="settings-intro">
+				<h2>Owner access</h2>
+				<p>Who signs in to this plant's owner dashboard.</p>
+			</div>
+			<div class="settings-body">
+				<dl class="settings-records">
+					<div><dt>Name</dt><dd>{ data.OwnerName }</dd></div>
+					<div><dt>Phone</dt><dd class="mono">{ data.OwnerPhone }</dd></div>
+					<div><dt>Email</dt><dd>{ data.OwnerEmail }</dd></div>
+				</dl>
+			</div>
+		</section>
+		<section class="settings-section">
+			<div class="settings-intro">
+				<h2>Plant record</h2>
+				<p>Location, contact, and web address on GatsToGo.</p>
+			</div>
+			<div class="settings-body">
+				<dl class="settings-records">
+					<div><dt>Address</dt><dd>{ data.Address }</dd></div>
+					<div><dt>Phone</dt><dd>{ data.Phone }</dd></div>
+					<div><dt>Domain status</dt><dd><span class={ "badge " + data.DomainBadge }>{ data.DomainStatus }</span></dd></div>
+					<div><dt>Custom domain</dt><dd>{ data.Domain }</dd></div>
+					<div><dt>Updated</dt><dd>{ data.UpdatedAt }</dd></div>
+				</dl>
+			</div>
+		</section>
+		<section class="settings-section">
+			<div class="settings-intro">
+				<h2>Messaging</h2>
+				<p>The SMS sender name customers see on receipts and codes.</p>
+			</div>
+			<div class="settings-body">
+				<form method="post" action={ templ.SafeURL("/admin/plants/" + data.ID + "/messaging") } class="settings-rate-form detail-inline-form">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="field">
+						<label for="termii-sender">Termii sender ID</label>
+						<input id="termii-sender" type="text" name="termii_sender_id" value={ data.TermiiSenderID } placeholder={ data.EffectiveTermiiSenderID }/>
+					</div>
+					<button class="btn primary" type="submit">@components.Icon("check") Save sender ID</button>
+				</form>
+				<p class="muted detail-hint">Leave blank to use the project default sender ID.</p>
+			</div>
+		</section>
+		<section class="settings-section">
+			<div class="settings-intro">
+				<h2>Activity</h2>
+				<p>Everything recorded for this plant, newest first.</p>
+			</div>
+			<div class="settings-body">
+				<div class="timeline">
+					if len(data.Activity) == 0 {
+						@emptyState("activity", "No activity recorded for this plant yet.")
+					}
+					for _, row := range data.Activity {
+						<div class="timeline-item"><strong>{ row.Action }</strong><span class="muted">{ row.Detail }</span></div>
+					}
 				</div>
-				<p class="muted" style="margin-top: 8px;">Leave blank to use the project default sender ID.</p>
-				<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save sender ID</button></div>
-			</form>
-			<div class="section-title" style="margin-top:28px;"><h2>Owner access</h2></div>
-			<div class="split-list">
-				<div class="info-row"><span>Name</span><strong>{ data.OwnerName }</strong></div>
-				<div class="info-row"><span>Phone</span><strong class="mono">{ data.OwnerPhone }</strong></div>
-				<div class="info-row"><span>Email</span><strong>{ data.OwnerEmail }</strong></div>
 			</div>
-			<div class="section-title" style="margin-top:28px;"><h2>Sales health</h2></div>
-			<div class="stat-line">
-				<div><div class="kpi-label">Staff</div><strong class="mono">{ data.StaffCount }</strong></div>
-				<div><div class="kpi-label">Prices set</div><strong class="mono">{ data.PriceCount }</strong></div>
-				<div><div class="kpi-label">Open shifts</div><strong class="mono">{ data.OpenShifts }</strong></div>
-			</div>
-			<div class="stat-line">
-				<div><div class="kpi-label">Txns 7d</div><strong class="mono">{ data.Txns7d }</strong></div>
-				<div><div class="kpi-label">Volume 30d</div><strong class="mono">{ data.Volume30d }</strong></div>
-				// Last txn deliberately isn't .mono here: unlike the counts
-				// and kg figures either side of it, its value is a full
-				// date/time or the "No transaction yet" fallback -- both too
-				// long to force onto one line in a three-column grid this
-				// narrow. Matches the Plants table's own row.LastTxn cell
-				// (adminConsoleContent), which was never .mono either.
-				<div><div class="kpi-label">Last txn</div><strong>{ data.LastTxn }</strong></div>
-			</div>
-		</div>
+		</section>
 	</div>
 }

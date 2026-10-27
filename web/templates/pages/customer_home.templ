@@ -307,6 +307,12 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ title }</title>
+			// White-labelled: the plant's own logo when it has one, GatsToGo's otherwise.
+			if theme.LogoPath != "" {
+				<link rel="icon" href={ theme.LogoPath }/>
+			} else {
+				@components.BrandFavicons()
+			}
 			<script>
 				function buyGasForm(pricePerKg) {
 					return {
@@ -437,8 +443,8 @@ templ customerPageShell(theme customerHomeTheme, title string, content templ.Com
 			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-			<link rel="stylesheet" href="/static/css/tokens.css"/>
-			<link rel="stylesheet" href="/static/css/customer-home.css"/>
+			<link rel="stylesheet" href={ cssURL("tokens.css") }/>
+			<link rel="stylesheet" href={ cssURL("customer-home.css") }/>
 		</head>
 		<body style={ customerCSSVars(theme) }>
 			@content
@@ -554,27 +560,34 @@ templ customerHomeContent(theme customerHomeTheme, pricePerKgKobo int64, csrfTok
 										@components.Icon("x-circle")
 									</button>
 								</div>
+								<div class="presets" x-show="presets.length" x-cloak>
+									<div class="presets-label" id="presets-label">Popular sizes</div>
+									<div class="preset-list" role="group" aria-labelledby="presets-label">
+										<template x-for="p in presets" :key="p.kg">
+											<button
+												type="button"
+												class="preset"
+												:class="{ 'is-selected': naira === p.amount }"
+												:aria-pressed="naira === p.amount"
+												:aria-label="p.label + ' for ' + formatNaira(p.amount)"
+												@click="amount = String(p.amount)"
+											>
+												<span class="preset-check" aria-hidden="true">
+													@components.Icon("check")
+												</span>
+												<span class="preset-kg"><span x-text="p.kg"></span><small>kg</small></span>
+												<span class="preset-amount" x-text="formatNaira(p.amount)"></span>
+											</button>
+										</template>
+									</div>
+								</div>
 								<p class="kg-preview" :class="{ 'has-kg': naira > 0 }">
-									<span x-show="naira <= 0">Enter an amount to see how many kg you will get.</span>
+									<span x-show="naira <= 0">Enter an amount or pick a size to see how many kg you will get.</span>
 									<span x-show="naira > 0" x-cloak class="kg-preview-result">
 										<span>You will get</span>
 										<strong x-text="formatKg(kg)">0.00 kg</strong>
 									</span>
 								</p>
-								<div class="preset-list" x-show="presets.length" x-cloak role="group" aria-label="Quick amounts">
-									<template x-for="p in presets" :key="p.kg">
-										<button
-											type="button"
-											class="preset"
-											:class="{ 'is-selected': naira === p.amount }"
-											:aria-pressed="naira === p.amount"
-											@click="amount = String(p.amount)"
-										>
-											<span class="preset-kg" x-text="p.label"></span>
-											<strong class="preset-amount" x-text="formatNaira(p.amount)"></strong>
-										</button>
-									</template>
-								</div>
 							</div>
 						</div>
 						<div class="field-step">

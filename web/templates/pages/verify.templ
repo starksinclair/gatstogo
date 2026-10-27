@@ -1,0 +1,50 @@
+package pages
+
+import (
+	"strings"
+
+	"gatstogo/web/templates/components"
+)
+
+// Official places an admin checks a plant's records. Neither government
+// site accepts the number in the link, so the value gets a copy button
+// right beside its "Verify" link: copy, open, paste.
+const (
+	verifyCACURL      = "https://search.cac.gov.ng/"
+	verifyNMDPRAURL   = "https://celps.nmdpra.gov.ng/Permit/VerifyPermit"
+	paystackSubaccURL = "https://dashboard.paystack.com/#/subaccounts"
+)
+
+// isProvided reports whether a record value is real, not one of the
+// "Not yet provided" / "... coming soon" placeholders the loaders use.
+func isProvided(v string) bool {
+	v = strings.TrimSpace(v)
+	return v != "" && v != "Not yet provided" && !strings.HasSuffix(v, "coming soon")
+}
+
+// verifyValue shows a record value with a copy button and, when verifyURL
+// is set, a link that opens the official verification site in a new tab.
+// Placeholders render as plain text with no actions.
+templ verifyValue(value string, verifyURL string, verifyLabel string) {
+	<span class="verify-value">
+		<span class="mono">{ value }</span>
+		if isProvided(value) {
+			<span class="verify-actions">
+				<button type="button" class="verify-copy" data-copy={ value } aria-label={ "Copy " + value } title="Copy">
+					<span class="when-idle">
+						@components.Icon("copy")
+					</span>
+					<span class="when-copied">
+						@components.Icon("check")
+					</span>
+				</button>
+				if verifyURL != "" {
+					<a class="verify-link" href={ templ.SafeURL(verifyURL) } target="_blank" rel="noopener noreferrer">
+						{ verifyLabel }
+						@components.Icon("arrow-square-out")
+					</a>
+				}
+			</span>
+		}
+	</span>
+}

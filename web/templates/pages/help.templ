@@ -1,0 +1,291 @@
+package pages
+
+import (
+	"strconv"
+
+	"gatstogo/web/templates/components"
+)
+
+// Help centre: hub (/help), category (/help/{category}), and article
+// (/help/{category}/{article}) pages. Content lives in help_content.go.
+
+// ---- Hub ----
+
+templ Help(contactEmail string) {
+	@marketingPageShell("Help centre | GatsToGo", helpHub(contactEmail))
+}
+
+templ helpHub(contactEmail string) {
+	<main class="hc">
+		<section class="hc-hero">
+			<div class="wrap">
+				<div class="section-eyebrow">Help centre</div>
+				<h1>How can we help?</h1>
+				<div class="hc-search" data-help-search>
+					@components.Icon("magnifying-glass")
+					<input type="search" placeholder="Search help, for example: forgot password, payouts, lost code" aria-label="Search help articles" autocomplete="off" data-help-input/>
+					<div class="hc-results" role="listbox" hidden data-help-results></div>
+				</div>
+				<p class="hc-hero-sub">{ strconv.Itoa(helpArticleCount()) } articles for plant owners, staff, and customers.</p>
+			</div>
+		</section>
+
+		<section class="hc-section">
+			<div class="wrap">
+				<h2 class="hc-section-title">For plant owners and staff</h2>
+				<div class="hc-cats">
+					for _, c := range HelpCategories {
+						if c.Audience == "owners" {
+							@helpCategoryTile(c)
+						}
+					}
+				</div>
+				<h2 class="hc-section-title">For customers buying gas</h2>
+				<div class="hc-cats hc-cats-2">
+					for _, c := range HelpCategories {
+						if c.Audience == "customers" {
+							@helpCategoryTile(c)
+						}
+					}
+				</div>
+			</div>
+		</section>
+
+		<section class="hc-section hc-popular">
+			<div class="wrap">
+				<h2 class="hc-section-title">Popular articles</h2>
+				<ul class="hc-popular-list">
+					for _, ref := range PopularHelpArticles() {
+						<li>
+							<a href={ templ.SafeURL(helpArticleURL(ref.Category, ref.Article)) }>
+								<span>
+									<strong>{ ref.Article.Title }</strong>
+									<small>{ ref.Category.Title }</small>
+								</span>
+								@components.Icon("arrow-right")
+							</a>
+						</li>
+					}
+				</ul>
+			</div>
+		</section>
+
+		<section class="hc-section">
+			<div class="wrap">
+				@helpContactBand(contactEmail)
+			</div>
+		</section>
+		@helpSearchScript()
+	</main>
+}
+
+templ helpCategoryTile(c HelpCategory) {
+	<a class="hc-cat" href={ templ.SafeURL(helpCategoryURL(c)) }>
+		<span class="hc-cat-icon">
+			@components.Icon(c.Icon)
+		</span>
+		<strong>{ c.Title }</strong>
+		<span class="hc-cat-desc">{ c.Description }</span>
+		<span class="hc-cat-count">{ strconv.Itoa(len(c.Articles)) } articles</span>
+	</a>
+}
+
+templ helpContactBand(contactEmail string) {
+	<div class="hc-contact">
+		<div>
+			<h2>Still need help?</h2>
+			<p>Plant owners can email us directly. Customers: for an order, contact the plant you bought from.</p>
+		</div>
+		<div class="hc-contact-actions">
+			<a class="button-primary" href={ templ.SafeURL("mailto:" + contactEmail) }>
+				Email support
+				@components.Icon("arrow-right")
+			</a>
+			<a class="text-button" href="/contact">Contact options</a>
+		</div>
+	</div>
+}
+
+// ---- Category ----
+
+templ HelpCategoryPage(c HelpCategory, contactEmail string) {
+	@marketingPageShell(c.Title+" | Help centre | GatsToGo", helpCategoryContent(c, contactEmail))
+}
+
+templ helpCategoryContent(c HelpCategory, contactEmail string) {
+	<main class="hc hc-page">
+		<div class="wrap hc-layout">
+			@helpSidebar(c.Slug, "")
+			<div class="hc-main">
+				<nav class="hc-crumbs" aria-label="Breadcrumb">
+					<a href="/help">Help centre</a>
+					<span aria-hidden="true">/</span>
+					<span aria-current="page">{ c.Title }</span>
+				</nav>
+				<h1>{ c.Title }</h1>
+				<p class="hc-lede">{ c.Description }</p>
+				<ul class="hc-article-list">
+					for _, a := range c.Articles {
+						<li>
+							<a href={ templ.SafeURL(helpArticleURL(c, a)) }>
+								<strong>{ a.Title }</strong>
+								<span>{ a.Summary }</span>
+							</a>
+						</li>
+					}
+				</ul>
+				@helpContactBand(contactEmail)
+			</div>
+		</div>
+	</main>
+}
+
+// ---- Article ----
+
+templ HelpArticlePage(c HelpCategory, a HelpArticle, contactEmail string) {
+	@marketingPageShell(a.Title+" | Help centre | GatsToGo", helpArticleContent(c, a, contactEmail))
+}
+
+templ helpArticleContent(c HelpCategory, a HelpArticle, contactEmail string) {
+	<main class="hc hc-page">
+		<div class="wrap hc-layout">
+			@helpSidebar(c.Slug, a.Slug)
+			<article class="hc-main hc-article">
+				<nav class="hc-crumbs" aria-label="Breadcrumb">
+					<a href="/help">Help centre</a>
+					<span aria-hidden="true">/</span>
+					<a href={ templ.SafeURL(helpCategoryURL(c)) }>{ c.Title }</a>
+				</nav>
+				<h1>{ a.Title }</h1>
+				<p class="hc-lede">{ a.Summary }</p>
+				<div class="hc-body">
+					for _, b := range a.Body {
+						switch b.Kind {
+							case "h":
+								<h2>{ b.Text }</h2>
+							case "steps":
+								<ol class="hc-steps">
+									for _, item := range b.Items {
+										<li>{ item }</li>
+									}
+								</ol>
+							case "list":
+								<ul class="hc-bullets">
+									for _, item := range b.Items {
+										<li>{ item }</li>
+									}
+								</ul>
+							case "note":
+								<div class="hc-note">
+									@components.Icon("check-circle")
+									<p>{ b.Text }</p>
+								</div>
+							default:
+								<p>{ b.Text }</p>
+						}
+					}
+				</div>
+				<div class="hc-feedback" data-help-feedback={ c.Slug + "/" + a.Slug }>
+					<span>Was this article helpful?</span>
+					<div class="hc-feedback-buttons">
+						<button type="button" data-vote="yes">Yes</button>
+						<button type="button" data-vote="no">No</button>
+					</div>
+					<p class="hc-feedback-thanks" hidden>Thanks for the feedback.</p>
+				</div>
+				if related := relatedHelpArticles(c, a, 3); len(related) > 0 {
+					<div class="hc-related">
+						<h2>Related articles</h2>
+						<ul>
+							for _, r := range related {
+								<li><a href={ templ.SafeURL(helpArticleURL(c, r)) }>{ r.Title }</a></li>
+							}
+						</ul>
+					</div>
+				}
+				@helpContactBand(contactEmail)
+			</article>
+		</div>
+		@helpFeedbackScript()
+	</main>
+}
+
+// helpSidebar lists every category; the current category's articles are
+// expanded with the current article highlighted.
+templ helpSidebar(currentCategory string, currentArticle string) {
+	<aside class="hc-sidebar">
+		<a class="hc-sidebar-home" href="/help">
+			@components.Icon("arrow-right")
+			All help topics
+		</a>
+		for _, c := range HelpCategories {
+			<div class={ "hc-side-group", templ.KV("is-open", c.Slug == currentCategory) }>
+				<a class={ "hc-side-cat", templ.KV("is-current", c.Slug == currentCategory && currentArticle == "") } href={ templ.SafeURL(helpCategoryURL(c)) }>{ c.Title }</a>
+				if c.Slug == currentCategory {
+					<ul>
+						for _, a := range c.Articles {
+							<li><a class={ templ.KV("is-current", a.Slug == currentArticle) } href={ templ.SafeURL(helpArticleURL(c, a)) }>{ a.Title }</a></li>
+						}
+					</ul>
+				}
+			</div>
+		}
+	</aside>
+}
+
+templ helpSearchScript() {
+	@templ.JSONScript("help-index", helpSearchEntries())
+	<script>
+		(function () {
+			var root = document.querySelector("[data-help-search]");
+			if (!root) return;
+			var input = root.querySelector("[data-help-input]");
+			var box = root.querySelector("[data-help-results]");
+			var index = JSON.parse(document.getElementById("help-index").textContent);
+			function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]; }); }
+			function search(q) {
+				var words = q.toLowerCase().split(/\s+/).filter(Boolean);
+				if (!words.length) return [];
+				return index.map(function (e) {
+					var title = e.t.toLowerCase(), text = (e.t + " " + e.s + " " + e.c).toLowerCase(), score = 0;
+					for (var i = 0; i < words.length; i++) {
+						if (text.indexOf(words[i]) === -1) return null;
+						score += title.indexOf(words[i]) !== -1 ? 3 : 1;
+					}
+					return { e: e, score: score };
+				}).filter(Boolean).sort(function (a, b) { return b.score - a.score; }).slice(0, 8);
+			}
+			input.addEventListener("input", function () {
+				var q = input.value.trim();
+				if (!q) { box.hidden = true; box.innerHTML = ""; return; }
+				var hits = search(q);
+				box.innerHTML = hits.length
+					? hits.map(function (h) { return '<a role="option" href="' + esc(h.e.u) + '"><strong>' + esc(h.e.t) + '</strong><span>' + esc(h.e.c) + ' · ' + esc(h.e.s) + '</span></a>'; }).join("")
+					: '<div class="hc-noresults">No articles match "' + esc(q) + '". Try other words, or <a href="/contact">contact us</a>.</div>';
+				box.hidden = false;
+			});
+			input.addEventListener("keydown", function (e) {
+				if (e.key === "Enter") { var first = box.querySelector("a[role=option]"); if (first) { e.preventDefault(); window.location = first.href; } }
+				if (e.key === "Escape") { box.hidden = true; }
+			});
+			document.addEventListener("click", function (e) { if (!root.contains(e.target)) box.hidden = true; });
+		})();
+	</script>
+}
+
+templ helpFeedbackScript() {
+	<script>
+		(function () {
+			var root = document.querySelector("[data-help-feedback]");
+			if (!root) return;
+			root.querySelectorAll("[data-vote]").forEach(function (b) {
+				b.addEventListener("click", function () {
+					var body = new URLSearchParams({ article: root.dataset.helpFeedback, helpful: b.dataset.vote });
+					try { navigator.sendBeacon("/help/feedback", body); } catch (e) {}
+					root.querySelector(".hc-feedback-buttons").hidden = true;
+					root.querySelector(".hc-feedback-thanks").hidden = false;
+				});
+			});
+		})();
+	</script>
+}

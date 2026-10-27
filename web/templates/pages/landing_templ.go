@@ -60,7 +60,7 @@ func landingContent() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main><section class=\"hero\"><div class=\"wrap hero-inner\"><div class=\"section-eyebrow\">For LPG plant owners</div><h1>Sell gas online. Run your plant from one dashboard.</h1><p class=\"lede\">GatsToGo gives your plant its own branded page to sell gas, a terminal for staff to redeem and fill orders, and a live dashboard that shows every sale, shift, and cedi of cash as it happens.</p><div class=\"hero-ctas\"><a class=\"button-primary\" href=\"/get-started\">Get started")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main><section class=\"hero\"><div class=\"wrap hero-inner\"><div class=\"section-eyebrow\">For LPG plant owners</div><h1>Sell gas online. Run your plant from one dashboard.</h1><p class=\"lede\">GatsToGo gives your plant its own branded page to sell gas, a terminal for staff to redeem and fill orders, and a live dashboard that shows every sale, shift, and naira of cash as it happens.</p><div class=\"hero-ctas\"><a class=\"button-primary\" href=\"/get-started\">Get started")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

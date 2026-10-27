@@ -348,6 +348,14 @@ type OwnerActivityRow struct {
 	// see loadActivity's own comment for why "what" (the raw subject
 	// column) isn't always present or always safe to show as-is.
 	Detail string
+	// Who/What/When are the same parts kept separate, for layouts that
+	// show them as columns (the admin activity list). Optional.
+	Who  string
+	What string
+	When string
+	// Tone colours the action in column layouts: badge-ok / badge-warn /
+	// badge-danger / badge-muted, or "" for neutral.
+	Tone string
 }
 
 type AdminConsoleData struct {
@@ -421,14 +429,14 @@ type AdminSystemTable struct {
 }
 
 templ OwnerDashboard(data OwnerDashboardData) {
-	@opsShell(data.PlantName+" owner dashboard", "Owner", ownerNav(), ownerDashboardContent(data), "/owner/logout", data.CSRFToken)
+	@opsShell(data.PlantName+" owner dashboard", "Owner", ownerNav(), ownerDashboardContent(data), "/owner/logout", data.CSRFToken, "Overview", data.PlantName)
 }
 
 templ AdminConsole(data AdminConsoleData) {
-	@opsShell("GatsToGo admin console", "Admin", adminNav(), adminConsoleContent(data), "/admin/logout", data.CSRFToken)
+	@opsShell("GatsToGo admin console", "Admin", adminNav(), adminConsoleContent(data), "/admin/logout", data.CSRFToken, "Overview", "Platform admin")
 }
 
-templ opsShell(title string, railLabel string, nav templ.Component, content templ.Component, logoutAction string, csrfToken string) {
+templ opsShell(title string, railLabel string, nav templ.Component, content templ.Component, logoutAction string, csrfToken string, mobileTitle string, mobileSub string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -438,9 +446,43 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 			@components.BrandFavicons()
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-			<link rel="stylesheet" href="/static/css/tokens.css"/>
-			<link rel="stylesheet" href="/static/css/owner-admin.css"/>
+			<link rel="stylesheet" href={ cssURL("tokens.css") }/>
+			<link rel="stylesheet" href={ cssURL("owner-admin.css") }/>
 			<script src="https://cdn.jsdelivr.net/npm/@lottiefiles/lottie-player@2.0.12/dist/lottie-player.js" defer></script>
+			<script>
+				// Copy buttons next to record values (verifyValue): copy, then
+				// show a check for a moment so the admin knows it worked.
+				document.addEventListener("click", function (event) {
+					var button = event.target.closest("[data-copy]");
+					if (!button) return;
+					var text = button.getAttribute("data-copy");
+					var done = function () {
+						button.classList.add("is-copied");
+						button.setAttribute("title", "Copied");
+						setTimeout(function () {
+							button.classList.remove("is-copied");
+							button.setAttribute("title", "Copy");
+						}, 1600);
+					};
+					// Older-browser / refused-permission fallback.
+					var fallback = function () {
+						var area = document.createElement("textarea");
+						area.value = text;
+						area.setAttribute("readonly", "");
+						area.style.position = "fixed";
+						area.style.opacity = "0";
+						document.body.appendChild(area);
+						area.select();
+						try { if (document.execCommand("copy")) done(); } catch (e) {}
+						document.body.removeChild(area);
+					};
+					if (navigator.clipboard && window.isSecureContext) {
+						navigator.clipboard.writeText(text).then(done, fallback);
+					} else {
+						fallback();
+					}
+				});
+			</script>
 			<script>
 				document.addEventListener("DOMContentLoaded", function () {
 					document.querySelectorAll("[data-tabs]").forEach(function (root) {
@@ -451,6 +493,10 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 							root.querySelectorAll("[data-tab-panel]").forEach(function (panel) {
 								panel.classList.toggle("active", panel.dataset.tabPanel === tab);
 							});
+							// Mobile header title follows the current section.
+							var label = root.querySelector('.rail [data-tab="' + tab + '"] .nav-button-label');
+							var title = root.querySelector("[data-mobile-title]");
+							if (label && title) title.textContent = label.textContent.trim();
 						}
 
 						// Mobile off-canvas drawer -- the exact same .rail markup
@@ -780,24 +826,33 @@ templ opsShell(title string, railLabel string, nav templ.Component, content temp
 		</head>
 		<body>
 			<div class="shell" data-tabs>
-				<div class="mobile-topbar">
+				<header class="mobile-topbar">
+					<span class="mt-mark">
+						@components.BrandMark("mark", "primary", "GatsToGo")
+					</span>
+					<div class="mt-title">
+						<strong data-mobile-title>{ mobileTitle }</strong>
+						<span>{ mobileSub }</span>
+					</div>
 					<button class="rail-toggle" type="button" data-rail-toggle aria-label="Open menu" aria-expanded="false" aria-controls="mobile-rail">
 						<span class="burger" aria-hidden="true"><span></span><span></span><span></span></span>
 					</button>
-					<div class="brand">@components.BrandMark("mark", "dark-container", "GatsToGo")<span>{ railLabel } workspace</span></div>
-				</div>
+				</header>
 				<div class="rail-backdrop" data-rail-backdrop></div>
 				<aside class="rail" id="mobile-rail">
 					<div class="brand">
-						@components.BrandMark("mark", "dark-container", "GatsToGo")
+						// dark-background mark for the desktop rail, regular mark
+						// for the light mobile drawer; CSS shows one of them
+						<span class="mark-on-dark">
+							@components.BrandMark("mark", "dark-container", "GatsToGo")
+						</span>
+						<span class="mark-on-light">
+							@components.BrandMark("mark", "primary", "GatsToGo")
+						</span>
 						<span>GATSTOGO</span>
 					</div>
 					<div class="rail-label">{ railLabel } workspace</div>
 					@nav
-					<div class="rail-note">
-						<strong>Real numbers only.</strong>
-						Everything on this dashboard reflects what's actually happened. Sections stay empty until there's something real to show.
-					</div>
 					<form
 						method="post"
 						action={ templ.SafeURL(logoutAction) }
@@ -856,10 +911,12 @@ templ kpiLabel(icon string, label string) {
 // actually match what the section is about) above the existing copy.
 // lottie is just the file's base name ("sales", "shifts", ...), never a
 // full path or user input, so building the src by concatenation here is
-// safe.
+// safe. Every empty state uses the large, responsive .empty-wide sizing;
+// "empty-state" (the owner dashboard's) is wide, the admin ones
+// (plants, activity) are square, hence .empty-square.
 templ emptyState(lottie string, message string) {
-	<div class="empty">
-		<lottie-player class="empty-lottie" src={ "/static/lottie/" + lottie + ".json" } autoplay loop></lottie-player>
+	<div class={ "empty", "empty-wide", templ.KV("empty-square", lottie != "empty-state") }>
+		<lottie-player class="empty-lottie" src={ "/static/lottie/" + lottie + ".json" } autoplay loop aria-hidden="true"></lottie-player>
 		{ message }
 	</div>
 }
@@ -955,13 +1012,13 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 		</div>
 	}
 	<section class="tab-panel active" data-tab-panel="overview">
-		<div class="kpi-row">
+		<div class="kpi-row kpi-band">
 			<div class="kpi-item">@kpiLabel("wallet", "Money today")<div class="kpi">{ data.MoneyToday }</div><div class="kpi-small">{ data.SalesCount } sales recorded</div></div>
 			<div class="kpi-item">@kpiLabel("gas-pump", "Gas sold")<div class="kpi">{ data.GasSoldKg }</div><div class="kpi-small">Paid ticket size</div></div>
 			<div class="kpi-item">@kpiLabel("receipt", "Current price")<div class="kpi">{ data.CurrentPrice }</div><div class="kpi-small">Snapshot used for new tickets</div></div>
 			<div class="kpi-item">@kpiLabel("bank", "Cash / electronic")<div class="kpi">{ data.CashTotal }</div><div class="kpi-small">Electronic { data.ElectronicTotal }</div></div>
 		</div>
-		<div class="dashboard-grid">
+		<div class="dashboard-grid overview-grid">
 			<div>
 				<div class="section-title"><h2>Today's control</h2></div>
 				<div class="stat-line">
@@ -970,9 +1027,9 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					<div><div class="kpi-label">Difference</div><strong class="mono">{ data.DiffKg } · { data.DiffAmount }</strong></div>
 				</div>
 				<div class="section-title section-spaced"><h2>Recent activity</h2></div>
-				<div class="timeline">
+				<div class="timeline activity-grid">
 					if len(data.Activity) == 0 {
-						@emptyState("activity", "No activity yet. Ticket, price, shift, and staff changes will appear here.")
+						@emptyState("empty-state", "No activity yet. Ticket, price, shift, and staff changes will appear here.")
 					}
 					for _, item := range data.Activity {
 						<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Detail }</span></div>
@@ -981,7 +1038,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 			</div>
 			<div class="dash-aside">
 				<div class="section-title"><h2>Plant basics</h2></div>
-				<div class="split-list">
+				<div class="split-list basics-list">
 					<div class="info-row"><span>Address</span><strong>{ data.PlantAddress }</strong></div>
 					<div class="info-row"><span>Phone</span><strong>{ data.PlantPhone }</strong></div>
 					<div class="info-row"><span>Web address</span><strong class="mono">{ data.PlantSlug }</strong></div>
@@ -997,7 +1054,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<thead><tr><th>Ticket</th><th>Customer</th><th>Code</th><th class="num">Paid kg</th><th class="num">Filled kg</th><th class="num">Amount</th><th>Channel</th><th>Pump</th><th>Status</th><th>Created</th><th></th></tr></thead>
 				<tbody>
 					if len(data.RecentTickets) == 0 {
-						<tr><td colspan="11">@emptyState("sales", "No sales yet. Paid customer tickets will show reference, code, weight, payment method, pump, and status here.")</td></tr>
+						<tr><td colspan="11">@emptyState("empty-state", "No sales yet. Paid customer tickets will show reference, code, weight, payment method, pump, and status here.")</td></tr>
 					}
 					for _, row := range data.RecentTickets {
 						<tr>
@@ -1036,7 +1093,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<thead><tr><th>Ticket</th><th>Customer phone</th><th>Rating</th><th>Message</th><th>Submitted</th></tr></thead>
 				<tbody>
 					if len(data.Reviews) == 0 {
-						<tr><td colspan="5">@emptyState("activity", "No reviews yet. When customers submit review links, their ratings and notes will appear here.")</td></tr>
+						<tr><td colspan="5">@emptyState("empty-state", "No reviews yet. When customers submit review links, their ratings and notes will appear here.")</td></tr>
 					}
 					for _, row := range data.Reviews {
 						<tr>
@@ -1063,7 +1120,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					<thead><tr><th>When</th><th>Kind</th><th class="num">Amount</th><th class="num">Counted</th><th>Recorded by</th><th>Ticket</th><th>Note</th></tr></thead>
 					<tbody>
 						if len(data.CashMovements) == 0 {
-							<tr><td colspan="7">@emptyState("cash", "No cash entries yet. Opening cash, cash sales, and closing records from the terminal will appear here.")</td></tr>
+							<tr><td colspan="7">@emptyState("empty-state", "No cash entries yet. Opening cash, cash sales, and closing records from the terminal will appear here.")</td></tr>
 						}
 						for _, row := range data.CashMovements {
 							<tr><td>{ row.When }</td><td>{ row.Kind }</td><td class="num">{ row.Amount }</td><td class="num">{ row.Counted }</td><td>{ row.Recorder }</td><td class="mono">{ row.Ticket }</td><td>{ row.Note }</td></tr>
@@ -1072,7 +1129,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				</table>
 			</div>
 		</div>
-		<div class="dashboard-grid section-spaced">
+		<div class="section-spaced">
 			<div>
 				<div class="section-title"><h2>Opening hours</h2></div>
 				<form method="post" action="/owner/hours">
@@ -1111,18 +1168,22 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					}
 				</form>
 			</div>
-			<div class="dash-aside">
-				<div class="section-title"><h2>Pumps</h2></div>
-				<div class="split-list">
-					if len(data.Pumps) == 0 {
-						@emptyState("activity", "No pumps yet. Add the first pump below.")
-					}
+		</div>
+		<div class="section-spaced">
+			<div class="section-title"><h2>Pumps</h2></div>
+			if len(data.Pumps) == 0 {
+				@emptyState("empty-state", "No pumps yet. Add the first pump below.")
+			} else {
+				<div class="pump-list">
+					<div class="pump-row pump-head" aria-hidden="true">
+						<span>Name</span><span>Order</span><span>Status</span><span>Queue</span><span></span>
+					</div>
 					for _, pump := range data.Pumps {
-						<form method="post" action="/owner/pumps" class="pump-edit-row">
+						<form method="post" action="/owner/pumps" class="pump-row">
 							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 							<input type="hidden" name="id" value={ pump.ID }/>
-							<div class="field"><label>Name</label><input type="text" name="name" value={ pump.Name } required/></div>
-							<div class="field"><label>Order</label><input type="number" name="sort_order" value={ strconv.Itoa(pump.SortOrder) } min="1"/></div>
+							<div class="field"><label for={ "pump-name-" + pump.ID }>Name</label><input id={ "pump-name-" + pump.ID } type="text" name="name" value={ pump.Name } required/></div>
+							<div class="field"><label for={ "pump-order-" + pump.ID }>Order</label><input id={ "pump-order-" + pump.ID } type="number" name="sort_order" value={ strconv.Itoa(pump.SortOrder) } min="1"/></div>
 							<div class="field">
 								<label>Status</label>
 								@themedSelect("status", []themedSelectOption{
@@ -1131,25 +1192,25 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 									{Value: "maintenance", Label: "Under maintenance"},
 								}, pump.StatusRaw)
 							</div>
-							<div class="info-row"><span>Queue</span><strong>{ strconv.Itoa(pump.BusyCount) } unfilled</strong></div>
-							if data.CanManagePumps {
-								<button class="btn compact" type="submit">Save</button>
-							}
+							<div class="field pump-queue"><label>Queue</label><strong>{ strconv.Itoa(pump.BusyCount) } unfilled</strong></div>
+							<div class="pump-action">
+								if data.CanManagePumps {
+									<button class="btn" type="submit">@components.Icon("check") Save</button>
+								}
+							</div>
 						</form>
 					}
 				</div>
-				if data.CanManagePumps {
-					<form method="post" action="/owner/pumps" class="section-spaced">
-						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-						<div class="form-grid">
-							<div class="field"><label>New pump name</label><input type="text" name="name" placeholder="Pump 2" required/></div>
-							<div class="field"><label>Order</label><input type="number" name="sort_order" placeholder="2" min="1"/></div>
-							<input type="hidden" name="status" value="working"/>
-						</div>
-						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Add pump</button></div>
-					</form>
-				}
-			</div>
+			}
+			if data.CanManagePumps {
+				<form method="post" action="/owner/pumps" class="pump-add">
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+					<div class="field"><label for="new-pump-name">New pump name</label><input id="new-pump-name" type="text" name="name" placeholder="Pump 2" required/></div>
+					<div class="field"><label for="new-pump-order">Order</label><input id="new-pump-order" type="number" name="sort_order" placeholder="2" min="1"/></div>
+					<input type="hidden" name="status" value="working"/>
+					<div class="pump-action"><button class="btn primary" type="submit">@components.Icon("plus") Add pump</button></div>
+				</form>
+			}
 		</div>
 		<div class="section-title section-spaced"><h2>Shift register</h2></div>
 		<div class="table-wrap">
@@ -1157,7 +1218,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<thead><tr><th>Staff</th><th>Device</th><th>Pump</th><th>Opened</th><th>Closed</th><th class="num">Tickets</th><th class="num">Tokens</th><th class="num">Opening</th><th class="num">Closing</th><th>Status</th><th>Notes</th></tr></thead>
 				<tbody>
 					if len(data.Shifts) == 0 {
-						<tr><td colspan="11">@emptyState("shifts", "No shifts yet. Once a cashier opens a shift, cash float, token count, sales, and closing cash will appear here.")</td></tr>
+						<tr><td colspan="11">@emptyState("empty-state", "No shifts yet. Once a cashier opens a shift, cash float, token count, sales, and closing cash will appear here.")</td></tr>
 					}
 					for _, row := range data.Shifts {
 						<tr><td>{ row.Staff }</td><td class="mono">{ row.Device }</td><td>{ row.Pump }</td><td>{ row.Opened }</td><td>{ row.Closed }</td><td class="num">{ row.Tickets }</td><td class="num">{ row.TokensIssued } / { row.TokensReturned }</td><td class="num">{ row.OpeningCash }</td><td class="num">{ row.ClosingCash }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Notes }</td></tr>
@@ -1167,7 +1228,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 		</div>
 	</section>
 	<section class="tab-panel" data-tab-panel="staff">
-		<div class="dashboard-grid">
+		<div>
 			<div>
 				<div class="section-title"><h2>Staff access</h2></div>
 				<div class="table-wrap">
@@ -1175,7 +1236,7 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 						<thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th>Permissions</th><th class="num">Sales</th><th class="num">Shifts</th><th>Joined</th><th></th></tr></thead>
 						<tbody>
 							if len(data.Staff) == 0 {
-								<tr><td colspan="9">@emptyState("staff", "No staff yet. Managers, cashiers, and operators will appear here.")</td></tr>
+								<tr><td colspan="9">@emptyState("empty-state", "No staff yet. Managers, cashiers, and operators will appear here.")</td></tr>
 							}
 							for _, row := range data.Staff {
 								<tr>
@@ -1289,25 +1350,23 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 					</table>
 				</div>
 			</div>
-			<div class="dash-aside">
+			<div class="section-spaced">
 				<div class="section-title"><h2>Add staff</h2></div>
 				if data.CanManageStaff {
-					<form method="post" action="/owner/staff">
+					<form method="post" action="/owner/staff" class="staff-add">
 						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-						<div class="form-grid">
-							<div class="field"><label>Name</label><input type="text" name="name" placeholder="Full name" required/></div>
-							<div class="field"><label>Phone</label><input type="tel" name="phone" placeholder="0803 000 0000" required/></div>
-							<div class="field">
-								<label>Role</label>
-								@themedSelect("role", []themedSelectOption{
-									{Value: "cashier", Label: "Cashier"},
-									{Value: "operator", Label: "Operator"},
-									{Value: "manager", Label: "Manager"},
-								}, "")
-							</div>
-							<div class="field"><label>PIN</label><input type="text" name="pin" placeholder="4-digit PIN" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required/></div>
+						<div class="field"><label for="new-staff-name">Name</label><input id="new-staff-name" type="text" name="name" placeholder="Full name" required/></div>
+						<div class="field"><label for="new-staff-phone">Phone</label><input id="new-staff-phone" type="tel" name="phone" placeholder="0803 000 0000" required/></div>
+						<div class="field">
+							<label>Role</label>
+							@themedSelect("role", []themedSelectOption{
+								{Value: "cashier", Label: "Cashier"},
+								{Value: "operator", Label: "Operator"},
+								{Value: "manager", Label: "Manager"},
+							}, "")
 						</div>
-						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("plus") Create staff</button></div>
+						<div class="field"><label for="new-staff-pin">PIN</label><input id="new-staff-pin" type="text" name="pin" placeholder="4-digit PIN" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required/></div>
+						<div class="staff-add-action"><button class="btn primary" type="submit">@components.Icon("plus") Create staff</button></div>
 					</form>
 				} else {
 					<p class="muted">Only the owner, or a manager granted staff-management permission, can create staff.</p>
@@ -1316,99 +1375,134 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 		</div>
 	</section>
 	<section class="tab-panel" data-tab-panel="settings">
-		<div class="dashboard-grid">
-			<div>
-				<div class="section-title"><h2>Price history</h2></div>
-				<div class="table-wrap">
-					<table style="min-width:560px">
-						<thead><tr><th>Effective from</th><th class="num">Price</th><th>Set by</th><th>Created</th></tr></thead>
-						<tbody>
-							if len(data.PriceHistory) == 0 {
-								<tr><td colspan="4">@emptyState("prices", "No price history yet. Every price change is kept here instead of overwritten.")</td></tr>
-							}
-							for _, row := range data.PriceHistory {
-								<tr><td>{ row.EffectiveFrom }</td><td class="num">{ row.Price }</td><td>{ row.SetBy }</td><td>{ row.CreatedAt }</td></tr>
-							}
-						</tbody>
-					</table>
-				</div>
-			</div>
-			<div class="dash-aside">
-				<div class="section-title"><h2>Set new rate</h2></div>
-				if data.CanEditPrice {
-					<form method="post" action="/owner/prices">
-						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-						<div class="form-grid">
-							<div class="field"><label>Price per kg</label><input type="text" name="price_per_kg" placeholder="1150" inputmode="decimal" required/></div>
-							<div class="field"><label>Effective from</label><input type="text" value="Immediately" disabled/></div>
-						</div>
-						<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save new price</button></div>
-					</form>
-				} else {
-					<p class="muted">Only the owner, or a manager granted price-editing permission, can set the gas price.</p>
-				}
-			</div>
-		</div>
-		<div class="dashboard-grid section-spaced">
-			<div>
-				<div class="section-title"><h2>Plant details</h2></div>
-				<form method="post" action="/owner/settings" enctype="multipart/form-data" data-splash="Saving settings">
-					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-					<div class="form-grid">
-						<div class="field"><label>Plant name</label><input type="text" name="name" value={ data.PlantNameValue } placeholder="Your LPG plant" required/></div>
-						<div class="field"><label>City</label><input type="text" name="city" value={ data.PlantCityValue } placeholder="Plant city"/></div>
-						<div class="field"><label>Phone</label><input type="tel" name="phone" value={ data.PlantPhoneValue } placeholder="0803 000 0000"/></div>
-						<div class="field" style="grid-column: 1 / -1;"><label>Address</label><input type="text" name="address" value={ data.PlantAddressValue } placeholder="Plant address"/></div>
+		<div class="settings">
+			<section class="settings-section">
+				<div class="settings-intro">
+					<h2>Gas price</h2>
+					<p>The rate customers pay online and the terminal charges. A new rate applies to new tickets immediately.</p>
+					<div class="settings-rate-now">
+						<div class="kpi-label">Current rate</div>
+						<div class="settings-rate-value">{ data.CurrentPrice }</div>
 					</div>
-					<div class="section-title section-spaced"><h2>Brand kit</h2></div>
-					<div class="form-grid">
-						@brandColorField("Primary color", "primary_color", data.PlantPrimaryColorValue, "#006B4D")
-						@brandColorField("Button color", "button_color", data.PlantButtonColorValue, "#006B4D")
-						@brandColorField("Secondary color", "secondary_color", data.PlantSecondaryColorValue, "#10B981")
-						@brandColorField("Button text color", "button_text_color", data.PlantButtonTextColorValue, "#F8FAFC")
-						<div class="field" style="grid-column: 1 / -1;">
-							<label>Logo</label>
-							<div class="file-field" data-file-input>
-								<input type="file" id="owner-logo-input" name="logo" accept="image/png,image/jpeg,image/webp" class="file-native"/>
-								<label class="btn file-trigger" for="owner-logo-input">Choose file</label>
-								<span class="file-name" data-file-name>
-									if data.PlantLogoPath != "" {
-										Current logo saved
-									} else {
-										No file chosen
-									}
-								</span>
+					if data.CanEditPrice {
+						<form method="post" action="/owner/prices" class="settings-rate-stack">
+							<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+							<div class="field">
+								<label for="new-price">New price per kg (₦)</label>
+								<input id="new-price" type="text" name="price_per_kg" placeholder="1150" inputmode="decimal" required/>
 							</div>
-							if data.PlantLogoPath != "" {
-								<img class="brand-logo-preview" src={ data.PlantLogoPath } alt="Plant logo"/>
-							}
+							<button class="btn primary" type="submit">@components.Icon("check") Save price</button>
+						</form>
+					} else {
+						<p class="muted settings-rate-note">Only the owner, or a manager granted price-editing permission, can set the gas price.</p>
+					}
+				</div>
+				<div class="settings-body">
+					<div class="settings-subhead settings-subhead-first">Price history</div>
+					<div class="table-wrap">
+						<table style="min-width:520px">
+							<thead><tr><th>Effective from</th><th class="num">Price</th><th>Set by</th><th>Created</th></tr></thead>
+							<tbody>
+								if len(data.PriceHistory) == 0 {
+									<tr><td colspan="4">@emptyState("empty-state", "No price history yet. Every price change is kept here instead of overwritten.")</td></tr>
+								}
+								for _, row := range data.PriceHistory {
+									<tr><td>{ row.EffectiveFrom }</td><td class="num">{ row.Price }</td><td>{ row.SetBy }</td><td>{ row.CreatedAt }</td></tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</section>
+			<form method="post" action="/owner/settings" enctype="multipart/form-data" data-splash="Saving settings">
+				<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+				<section class="settings-section">
+					<div class="settings-intro">
+						<h2>Plant details</h2>
+						<p>Shown to customers on your buy-gas page and receipts.</p>
+					</div>
+					<div class="settings-body">
+						<div class="form-grid">
+							<div class="field"><label for="set-name">Plant name</label><input id="set-name" type="text" name="name" value={ data.PlantNameValue } placeholder="Your LPG plant" required/></div>
+							<div class="field"><label for="set-city">City</label><input id="set-city" type="text" name="city" value={ data.PlantCityValue } placeholder="Plant city"/></div>
+							<div class="field"><label for="set-phone">Phone</label><input id="set-phone" type="tel" name="phone" value={ data.PlantPhoneValue } placeholder="0803 000 0000"/></div>
+							<div class="field"><label for="set-address">Address</label><input id="set-address" type="text" name="address" value={ data.PlantAddressValue } placeholder="Plant address"/></div>
 						</div>
 					</div>
-					<div class="action-strip"><button class="btn primary" type="submit">@components.Icon("check") Save settings</button></div>
-				</form>
-			</div>
-			<div class="dash-aside">
-				<div class="section-title"><h2>Locked records</h2></div>
-				<div class="split-list">
-					<div class="info-row"><span>Legal business name</span><strong>{ data.PlantLegalBusinessName }</strong></div>
-					<div class="info-row"><span>State</span><strong>{ data.PlantState }</strong></div>
-					<div class="info-row"><span>CAC number</span><strong class="mono">{ data.PlantCACNumber }</strong></div>
-					<div class="info-row"><span>NMDPRA license</span><strong class="mono">{ data.PlantNMDPRALicense }</strong></div>
-					<div class="info-row"><span>Settlement account</span><strong class="mono">{ data.PlantBankAccount }</strong></div>
-					<div class="info-row"><span>Account name</span><strong>{ data.PlantBankAccountName }</strong></div>
+				</section>
+				<section class="settings-section">
+					<div class="settings-intro">
+						<h2>Brand kit</h2>
+						<p>Your colors and logo on the customer site and staff terminal.</p>
+					</div>
+					<div class="settings-body">
+						<div class="form-grid">
+							@brandColorField("Primary color", "primary_color", data.PlantPrimaryColorValue, "#006B4D")
+							@brandColorField("Button color", "button_color", data.PlantButtonColorValue, "#006B4D")
+							@brandColorField("Secondary color", "secondary_color", data.PlantSecondaryColorValue, "#10B981")
+							@brandColorField("Button text color", "button_text_color", data.PlantButtonTextColorValue, "#F8FAFC")
+							<div class="field" style="grid-column: 1 / -1;">
+								<label>Logo</label>
+								<div class="settings-logo">
+									if data.PlantLogoPath != "" {
+										<img class="brand-logo-preview" src={ data.PlantLogoPath } alt="Plant logo"/>
+									}
+									<div class="file-field" data-file-input>
+										<input type="file" id="owner-logo-input" name="logo" accept="image/png,image/jpeg,image/webp" class="file-native"/>
+										<label class="btn file-trigger" for="owner-logo-input">Choose file</label>
+										<span class="file-name" data-file-name>
+											if data.PlantLogoPath != "" {
+												Current logo saved
+											} else {
+												No file chosen
+											}
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="settings-save">
+							<span class="muted">Saves plant details and brand kit together.</span>
+							<button class="btn primary" type="submit">@components.Icon("check") Save changes</button>
+						</div>
+					</div>
+				</section>
+			</form>
+			<section class="settings-section">
+				<div class="settings-intro">
+					<h2>Business records</h2>
+					<p>Your registered business and payout account. Contact GatsToGo to change these.</p>
 				</div>
-				<p class="muted" style="margin-top: 12px;">These identify the registered business and payout destination. Contact GatsToGo to change them.</p>
-			</div>
+				<div class="settings-body">
+					<dl class="settings-records">
+						<div><dt>Legal business name</dt><dd>{ data.PlantLegalBusinessName }</dd></div>
+						<div><dt>State</dt><dd>{ data.PlantState }</dd></div>
+						<div><dt>CAC number</dt><dd class="mono">{ data.PlantCACNumber }</dd></div>
+						<div><dt>NMDPRA license</dt><dd class="mono">{ data.PlantNMDPRALicense }</dd></div>
+						<div><dt>Settlement account</dt><dd class="mono">{ data.PlantBankAccount }</dd></div>
+						<div><dt>Account name</dt><dd>{ data.PlantBankAccountName }</dd></div>
+					</dl>
+				</div>
+			</section>
+			<section class="settings-section">
+				<div class="settings-intro">
+					<h2>Security</h2>
+					<p>Keep your dashboard sign-in safe.</p>
+				</div>
+				<div class="settings-body">
+					<div class="settings-link-row">
+						<div>
+							<strong>Password</strong>
+							<span class="muted">Change the password you use to sign in.</span>
+						</div>
+						<a class="btn" href="/owner/password">
+							Change password
+							@components.Icon("arrow-right")
+						</a>
+					</div>
+				</div>
+			</section>
 		</div>
-		<div class="section-title section-spaced"><h2>Account security</h2></div>
-		<p class="muted">Change the password you use to sign in to this dashboard.</p>
-		<form method="post" action="/owner/password" data-splash="Updating password" style="max-width:420px;">
-			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
-			<div class="field"><label>Current password</label><input type="password" name="current_password" autocomplete="current-password" required/></div>
-			<div class="field" style="margin-top:10px;"><label>New password</label><input type="password" name="new_password" autocomplete="new-password" required/></div>
-			<div class="field" style="margin-top:10px;"><label>Confirm new password</label><input type="password" name="new_password_confirm" autocomplete="new-password" required/></div>
-			<div class="action-strip" style="margin-top:16px; justify-content:flex-start;"><button class="btn primary" type="submit">Update password</button></div>
-		</form>
 	</section>
 }
 
@@ -1471,23 +1565,25 @@ templ adminConsoleContent(data AdminConsoleData) {
 		</div>
 	}
 	<section class="tab-panel active" data-tab-panel="overview">
-		<div class="kpi-row">
+		<div class="kpi-row kpi-band">
 			<div class="kpi-item">@kpiLabel("factory", "Plants")<div class="kpi">{ data.PlantCount }</div><div class="kpi-small">All plants on GatsToGo</div></div>
 			<div class="kpi-item">@kpiLabel("list-checks", "Applications")<div class="kpi">{ data.OnboardingCount }</div><div class="kpi-small">Waiting for verification</div></div>
-			<div class="kpi-item">@kpiLabel("receipt", "Transactions 7d")<div class="kpi">{ data.TotalTickets7d }</div><div class="kpi-small">Across active plants</div></div>
+			<div class="kpi-item">@kpiLabel("receipt", "Transactions 7d")<div class="kpi">{ formatThousands(data.TotalTickets7d) }</div><div class="kpi-small">Across active plants</div></div>
 			<div class="kpi-item">@kpiLabel("gas-pump", "Volume 30d")<div class="kpi">{ data.TotalVolume30d }</div><div class="kpi-small">Paid ticket weight</div></div>
 		</div>
-		<div class="dashboard-grid">
+		<div class="dashboard-grid overview-grid">
 			<div>
 				<div class="section-title"><h2>New applications</h2></div>
 				if len(data.Applications) == 0 {
 					@emptyState("plants", "No plant applications are waiting for review.")
 				} else {
-					<div class="timeline">
-						for _, row := range data.Applications {
+					<div class="timeline activity-grid">
+						for i, row := range data.Applications {
+							if i < 6 {
 							<div class="timeline-item application-item">
-								<strong>{ row.Name }</strong>
-								<span class="muted">{ row.OwnerName } · { row.OwnerPhone } · submitted { row.CreatedAt }</span>
+								<strong><a class="plant-name-link" href={ templ.SafeURL("/admin/plants/" + row.ID) }>{ row.Name }</a></strong>
+								<span class="muted">{ row.OwnerName } · <span class="mono">{ row.OwnerPhone }</span></span>
+								<span class="muted">Submitted { row.CreatedAt }</span>
 								<div class="application-actions">
 									<a class="btn" href={ templ.SafeURL("/admin/plants/" + row.ID) }>Review</a>
 									@plantStatusForm(row.ID, "active", "Activate", data.CSRFToken, statusConfirm{
@@ -1497,8 +1593,15 @@ templ adminConsoleContent(data AdminConsoleData) {
 									})
 								</div>
 							</div>
+							}
 						}
 					</div>
+					if len(data.Applications) > 6 {
+						<button class="see-all-link" type="button" data-tab="applications">
+							See all { strconv.Itoa(len(data.Applications)) } applications
+							@components.Icon("arrow-right")
+						</button>
+					}
 				}
 			</div>
 			<div class="dash-aside">
@@ -1515,92 +1618,141 @@ templ adminConsoleContent(data AdminConsoleData) {
 	</section>
 	<section class="tab-panel" data-tab-panel="applications">
 		<div class="section-title"><h2>Applications under review</h2></div>
-		<div class="table-wrap">
-			<table style="min-width:1160px">
-				<thead><tr><th>Plant</th><th>Owner</th><th>Business</th><th>Location</th><th>Web address</th><th>Submitted</th><th></th></tr></thead>
-				<tbody>
-					if len(data.Applications) == 0 {
-						<tr><td colspan="7">@emptyState("plants", "No pending applications. New /get-started submissions will appear here with status under review.")</td></tr>
-					}
-					for _, row := range data.Applications {
-						<tr>
-							<td><strong><a class="plant-name-link" href={ templ.SafeURL("/admin/plants/" + row.ID) }>{ row.Name }</a></strong><div class="muted mono">{ row.Phone }</div></td>
-							<td>{ row.OwnerName }<div class="muted mono">{ row.OwnerPhone }</div><div class="muted">{ row.OwnerEmail }</div></td>
-							<td>{ row.LegalName }<div class="muted mono">{ row.CACNumber }</div><div class="muted mono">{ row.NMDPRALicense }</div></td>
-							<td>{ row.City }<div class="muted">{ row.Address }</div></td>
-							<td class="mono">{ row.Slug }</td>
-							<td>{ row.CreatedAt }</td>
-							<td class="action-strip table-actions">
-								<a class="btn" href={ templ.SafeURL("/admin/plants/" + row.ID) }>Review</a>
-								@plantStatusForm(row.ID, "active", "Activate", data.CSRFToken, statusConfirm{
-									Title: "Activate " + row.Name + "?",
-									Desc:  "Its customer page, staff terminal, and owner login all go live immediately.",
-									Tone:  "ok",
-								})
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
-		</div>
+		if len(data.Applications) == 0 {
+			<div class="app-list">
+				@emptyState("plants", "No pending applications. New /get-started submissions will appear here with status under review.")
+			</div>
+		} else {
+			<div class="app-list">
+				<div class="app-row app-head" aria-hidden="true">
+					<span>Plant</span><span>Owner</span><span>Business</span><span>Location</span><span></span>
+				</div>
+				for _, row := range data.Applications {
+					<div class="app-row">
+						<div class="app-cell">
+							<span class="app-label">Plant</span>
+							<strong><a class="plant-name-link" href={ templ.SafeURL("/admin/plants/" + row.ID) }>{ row.Name }</a></strong>
+							<span class="muted mono">{ row.Slug }</span>
+							<span class="muted">Submitted { row.CreatedAt }</span>
+						</div>
+						<div class="app-cell">
+							<span class="app-label">Owner</span>
+							<strong>{ row.OwnerName }</strong>
+							<span class="muted mono">{ row.OwnerPhone }</span>
+							<span class="muted app-wrap">{ row.OwnerEmail }</span>
+						</div>
+						<div class="app-cell">
+							<span class="app-label">Business</span>
+							<strong>{ row.LegalName }</strong>
+							<span class="muted">@verifyValue(row.CACNumber, verifyCACURL, "Verify")</span>
+							<span class="muted">@verifyValue(row.NMDPRALicense, verifyNMDPRAURL, "Verify")</span>
+						</div>
+						<div class="app-cell">
+							<span class="app-label">Location</span>
+							<strong>{ row.City }</strong>
+							<span class="muted">{ row.Address }</span>
+							<span class="muted mono">{ row.Phone }</span>
+						</div>
+						<div class="app-actions">
+							<a class="btn" href={ templ.SafeURL("/admin/plants/" + row.ID) }>Review</a>
+							@plantStatusForm(row.ID, "active", "Activate", data.CSRFToken, statusConfirm{
+								Title: "Activate " + row.Name + "?",
+								Desc:  "Its customer page, staff terminal, and owner login all go live immediately.",
+								Tone:  "ok",
+							})
+						</div>
+					</div>
+				}
+			</div>
+		}
 	</section>
 	<section class="tab-panel" data-tab-panel="plants">
 		<div class="section-title"><h2>Plants</h2></div>
-		<div class="table-wrap">
-			<table style="min-width:1300px">
-				<thead><tr><th>Plant</th><th>Location</th><th>Web address</th><th>Status</th><th>Domain</th><th class="num">Staff</th><th class="num">Prices</th><th class="num">Open shifts</th><th class="num">Txns 7d</th><th class="num">Volume 30d</th><th>Last txn</th><th></th></tr></thead>
-				<tbody>
-					if len(data.Plants) == 0 {
-						<tr><td colspan="12">@emptyState("plants", "No plants yet. Plant records with domain, staff, price, shift, and transaction health will appear here.")</td></tr>
-					}
-					for _, row := range data.Plants {
-						<tr>
-							<td><strong><a class="plant-name-link" href={ templ.SafeURL("/admin/plants/" + row.ID) }>{ row.Name }</a></strong><div class="muted mono">{ row.Phone }</div></td><td>{ row.City }<div class="muted">{ row.Address }</div></td><td class="mono" title={ row.Slug }>{ row.Slug }</td><td><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></td><td>{ row.Domain }<div><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></div></td><td class="num">{ row.StaffCount }</td><td class="num">{ row.PriceCount }</td><td class="num">{ row.OpenShifts }</td><td class="num">{ row.Txns7d }</td><td class="num">{ row.Volume30d }</td><td>{ row.LastTxn }</td>
-							<td class="action-strip table-actions">
-								<a class="btn" href={ templ.SafeURL("/admin/plants/" + row.ID) }>View</a>
-								switch row.RawStatus {
-									case "active":
-										@plantStatusForm(row.ID, "suspended", "Suspend", data.CSRFToken, statusConfirm{
-											Title: "Suspend " + row.Name + "?",
-											Desc:  "Its customer page, staff terminal, and owner login all go offline immediately. You can reactivate it any time.",
-											Tone:  "warning",
-										})
-									case "suspended":
-										@plantStatusForm(row.ID, "active", "Reactivate", data.CSRFToken, statusConfirm{
-											Title: "Reactivate " + row.Name + "?",
-											Desc:  "Its customer page, staff terminal, and owner login all come back online immediately.",
-											Tone:  "ok",
-										})
-										@plantStatusForm(row.ID, "closed", "Close", data.CSRFToken, statusConfirm{
-											Title: "Close " + row.Name + "?",
-											Desc:  "Like suspending, this takes everything offline immediately. Unlike suspending, there's no reactivate button for a closed plant in this console.",
-											Tone:  "danger",
-										})
-									case "provisioning":
-										@plantStatusForm(row.ID, "active", "Activate", data.CSRFToken, statusConfirm{
-											Title: "Activate " + row.Name + "?",
-											Desc:  "Its customer page, staff terminal, and owner login all go live immediately.",
-											Tone:  "ok",
-										})
-								}
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
-		</div>
-	</section>
-	<section class="tab-panel" data-tab-panel="activity">
-		<div style="max-width: 640px;">
-			<div class="section-title"><h2>Admin activity</h2></div>
-			<div class="timeline">
-				if len(data.RecentActivity) == 0 {
-					@emptyState("activity", "No admin actions yet. Plant approvals, suspensions, and closures will appear here.")
-				}
-				for _, item := range data.RecentActivity {
-					<div class="timeline-item"><strong>{ item.Action }</strong><span class="muted">{ item.Detail }</span></div>
+		if len(data.Plants) == 0 {
+			<div class="app-list">
+				@emptyState("plants", "No plants yet. Plant records with domain, staff, price, shift, and transaction health will appear here.")
+			</div>
+		} else {
+			<div class="app-list plant-list">
+				<div class="app-row app-head" aria-hidden="true">
+					<span>Plant</span><span>Location</span><span>Domain</span><span>Sales health</span><span></span>
+				</div>
+				for _, row := range data.Plants {
+					<div class="app-row">
+						<div class="app-cell">
+							<span class="app-label">Plant</span>
+							<strong><a class="plant-name-link" href={ templ.SafeURL("/admin/plants/" + row.ID) }>{ row.Name }</a></strong>
+							<span class="muted mono app-wrap" title={ row.Slug }>{ row.Slug }</span>
+							<span><span class={ "badge " + row.BadgeCSS }>{ row.Status }</span></span>
+						</div>
+						<div class="app-cell">
+							<span class="app-label">Location</span>
+							<strong>{ row.City }</strong>
+							<span class="muted">{ row.Address }</span>
+							<span class="muted mono">{ row.Phone }</span>
+						</div>
+						<div class="app-cell">
+							<span class="app-label">Domain</span>
+							<strong class="app-wrap">{ row.Domain }</strong>
+							<span><span class={ "badge " + row.DomainBadge }>{ row.DomainStatus }</span></span>
+						</div>
+						<div class="app-cell">
+							<span class="app-label">Sales health</span>
+							<strong class="mono">{ formatThousands(row.Txns7d) } txns · { row.Volume30d }</strong>
+							<span class="muted">Last txn · { row.LastTxn }</span>
+							<span class="muted">Staff { row.StaffCount } · Open shifts { row.OpenShifts } · Prices { row.PriceCount }</span>
+						</div>
+						<div class="app-actions">
+							<a class="btn" href={ templ.SafeURL("/admin/plants/" + row.ID) }>View</a>
+							switch row.RawStatus {
+								case "active":
+									@plantStatusForm(row.ID, "suspended", "Suspend", data.CSRFToken, statusConfirm{
+										Title: "Suspend " + row.Name + "?",
+										Desc:  "Its customer page, staff terminal, and owner login all go offline immediately. You can reactivate it any time.",
+										Tone:  "warning",
+									})
+								case "suspended":
+									@plantStatusForm(row.ID, "active", "Reactivate", data.CSRFToken, statusConfirm{
+										Title: "Reactivate " + row.Name + "?",
+										Desc:  "Its customer page, staff terminal, and owner login all come back online immediately.",
+										Tone:  "ok",
+									})
+									@plantStatusForm(row.ID, "closed", "Close", data.CSRFToken, statusConfirm{
+										Title: "Close " + row.Name + "?",
+										Desc:  "Like suspending, this takes everything offline immediately. Unlike suspending, there's no reactivate button for a closed plant in this console.",
+										Tone:  "danger",
+									})
+								case "provisioning":
+									@plantStatusForm(row.ID, "active", "Activate", data.CSRFToken, statusConfirm{
+										Title: "Activate " + row.Name + "?",
+										Desc:  "Its customer page, staff terminal, and owner login all go live immediately.",
+										Tone:  "ok",
+									})
+							}
+						</div>
+					</div>
 				}
 			</div>
+		}
+	</section>
+	<section class="tab-panel" data-tab-panel="activity">
+		<div class="section-title"><h2>Admin activity</h2></div>
+		<div class="app-list">
+			if len(data.RecentActivity) == 0 {
+				@emptyState("activity", "No admin actions yet. Plant approvals, suspensions, and closures will appear here.")
+			} else {
+				<div class="app-row activity-row app-head" aria-hidden="true">
+					<span>Action</span><span>Plant</span><span>By</span><span>When</span>
+				</div>
+				for _, item := range data.RecentActivity {
+					<div class="app-row activity-row">
+						<div class="app-cell"><strong class={ "activity-action", item.Tone }>{ item.Action }</strong></div>
+						<div class="app-cell"><span class="app-label">Plant</span><span>{ fallbackText(item.What, "—") }</span></div>
+						<div class="app-cell"><span class="app-label">By</span><span class="muted">{ item.Who }</span></div>
+						<div class="app-cell activity-when"><span class="mono muted">{ item.When }</span></div>
+					</div>
+				}
+			}
 		</div>
 	</section>
 }

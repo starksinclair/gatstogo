@@ -28,9 +28,9 @@ VALUES (
            'Sunrise Gas Plant',
            'Owerri',
            'active',
-           '#2563eb',
-           '#1e40af',
-           '#3b82f6'
+           '#006B4D',
+           '#10B981',
+           '#006B4D'
        );
 
 -- Insert an owner

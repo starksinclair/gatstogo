@@ -247,7 +247,13 @@ func (s *Server) MountHandlers() {
 	//}
 
 	//s.Router.Get("/", attendant.Test)
-	s.Router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	// no-cache makes browsers re-check each file (a cheap 304 when it hasn't
+	// changed) instead of silently reusing a stale stylesheet after a deploy.
+	staticFiles := http.StripPrefix("/static/", http.FileServer(http.Dir("web/static")))
+	s.Router.Handle("/static/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
+		staticFiles.ServeHTTP(w, r)
+	}))
 
 	// Server-to-server; no session, no cookies, and deliberately no CSRF
 	// middleware -- authenticity here comes entirely from the
@@ -273,6 +279,14 @@ func (s *Server) MountHandlers() {
 	s.Router.Get("/terms", termsPageHandler(s))
 	s.Router.Get("/privacy", privacyPageHandler(s))
 	s.Router.Get("/get-started", signupPageHandler(s))
+	// Footer support pages, marketing host only (a plant's own subdomain
+	// has its own login and receipts pages).
+	s.Router.With(marketingHostOnly).Get("/login", loginFinderHandler(s))
+	s.Router.With(marketingHostOnly).Get("/help", helpPageHandler(s))
+	s.Router.With(marketingHostOnly).Get("/help/{category}", helpCategoryHandler(s))
+	s.Router.With(marketingHostOnly).Get("/help/{category}/{article}", helpArticleHandler(s))
+	s.Router.With(marketingHostOnly).Post("/help/feedback", helpFeedbackHandler(s))
+	s.Router.With(marketingHostOnly).Get("/contact", contactPageHandler(s))
 	s.Router.With(middleware.CSRF).Post("/get-started", signupSubmitHandler(s))
 
 	// Human-facing tenant entry pages should explain "under review" for
@@ -412,6 +426,7 @@ func (s *Server) MountHandlers() {
 			r.Post("/owner/hours", ownerHoursHandler(s))
 			r.Post("/owner/pumps", ownerPumpHandler(s))
 			r.Post("/owner/settings", ownerUpdateSettingsHandler(s))
+			r.Get("/owner/password", ownerChangePasswordPageHandler(s))
 			r.Post("/owner/password", ownerChangePasswordHandler(s))
 		})
 
@@ -725,6 +740,10 @@ func ownerErrorMessage(code string) string {
 		return "Those new passwords don't match."
 	case "password-current":
 		return "That's not your current password."
+	case "password-short":
+		return "Your new password needs at least 8 characters."
+	case "password-same":
+		return "Choose a new password that's different from your current one."
 	case "password-form":
 		return "Something went wrong. Please try again."
 	case "form":
@@ -1395,6 +1414,22 @@ func loadAdminActivity(ctx context.Context, db tenantdb.Querier, limit int) []pa
 		if what != "" {
 			row.Detail = actor + " · " + what + " · " + when
 		}
+		row.Who, row.What, row.When = actor, what, when
+		// A status change says what it changed to: the new status is the
+		// log's subject, and the plant name already has its own column.
+		if rawAction == "plant.status_changed" {
+			switch subject {
+			case "active":
+				row.Action, row.Tone = "Plant activated", "badge-ok"
+			case "suspended":
+				row.Action, row.Tone = "Plant suspended", "badge-warn"
+			case "closed":
+				row.Action, row.Tone = "Plant closed", "badge-danger"
+			case "provisioning":
+				row.Action, row.Tone = "Plant moved to review", "badge-muted"
+			}
+			row.What = fallbackString(plantName, "")
+		}
 		out = append(out, row)
 	}
 	return out
@@ -1659,8 +1694,14 @@ func signedNaira(kobo int64) string {
 	return formatNaira(0)
 }
 
+// formatKg renders grams as kilograms with two decimals and thousands
+// separators, e.g. 518483000 -> "518,483.00 kg".
 func formatKg(grams int64) string {
-	return fmt.Sprintf("%.2f kg", float64(grams)/1000)
+	if grams < 0 {
+		return "-" + formatKg(-grams)
+	}
+	hundredths := (grams + 5) / 10 // round to 0.01 kg
+	return fmt.Sprintf("%s.%02d kg", formatWholeNumber(hundredths/100), hundredths%100)
 }
 
 func signedKg(grams int64) string {
