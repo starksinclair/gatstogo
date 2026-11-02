@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(chromium-cli --help)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(node -e \"require.resolve\\('playwright'\\)\")",
+      "Read(//Users/sinclair/.cache/**)",
+      "Bash(npx --yes playwright install chromium --with-deps)",
+      "Bash(mkdir -p /tmp/gts_preview)",
+      "Read(//private/tmp/gts_preview/**)",
+      "Bash(npm install *)",
+      "Read(//tmp/gts_preview/**)",
+      "Bash(node shot.js)"
+    ],
+    "additionalDirectories": [
+      "/tmp/gts_preview",
+      "/private/tmp/gts_preview"
+    ]
+  }
+}

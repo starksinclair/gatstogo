@@ -1,0 +1,323 @@
+package pages
+
+import "gatstogo/internal/domain"
+
+type CylinderButton struct {
+	Label string
+	Value string
+	Class string
+}
+
+type FillPanelData struct {
+	Locked          bool
+	LockSecondsLeft int
+	Revealed        bool
+	RevealTicketID  string
+	RevealInitials  string
+	RevealKg        string
+	RevealAmount    string
+	RevealMethod    string
+	ErrorMsg        string
+	ErrorClass      string
+}
+
+type CashPanelData struct {
+	Cylinders        []CylinderButton
+	SelectedCylinder string
+	Phone            string
+	AmountStr        string
+	Blocked          bool
+	ButtonLabel      string
+	CashHeldStr      string
+	CashClass        string
+	CashCaption      string
+	ConfirmMsg       string
+	ErrorMsg         string
+}
+
+type EndPanelData struct {
+	ClosingCashPlaceholder string
+	FillsCompleted         int64
+	KgDispensedStr         string
+	CashHeldStr            string
+	OpeningCashStr         string
+}
+
+type DashboardShellData struct {
+	Plant          *domain.Plant
+	Config         string // "combined" | "cashier" | "operator"
+	FillsCompleted int64
+	KgDispensedStr string
+	ActiveTab      string // "fill" | "cash" | "end"
+	ShowCashTab    bool
+	Fill           FillPanelData
+	Cash           CashPanelData
+	End            EndPanelData
+}
+
+templ StaffTerminalDashboard(data DashboardShellData) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ terminalPlantName(data.Plant) } staff terminal</title>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@500;600;700;800&family=IBM+Plex+Mono:wght@600;700;800&display=swap" rel="stylesheet"/>
+			<link rel="stylesheet" href="/static/css/terminal.css"/>
+			<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+		</head>
+		<body>
+			<div class="terminal-page">
+				<div class="screen">
+					@DashboardShell(data)
+				</div>
+			</div>
+		</body>
+	</html>
+}
+
+templ DashboardShell(data DashboardShellData) {
+	<div id="dashboard-shell">
+		<header class="terminal-top">
+			<div>
+				<div class="brand-row">
+					<span class="brand-mark">G</span>
+					<strong>GATSTOGO</strong>
+					<span>{ terminalPlantName(data.Plant) }</span>
+				</div>
+			</div>
+			<div class="shift-strip">
+				<strong class="mono">{ fmtInt(data.FillsCompleted) } fills</strong>
+				<strong class="mono">{ data.KgDispensedStr }</strong>
+				<button
+					type="button"
+					hx-get="/terminal/dashboard/tab/end"
+					hx-target="#dashboard-shell"
+					hx-swap="outerHTML"
+				>End shift</button>
+			</div>
+		</header>
+		<nav class="terminal-tabs">
+			<button
+				class={ tabClass(data.ActiveTab == "fill") }
+				type="button"
+				hx-get="/terminal/dashboard/tab/fill"
+				hx-target="#dashboard-shell"
+				hx-swap="outerHTML"
+			>Fill</button>
+			if data.ShowCashTab {
+				<button
+					class={ tabClass(data.ActiveTab == "cash") }
+					type="button"
+					hx-get="/terminal/dashboard/tab/cash"
+					hx-target="#dashboard-shell"
+					hx-swap="outerHTML"
+				>Cash sale</button>
+			}
+			<button
+				class={ tabClass(data.ActiveTab == "end") }
+				type="button"
+				hx-get="/terminal/dashboard/tab/end"
+				hx-target="#dashboard-shell"
+				hx-swap="outerHTML"
+			>End shift</button>
+		</nav>
+		<main>
+			if data.ActiveTab == "cash" && data.ShowCashTab {
+				@CashPanel(data.Cash)
+			} else if data.ActiveTab == "end" {
+				@EndPanel(data.End)
+			} else {
+				@FillPanel(data.Fill)
+			}
+		</main>
+	</div>
+}
+
+func tabClass(active bool) string {
+	if active {
+		return "active"
+	}
+	return ""
+}
+
+templ FillPanel(data FillPanelData) {
+	if data.Locked {
+		<section class="lock-panel terminal-card">
+			<div class="section-kicker">Too many attempts</div>
+			<h1>Terminal locked</h1>
+			<div class="lock-time mono">0:{ fmtSeconds(data.LockSecondsLeft) }</div>
+			<p class="strong-help">This clears automatically. The terminal keeps the shift safe.</p>
+		</section>
+	} else if data.Revealed {
+		<section class="fill-grid">
+			<div class="terminal-card authorised-card">
+				<div class="section-kicker">Authorised fill</div>
+				<div class="initials">{ data.RevealInitials }</div>
+				<div class="weight mono">{ data.RevealKg }</div>
+				<div class="proof-row">
+					<span>Amount paid</span>
+					<strong class="mono">{ data.RevealAmount }</strong>
+				</div>
+				<div class="proof-row">
+					<span>Method</span>
+					<strong>{ data.RevealMethod }</strong>
+				</div>
+				<form hx-post="/terminal/fill-ticket/confirm" hx-target="#dashboard-shell" hx-swap="outerHTML">
+					<input type="hidden" name="ticket_id" value={ data.RevealTicketID }/>
+					<button class="primary-action valve" type="submit">Open valve</button>
+				</form>
+			</div>
+			<aside class="terminal-card privacy-card">
+				<div class="section-kicker">Privacy</div>
+				<p>No customer name, phone number, or ticket reference appears on this terminal.</p>
+				<button
+					class="secondary-action"
+					type="button"
+					hx-get="/terminal/dashboard/tab/fill"
+					hx-target="#dashboard-shell"
+					hx-swap="outerHTML"
+				>Try another code</button>
+			</aside>
+		</section>
+	} else {
+		<section class="fill-grid" id="fill-code-section">
+			<div class="terminal-card code-card">
+				<div class="section-kicker">Fill tab</div>
+				<h1>Enter customer code</h1>
+				<form id="code-form" hx-post="/terminal/fill-ticket" hx-target="#dashboard-shell" hx-swap="outerHTML">
+					<div class="code-boxes">
+						<span></span>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					if data.ErrorMsg != "" {
+						<div class={ "state-message", data.ErrorClass }>{ data.ErrorMsg }</div>
+					}
+					<input type="hidden" name="code" id="code-value"/>
+					<div class="keypad">
+						for _, k := range pinKeys {
+							if k.Soft {
+								<button class="key key-soft" type="button" data-code-key={ k.Action }>{ k.Label }</button>
+							} else {
+								<button class="key" type="button" data-code-key={ k.Action }>{ k.Label }</button>
+							}
+						}
+					</div>
+				</form>
+			</div>
+			<aside class="terminal-card summary-card">
+				<div class="section-kicker">Shift summary</div>
+				<p>Fills and kg dispensed appear in the header above as they happen.</p>
+			</aside>
+		</section>
+		<script>
+			(function () {
+				var section = document.getElementById("fill-code-section");
+				if (!section) return;
+				var codeInput = section.querySelector("#code-value");
+				var boxes = section.querySelectorAll(".code-boxes span");
+				var form = section.querySelector("#code-form");
+				section.querySelectorAll("[data-code-key]").forEach(function (btn) {
+					btn.addEventListener("click", function () {
+						var action = btn.dataset.codeKey;
+						var value = codeInput.value;
+						if (action === "back") value = value.slice(0, -1);
+						else if (action === "clear") value = "";
+						else if (value.length < 4) value += action;
+						codeInput.value = value;
+						boxes.forEach(function (box, i) {
+							box.textContent = i < value.length ? value[i] : "-";
+						});
+						if (value.length === 4) form.requestSubmit();
+					});
+				});
+			})();
+		</script>
+	}
+}
+
+templ CashPanel(data CashPanelData) {
+	<section class="cash-grid">
+		<div class="terminal-card">
+			<div class="section-kicker">Cash sale</div>
+			<h1>Record cash and open valve</h1>
+			<div class="cylinder-grid">
+				for _, c := range data.Cylinders {
+					<button
+						class={ c.Class }
+						type="button"
+						hx-post="/terminal/cash-preview"
+						hx-vals={ `{"cylinder":"` + c.Value + `"}` }
+						hx-include="[name='phone']"
+						hx-target="#dashboard-shell"
+						hx-swap="outerHTML"
+					><span class="mono">{ c.Label }</span></button>
+				}
+			</div>
+			<form hx-post="/terminal/cash-sale" hx-target="#dashboard-shell" hx-swap="outerHTML">
+				<input type="hidden" name="cylinder" value={ data.SelectedCylinder }/>
+				<label class="field-label" for="phone">Phone number optional</label>
+				<input id="phone" name="phone" class="terminal-input mono" value={ data.Phone } placeholder="0803 000 0000" inputmode="tel"/>
+				<div class="amount-panel" id="cash-amount-panel">
+					<span>Amount at today's price</span>
+					<strong class="mono">{ data.AmountStr }</strong>
+					<em>Not editable</em>
+				</div>
+				if data.Blocked {
+					<div class="state-message used">Cash limit reached. Record a deposit before taking more cash.</div>
+				}
+				if data.ErrorMsg != "" {
+					<div class="state-message wrong">{ data.ErrorMsg }</div>
+				}
+				<button class="primary-action" type="submit" disabled?={ data.Blocked }>{ data.ButtonLabel }</button>
+				if data.ConfirmMsg != "" {
+					<div class="state-message confirmed">{ data.ConfirmMsg }</div>
+				}
+			</form>
+		</div>
+		<aside class="terminal-card cash-side">
+			<div class="section-kicker">Cash holding</div>
+			<div class={ "cash-held", data.CashClass }>
+				<strong class="mono">{ data.CashHeldStr }</strong>
+				<span>{ data.CashCaption }</span>
+			</div>
+			<p class="strong-help">Cash sales are queued for the fill straight after you record them — no code to hand over.</p>
+		</aside>
+	</section>
+}
+
+templ EndPanel(data EndPanelData) {
+	<section class="end-grid">
+		<div class="terminal-card">
+			<div class="section-kicker">Shift end</div>
+			<h1>Count and close shift</h1>
+			<form hx-post="/terminal/end-shift" hx-target="body" hx-swap="outerHTML">
+				<label class="field-label" for="closing-cash">Closing cash count</label>
+				<input id="closing-cash" name="closing_cash" class="terminal-input mono" placeholder={ data.ClosingCashPlaceholder } inputmode="numeric" autocomplete="off"/>
+				<button class="primary-action" type="submit">Submit and end shift</button>
+			</form>
+		</div>
+		<aside class="terminal-card">
+			<div class="section-kicker">Summary</div>
+			<div class="proof-row">
+				<span>Fills completed</span>
+				<strong class="mono">{ fmtInt(data.FillsCompleted) }</strong>
+			</div>
+			<div class="proof-row">
+				<span>Kg dispensed</span>
+				<strong class="mono">{ data.KgDispensedStr }</strong>
+			</div>
+			<div class="proof-row">
+				<span>Cash recorded</span>
+				<strong class="mono">{ data.CashHeldStr }</strong>
+			</div>
+			<div class="proof-row">
+				<span>Opening float</span>
+				<strong class="mono">{ data.OpeningCashStr }</strong>
+			</div>
+		</aside>
+	</section>
+}

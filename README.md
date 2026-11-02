@@ -59,7 +59,8 @@ Routes:
 - `/` - customer buy gas home page
 - `/home` - same customer home page
 - `/receipts` - customer receipts and receipt proof UI
-- `/terminal` - staff terminal UI
+- `/terminal/login` - staff terminal shift-start screen (PIN login)
+- `/terminal/dashboard` - authenticated staff terminal (fill / cash sale / end shift), requires an open shift session
 - `/owner` - owner dashboard
 - `/owner/dashboard` - same owner dashboard
 - `/home/summary` - small plant summary component endpoint
@@ -106,9 +107,19 @@ For tenant pages, use a plant subdomain host. The seed data creates a `sunrise` 
 
 ```text
 http://sunrise.localhost:8080/
-http://sunrise.localhost:8080/terminal
+http://sunrise.localhost:8080/terminal/login
 http://sunrise.localhost:8080/owner
 ```
+
+The staff terminal requires signing in with a 4-digit PIN. Seeded test staff (from `migrations/0003_seed_terminal_test_users.up.sql`, dev-only):
+
+| Name | Role | PIN |
+| --- | --- | --- |
+| Mary Attendant | Cashier | `4242` |
+| James Manager | Manager (combined) | `1357` |
+| Tunde Operator | Operator | `9081` |
+
+A seeded ticket with code `2714` is ready to redeem on the Fill tab after signing in.
 
 Admin console:
 
@@ -250,8 +261,8 @@ There is also a pitch deck at:
 
 ## Notes And Caveats
 
-- Customer purchase, receipt verification, payment, SMS, and terminal actions are not fully wired to APIs yet.
-- `/terminal` is currently an interactive UI prototype with local state.
+- Customer purchase, receipt verification, payment, and SMS are not fully wired to APIs yet.
+- The staff terminal (`/terminal/login`, `/terminal/dashboard`) is server-rendered (templ + htmx) with PIN-based auth and reads/writes real `shifts`/`tickets`/`cash_movements` rows. CSRF protection on its forms and a durable (Postgres-backed) session store are not implemented yet - flagged as follow-up work.
 - Owner/admin pages read from the database and use empty states when data is missing.
 - The Docker migration service runs `*.up.sql` files from `migrations`.
 - The app currently loads some third-party scripts/fonts from CDNs. CSS has already been moved to local static files.
