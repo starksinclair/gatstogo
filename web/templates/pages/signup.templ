@@ -104,7 +104,7 @@ templ signupContent(data SignupViewData) {
 						<div class="field-underline">
 							<label for="slug">Web address</label>
 							<input id="slug" type="text" name="slug" value={ data.Slug } placeholder="sunrise" pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?" required/>
-							<p class="slug-preview">Customers will find you at <strong>{ slugOrPlaceholder(data.Slug) }</strong>.gatstogo.ng</p>
+							<p class="slug-preview">Customers will find you at <strong>{ slugOrPlaceholder(data.Slug) }</strong>.{ AppBaseDomain }</p>
 						</div>
 						<div class="field-grid">
 							<div class="field-underline">

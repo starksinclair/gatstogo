@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -24,17 +25,39 @@ const resendSandboxFrom = "GatsToGo <onboarding@resend.dev>"
 // (https://resend.com/docs/api-reference/emails/send-email).
 type ResendSender struct {
 	APIKey     string
-	From       string // defaults to resendSandboxFrom if empty
+	From       string // bare address or "Name <addr>"; empty falls back to the sandbox sender
+	FromName   string // used when From is a bare address, e.g. "GatsToGo"
+	ReplyTo    string // optional; Resend reply_to
 	BaseURL    string // defaults to the real Resend API; overridden in tests
 	HTTPClient *http.Client
 }
 
-func NewResendSender(apiKey, from string) *ResendSender {
+func NewResendSender(apiKey, from, fromName, replyTo string) *ResendSender {
 	return &ResendSender{
 		APIKey:     apiKey,
 		From:       from,
+		FromName:   fromName,
+		ReplyTo:    replyTo,
 		HTTPClient: &http.Client{Timeout: 15 * time.Second},
 	}
+}
+
+// formatFrom builds Resend's from field. A value that already includes
+// "Name <addr>" is left alone so an older RESEND_FROM_EMAIL can still
+// carry the display name itself.
+func formatFrom(name, addr string) string {
+	addr = strings.TrimSpace(addr)
+	name = strings.TrimSpace(name)
+	if addr == "" {
+		return resendSandboxFrom
+	}
+	if strings.Contains(addr, "<") {
+		return addr
+	}
+	if name == "" {
+		return addr
+	}
+	return name + " <" + addr + ">"
 }
 
 // ErrAPI wraps a non-2xx Resend response with its message, the same
@@ -50,17 +73,16 @@ func (e *ErrAPI) Error() string {
 }
 
 func (c *ResendSender) Send(ctx context.Context, to, subject, body string) error {
-	from := c.From
-	if from == "" {
-		from = resendSandboxFrom
-	}
-
-	payload, err := json.Marshal(map[string]any{
-		"from":    from,
+	fields := map[string]any{
+		"from":    formatFrom(c.FromName, c.From),
 		"to":      []string{to},
 		"subject": subject,
 		"text":    body,
-	})
+	}
+	if replyTo := strings.TrimSpace(c.ReplyTo); replyTo != "" {
+		fields["reply_to"] = replyTo
+	}
+	payload, err := json.Marshal(fields)
 	if err != nil {
 		return err
 	}

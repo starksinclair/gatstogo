@@ -76,9 +76,9 @@ var HelpCategories = []HelpCategory{
 					),
 				}},
 			{Slug: "choosing-web-address", Title: "Choosing your web address",
-				Summary: "Your page lives at yourname.gatstogo.ng. Pick something customers recognise.",
+				Summary: "Your page lives at yourname.{{base_domain}}. Pick something customers recognise.",
 				Body: []HelpBlock{
-					p("Your web address is the name before .gatstogo.ng, for example sunrise.gatstogo.ng. Customers buy gas there, and your owner and staff logins live there too."),
+					p("Your web address is the name before .{{base_domain}}, for example sunrise.{{base_domain}}. Customers buy gas there, and your owner and staff logins live there too."),
 					bullets(
 						"Use lowercase letters, numbers, and hyphens only.",
 						"It can't start or end with a hyphen.",
@@ -108,7 +108,7 @@ var HelpCategories = []HelpCategory{
 			{Slug: "owner-sign-in", Title: "How to sign in as an owner", Popular: true,
 				Summary: "Sign in on your plant's own login page with your phone number and password.",
 				Body: []HelpBlock{
-					p("Each plant has its own login page: your web address followed by /owner/login, for example sunrise.gatstogo.ng/owner/login."),
+					p("Each plant has its own login page: your web address followed by /owner/login, for example sunrise.{{base_domain}}/owner/login."),
 					steps(
 						"Open your plant's login page.",
 						"Enter the phone number you registered with.",
@@ -496,7 +496,7 @@ func helpSearchEntries() []helpSearchEntry {
 	var es []helpSearchEntry
 	for _, c := range HelpCategories {
 		for _, a := range c.Articles {
-			es = append(es, helpSearchEntry{a.Title, a.Summary, c.Title, helpArticleURL(c, a)})
+			es = append(es, helpSearchEntry{a.Title, helpText(a.Summary), c.Title, helpArticleURL(c, a)})
 		}
 	}
 	return es

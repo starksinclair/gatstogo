@@ -189,15 +189,16 @@ func applicationApplicantEmail(n plantApplicationNotification) (subject, body st
 	return subject, body
 }
 
-// notifyNewApplication emails GatsToGo's own inbox so a submission is
-// never sitting unseen in the admin console, and sends the applicant a
-// receipt so they know it went through. Failures are only logged -- the
-// application itself is already saved and must not be reported as failed.
+// notifyNewApplication emails the public support inbox (SUPPORT_EMAIL) so a
+// submission is never sitting unseen in the admin console, and sends the
+// applicant a receipt so they know it went through. Failures are only
+// logged -- the application itself is already saved and must not be
+// reported as failed. Applicant replies go to RESEND_REPLY_TO.
 func notifyNewApplication(ctx context.Context, s *Server, n plantApplicationNotification) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	if to := strings.TrimSpace(s.NotificationEmail); to != "" {
+	if to := strings.TrimSpace(s.SupportEmail); to != "" {
 		subject, body := applicationAdminEmail(s.AppBaseURL, n)
 		if err := s.Email.Send(ctx, to, subject, body); err != nil {
 			log.Println("new application notification: admin email failed:", err)

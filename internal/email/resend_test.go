@@ -24,8 +24,11 @@ func TestResendSenderSendsExpectedRequest(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatalf("decode request body: %v", err)
 		}
-		if body["from"] != "GatsToGo <owner@gatstogo.ng>" {
+		if body["from"] != "GatsToGo <noreply@notification.gatstogo.com>" {
 			t.Errorf("unexpected from: %v", body["from"])
+		}
+		if body["reply_to"] != "support@notification.gatstogo.com" {
+			t.Errorf("unexpected reply_to: %v", body["reply_to"])
 		}
 		to, ok := body["to"].([]any)
 		if !ok || len(to) != 1 || to[0] != "ada@sunrisegas.ng" {
@@ -34,7 +37,7 @@ func TestResendSenderSendsExpectedRequest(t *testing.T) {
 		if body["subject"] != "Reset your password" {
 			t.Errorf("unexpected subject: %v", body["subject"])
 		}
-		if body["text"] != "Reset link: https://sunrise.gatstogo.ng/owner/reset-password?token=abc123" {
+		if body["text"] != "Reset link: https://sunrise.gatstogo.com/owner/reset-password?token=abc123" {
 			t.Errorf("unexpected text: %v", body["text"])
 		}
 
@@ -43,12 +46,19 @@ func TestResendSenderSendsExpectedRequest(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	sender := NewResendSender("re_test_key", "GatsToGo <owner@gatstogo.ng>")
+	sender := NewResendSender("re_test_key", "noreply@notification.gatstogo.com", "GatsToGo", "support@notification.gatstogo.com")
 	sender.BaseURL = srv.URL
 
-	err := sender.Send(context.Background(), "ada@sunrisegas.ng", "Reset your password", "Reset link: https://sunrise.gatstogo.ng/owner/reset-password?token=abc123")
+	err := sender.Send(context.Background(), "ada@sunrisegas.ng", "Reset your password", "Reset link: https://sunrise.gatstogo.com/owner/reset-password?token=abc123")
 	if err != nil {
 		t.Fatalf("Send: %v", err)
+	}
+}
+
+func TestFormatFromLeavesExplicitNameAlone(t *testing.T) {
+	got := formatFrom("Ignored", "GatsToGo <noreply@notification.gatstogo.com>")
+	if got != "GatsToGo <noreply@notification.gatstogo.com>" {
+		t.Fatalf("got %q", got)
 	}
 }
 
@@ -65,7 +75,7 @@ func TestResendSenderUsesSandboxFromWhenUnset(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	sender := NewResendSender("re_test_key", "") // no From configured
+	sender := NewResendSender("re_test_key", "", "", "") // no From configured
 	sender.BaseURL = srv.URL
 
 	if err := sender.Send(context.Background(), "ada@sunrisegas.ng", "s", "b"); err != nil {
@@ -80,7 +90,7 @@ func TestResendSenderAPIError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	sender := NewResendSender("bad_key", "GatsToGo <owner@gatstogo.ng>")
+	sender := NewResendSender("bad_key", "noreply@notification.gatstogo.com", "GatsToGo", "")
 	sender.BaseURL = srv.URL
 
 	err := sender.Send(context.Background(), "ada@sunrisegas.ng", "s", "b")

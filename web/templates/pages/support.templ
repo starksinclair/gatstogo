@@ -30,7 +30,7 @@ templ loginFinderContent(input string, errorMsg string) {
 				<label for="plant">Your plant's web address</label>
 				<div class="finder-field">
 					<input id="plant" name="plant" type="text" value={ input } placeholder="sunrise" autocomplete="off" autocapitalize="none" spellcheck="false" required autofocus/>
-					<span class="finder-suffix">.gatstogo.ng</span>
+					<span class="finder-suffix">.{ AppBaseDomain }</span>
 				</div>
 				<button class="button-primary" type="submit">
 					Continue to sign in

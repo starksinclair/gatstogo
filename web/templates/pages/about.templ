@@ -2,11 +2,10 @@ package pages
 
 import "gatstogo/web/templates/components"
 
-// About takes the real contact inbox (Server.NotificationEmail) rather
-// than hardcoding it here -- same address cmd/server/tickets.go already
-// uses as the base for Paystack's required customer-email field, kept
-// configurable via the one TICKET_NOTIFICATION_EMAIL env var rather than
-// duplicated as a literal in this template too.
+// About takes the public contact inbox (Server.SupportEmail, SUPPORT_EMAIL)
+// rather than hardcoding it here. That address is the marketing and
+// support mailbox shown on the live site, separate from the Resend
+// sending address and from Paystack's ticket placeholder email.
 //
 // Every claim on this page is either how the product actually works (see
 // pricing.templ's comment for the payment terms) or sourced: the market

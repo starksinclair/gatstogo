@@ -10,13 +10,12 @@ func TestExtractSubdomain(t *testing.T) {
 		host string
 		want string
 	}{
-		{"sunrise.gatstogo.ng", "sunrise"},
+		{"sunrise.gatstogo.com", "sunrise"},
 		{"sunrise.localhost:8080", "sunrise"},
 		{"localhost:8080", ""},
 		{"localhost", ""},
-		{"gatstogo.ng", "gatstogo"},
 		{"gatstogo.com", "gatstogo"},
-		{"www.gatstogo.ng", "www"},
+		{"www.gatstogo.com", "www"},
 		{"", ""},
 	}
 	for _, c := range cases {
@@ -71,20 +70,20 @@ func TestIsMarketingHost(t *testing.T) {
 // email whose link embedded an attacker-chosen host. Every case below
 // with want=false is a variant of that exact attack.
 func TestHasBaseDomainSuffixRejectsSpoofedHosts(t *testing.T) {
-	const baseDomain = "gatstogo.ng"
+	const baseDomain = "gatstogo.com"
 
 	cases := []struct {
 		name string
 		host string
 		want bool
 	}{
-		{"legitimate subdomain", "sunrise.gatstogo.ng", true},
-		{"legitimate subdomain with port", "sunrise.gatstogo.ng:8080", true},
+		{"legitimate subdomain", "sunrise.gatstogo.com", true},
+		{"legitimate subdomain with port", "sunrise.gatstogo.com:8080", true},
 		{"the attack this fixes: attacker-controlled host after a real slug", "sunrise.evil.com", false},
 		{"attacker-controlled host, no port", "sunrise.attacker.net", false},
-		{"lookalike domain with no dot boundary", "sunrise.evilgatstogo.ng", false},
-		{"lookalike domain, base domain as a bare suffix without leading dot", "sunriseXgatstogo.ng", false},
-		{"bare base domain, no subdomain at all", "gatstogo.ng", false},
+		{"lookalike domain with no dot boundary", "sunrise.evilgatstogo.com", false},
+		{"lookalike domain, base domain as a bare suffix without leading dot", "sunriseXgatstogo.com", false},
+		{"bare base domain, no subdomain at all", "gatstogo.com", false},
 		{"completely unrelated host", "example.com", false},
 		{"empty host", "", false},
 	}
@@ -102,7 +101,7 @@ func TestHasBaseDomainSuffixRejectsSpoofedHosts(t *testing.T) {
 // (correctly, but far too dangerously) matching everything the way a
 // naive strings.HasSuffix(host, "."+"") would.
 func TestHasBaseDomainSuffixFailsClosedWhenUnconfigured(t *testing.T) {
-	for _, host := range []string{"sunrise.gatstogo.ng", "anything", ""} {
+	for _, host := range []string{"sunrise.gatstogo.com", "anything", ""} {
 		if hasBaseDomainSuffix(host, "") {
 			t.Errorf("hasBaseDomainSuffix(%q, \"\") = true, want false (must fail closed)", host)
 		}

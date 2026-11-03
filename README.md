@@ -138,7 +138,14 @@ PAYSTACK_SECRET_KEY=
 PAYSTACK_PUBLIC_KEY=
 # Optional -- real inbox Paystack's Initialize API email is built from
 # (Gmail-style "+tag" addressing per ticket). Defaults to gatstogofficial@gmail.com.
-TICKET_NOTIFICATION_EMAIL=
+TICKET_NOTIFICATION_EMAIL=ticket@notification.gatstogo.com
+
+# Email (Resend). From must be on the verified sending domain.
+RESEND_FROM_NAME=GatsToGo
+RESEND_FROM_EMAIL=noreply@notification.gatstogo.com
+RESEND_REPLY_TO=support@notification.gatstogo.com
+# Public support / marketing address on the live site.
+SUPPORT_EMAIL=info@gatstogo.com
 
 # SMS -- logging locally; Termii in production when configured.
 SMS_PROVIDER=logging

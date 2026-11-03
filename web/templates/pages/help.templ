@@ -129,7 +129,7 @@ templ helpCategoryContent(c HelpCategory, contactEmail string) {
 						<li>
 							<a href={ templ.SafeURL(helpArticleURL(c, a)) }>
 								<strong>{ a.Title }</strong>
-								<span>{ a.Summary }</span>
+								<span>{ helpText(a.Summary) }</span>
 							</a>
 						</li>
 					}
@@ -157,31 +157,31 @@ templ helpArticleContent(c HelpCategory, a HelpArticle, contactEmail string) {
 					<a href={ templ.SafeURL(helpCategoryURL(c)) }>{ c.Title }</a>
 				</nav>
 				<h1>{ a.Title }</h1>
-				<p class="hc-lede">{ a.Summary }</p>
+				<p class="hc-lede">{ helpText(a.Summary) }</p>
 				<div class="hc-body">
 					for _, b := range a.Body {
 						switch b.Kind {
 							case "h":
-								<h2>{ b.Text }</h2>
+								<h2>{ helpText(b.Text) }</h2>
 							case "steps":
 								<ol class="hc-steps">
 									for _, item := range b.Items {
-										<li>{ item }</li>
+										<li>{ helpText(item) }</li>
 									}
 								</ol>
 							case "list":
 								<ul class="hc-bullets">
 									for _, item := range b.Items {
-										<li>{ item }</li>
+										<li>{ helpText(item) }</li>
 									}
 								</ul>
 							case "note":
 								<div class="hc-note">
 									@components.Icon("check-circle")
-									<p>{ b.Text }</p>
+									<p>{ helpText(b.Text) }</p>
 								</div>
 							default:
-								<p>{ b.Text }</p>
+								<p>{ helpText(b.Text) }</p>
 						}
 					}
 				</div>

@@ -51,7 +51,7 @@ func loginFinderHandler(s *Server) http.HandlerFunc {
 
 		slug := plantSlugFromInput(input)
 		if slug == "" {
-			render(http.StatusOK, "Enter your plant's web address, for example sunrise or sunrise.gatstogo.ng.")
+			render(http.StatusOK, "Enter your plant's web address, for example sunrise or sunrise."+pages.AppBaseDomain+".")
 			return
 		}
 
@@ -78,8 +78,8 @@ func loginFinderHandler(s *Server) http.HandlerFunc {
 }
 
 // plantSlugFromInput accepts what an owner is likely to remember -- the
-// bare name ("sunrise"), the host ("sunrise.gatstogo.ng"), or a full link
-// ("https://sunrise.gatstogo.ng/owner/login") -- and returns the slug.
+// bare name ("sunrise"), the host ("sunrise.gatstogo.com"), or a full link
+// ("https://sunrise.gatstogo.com/owner/login") -- and returns the slug.
 func plantSlugFromInput(input string) string {
 	s := strings.ToLower(strings.TrimSpace(input))
 	if strings.Contains(s, "://") {
@@ -100,7 +100,7 @@ func plantSlugFromInput(input string) string {
 
 func helpPageHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := pages.Help(s.NotificationEmail).Render(r.Context(), w); err != nil {
+		if err := pages.Help(s.SupportEmail).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -108,7 +108,7 @@ func helpPageHandler(s *Server) http.HandlerFunc {
 
 func contactPageHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := pages.Contact(s.NotificationEmail).Render(r.Context(), w); err != nil {
+		if err := pages.Contact(s.SupportEmail).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -121,7 +121,7 @@ func helpCategoryHandler(s *Server) http.HandlerFunc {
 			renderNotFound(w, r)
 			return
 		}
-		if err := pages.HelpCategoryPage(c, s.NotificationEmail).Render(r.Context(), w); err != nil {
+		if err := pages.HelpCategoryPage(c, s.SupportEmail).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -134,7 +134,7 @@ func helpArticleHandler(s *Server) http.HandlerFunc {
 			renderNotFound(w, r)
 			return
 		}
-		if err := pages.HelpArticlePage(c, a, s.NotificationEmail).Render(r.Context(), w); err != nil {
+		if err := pages.HelpArticlePage(c, a, s.SupportEmail).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}

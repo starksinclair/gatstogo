@@ -108,7 +108,20 @@ func loginFinderContent(input string, errorMsg string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" placeholder=\"sunrise\" autocomplete=\"off\" autocapitalize=\"none\" spellcheck=\"false\" required autofocus> <span class=\"finder-suffix\">.gatstogo.ng</span></div><button class=\"button-primary\" type=\"submit\">Continue to sign in")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" placeholder=\"sunrise\" autocomplete=\"off\" autocapitalize=\"none\" spellcheck=\"false\" required autofocus> <span class=\"finder-suffix\">.")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(AppBaseDomain)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/support.templ`, Line: 33, Col: 49}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span></div><button class=\"button-primary\" type=\"submit\">Continue to sign in")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -116,7 +129,7 @@ func loginFinderContent(input string, errorMsg string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</button></form><div class=\"finder-notes\"><p><strong>Staff?</strong> Sign in on your plant's terminal with your PIN. Your manager has the link.</p><p><strong>Don't know your web address?</strong> It's in the approval email and SMS we sent you. Still stuck? <a href=\"/contact\">Contact us</a>.</p><p><strong>Not on GatsToGo yet?</strong> <a href=\"/get-started\">Apply to get started</a>.</p></div></div></main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</button></form><div class=\"finder-notes\"><p><strong>Staff?</strong> Sign in on your plant's terminal with your PIN. Your manager has the link.</p><p><strong>Don't know your web address?</strong> It's in the approval email and SMS we sent you. Still stuck? <a href=\"/contact\">Contact us</a>.</p><p><strong>Not on GatsToGo yet?</strong> <a href=\"/get-started\">Apply to get started</a>.</p></div></div></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -141,9 +154,9 @@ func Contact(contactEmail string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = marketingPageShell("Contact | GatsToGo", contactContent(contactEmail)).Render(ctx, templ_7745c5c3_Buffer)
@@ -170,64 +183,64 @@ func contactContent(contactEmail string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<main class=\"support-page\"><div class=\"wrap\"><div class=\"support-head\"><div class=\"section-eyebrow\">Contact</div><h1>Talk to us.</h1><p class=\"support-lede\">Whether you run a plant or buy gas from one, here's the quickest way to the right answer.</p></div><div class=\"contact-grid\"><div class=\"contact-card\"><span class=\"contact-card-label\">Run an LPG plant?</span><h2>Bring your plant online</h2><p>Apply in about 5 minutes. We review every application and contact you by email and SMS.</p><a class=\"text-button\" href=\"/get-started\">Apply to get started</a></div><div class=\"contact-card\"><span class=\"contact-card-label\">Already on GatsToGo?</span><h2>Owner support</h2><p>Questions about your dashboard, payouts, staff, or business details.</p><a class=\"text-button\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<main class=\"support-page\"><div class=\"wrap\"><div class=\"support-head\"><div class=\"section-eyebrow\">Contact</div><h1>Talk to us.</h1><p class=\"support-lede\">Whether you run a plant or buy gas from one, here's the quickest way to the right answer.</p></div><div class=\"contact-grid\"><div class=\"contact-card\"><span class=\"contact-card-label\">Run an LPG plant?</span><h2>Bring your plant online</h2><p>Apply in about 5 minutes. We review every application and contact you by email and SMS.</p><a class=\"text-button\" href=\"/get-started\">Apply to get started</a></div><div class=\"contact-card\"><span class=\"contact-card-label\">Already on GatsToGo?</span><h2>Owner support</h2><p>Questions about your dashboard, payouts, staff, or business details.</p><a class=\"text-button\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var7 templ.SafeURL
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("mailto:" + contactEmail))
+		var templ_7745c5c3_Var8 templ.SafeURL
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("mailto:" + contactEmail))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/support.templ`, Line: 73, Col: 74}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(contactEmail)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/support.templ`, Line: 73, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</a></div><div class=\"contact-card\"><span class=\"contact-card-label\">Buying gas?</span><h2>Contact your plant</h2><p>For an order, refund, or opening hours, call the plant: their number is on their GatsToGo page.</p><a class=\"text-button\" href=\"/help/buying-gas\">Customer help</a></div></div><div class=\"contact-more\"><div class=\"about-contact-row\"><span>General enquiries</span> <a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 templ.SafeURL
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("mailto:" + contactEmail))
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(contactEmail)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/support.templ`, Line: 85, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/support.templ`, Line: 73, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</a></div><div class=\"contact-card\"><span class=\"contact-card-label\">Buying gas?</span><h2>Contact your plant</h2><p>For an order, refund, or opening hours, call the plant: their number is on their GatsToGo page.</p><a class=\"text-button\" href=\"/help/buying-gas\">Customer help</a></div></div><div class=\"contact-more\"><div class=\"about-contact-row\"><span>General enquiries</span> <a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(contactEmail)
+		var templ_7745c5c3_Var10 templ.SafeURL
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("mailto:" + contactEmail))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/support.templ`, Line: 85, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/support.templ`, Line: 85, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</a></div><div class=\"about-contact-row\"><span>Report a problem</span><p>Spotted something wrong or a security issue? Email us with the details and the page you were on.</p></div></div></div></main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(contactEmail)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/support.templ`, Line: 85, Col: 71}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</a></div><div class=\"about-contact-row\"><span>Report a problem</span><p>Spotted something wrong or a security issue? Email us with the details and the page you were on.</p></div></div></div></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

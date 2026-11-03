@@ -16,7 +16,7 @@ type contextKey string
 
 const PlantContextKey contextKey = "plant"
 
-// BaseDomain is this app's own real domain -- "gatstogo.ng" in
+// BaseDomain is this app's own real domain -- "gatstogo.com" in
 // production, "localhost" for the local dev loop (sunrise.localhost:8080)
 // -- set once at startup from APP_BASE_DOMAIN (cmd/server/main.go)
 // before Tenant is ever invoked. Every legitimate tenant request's Host
@@ -28,7 +28,7 @@ const PlantContextKey contextKey = "plant"
 // the leftmost label of r.Host (ExtractSubdomain), with nothing checking
 // that the rest of the host was actually this app's own domain. A request
 // with Host: sunrise.evil.com resolved the real "sunrise" plant just as
-// successfully as sunrise.gatstogo.ng would have -- and since several
+// successfully as sunrise.gatstogo.com would have -- and since several
 // handlers build absolute URLs from r.Host (most seriously, the owner
 // "forgot password" email's reset link, cmd/server/auth.go), an attacker
 // could get a real, valid password-reset link emailed to a real owner
@@ -41,7 +41,7 @@ var BaseDomain string
 func Tenant(db *pgxpool.Pool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			host := r.Host // e.g. sunrise.gatstogo.ng or sunrise.localhost:8080
+			host := r.Host // e.g. sunrise.gatstogo.com or sunrise.localhost:8080
 
 			slug := ExtractSubdomain(host)
 			if slug == "" || slug == "www" || slug == "admin" || slug == "api" || !hasBaseDomainSuffix(host, BaseDomain) {
@@ -112,7 +112,7 @@ func renderNotFound(w http.ResponseWriter, r *http.Request) {
 }
 
 // ExtractSubdomain pulls the leftmost label off a request Host header
-// (e.g. "sunrise" from "sunrise.gatstogo.ng" or "sunrise.localhost:8080").
+// (e.g. "sunrise" from "sunrise.gatstogo.com" or "sunrise.localhost:8080").
 // Exported so cmd/server's own routing can ask the same question Tenant
 // asks internally -- "is this a real tenant subdomain, or the bare/www
 // marketing host?" -- without duplicating the parsing logic.
@@ -151,8 +151,8 @@ func IsMarketingHost(host, baseDomain string) bool {
 }
 
 // IsTenantHost reports whether host is a legitimate direct tenant
-// subdomain for this deployment, e.g. sunrise.gatstogo.ng when
-// baseDomain is gatstogo.ng. This is the exported, safe counterpart to
+// subdomain for this deployment, e.g. sunrise.gatstogo.com when
+// baseDomain is gatstogo.com. This is the exported, safe counterpart to
 // ExtractSubdomain for callers that need to query by slug: checking the
 // base-domain suffix first avoids reintroducing the Host-header spoofing
 // issue Tenant itself is hardened against.
@@ -172,8 +172,8 @@ func stripHostPort(host string) string {
 }
 
 // hasBaseDomainSuffix reports whether host is a direct subdomain of
-// baseDomain -- "sunrise.gatstogo.ng" of "gatstogo.ng", but not
-// "sunrise.evilgatstogo.ng" (no dot boundary before the match) or
+// baseDomain -- "sunrise.gatstogo.com" of "gatstogo.com", but not
+// "sunrise.evilgatstogo.com" (no dot boundary before the match) or
 // "sunrise.evil.com" (no match at all) of the same baseDomain. Fails
 // closed (false) if baseDomain is empty -- a misconfigured/unset
 // BaseDomain must never make every host pass this check by accident.

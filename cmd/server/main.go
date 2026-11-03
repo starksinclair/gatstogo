@@ -61,7 +61,11 @@ type Server struct {
 	// (see ticketEmail in tickets.go). Configurable via
 	// TICKET_NOTIFICATION_EMAIL; defaults to the address actually in use.
 	NotificationEmail string
-	AppBaseURL        string
+	// SupportEmail is the public contact address shown on the marketing
+	// site (About, Help, Contact) and the inbox that receives new
+	// /get-started applications. Configurable via SUPPORT_EMAIL.
+	SupportEmail string
+	AppBaseURL   string
 }
 
 func main() {
@@ -180,9 +184,10 @@ func CreateNewServer() (*Server, error) {
 		appDB.Close()
 		adminDB.Close()
 		_ = rdb.Close()
-		return nil, fmt.Errorf("APP_BASE_DOMAIN is required (e.g. gatstogo.ng in production, localhost for local dev)")
+		return nil, fmt.Errorf("APP_BASE_DOMAIN is required (e.g. gatstogo.com in production, localhost for local dev)")
 	}
 	middleware.BaseDomain = baseDomain
+	pages.AppBaseDomain = baseDomain
 
 	// 5. Paystack. Required: a server that can't take payment isn't
 	// meaningfully "up" for this app's purpose.
@@ -211,7 +216,12 @@ func CreateNewServer() (*Server, error) {
 	// delivered, until a real key is added.
 	var emailSender email.Sender = email.NewLoggingSender()
 	if resendAPIKey := os.Getenv("RESEND_API_KEY"); resendAPIKey != "" {
-		emailSender = email.NewResendSender(resendAPIKey, os.Getenv("RESEND_FROM_EMAIL"))
+		emailSender = email.NewResendSender(
+			resendAPIKey,
+			getEnv("RESEND_FROM_EMAIL", "noreply@notification.gatstogo.com"),
+			getEnv("RESEND_FROM_NAME", "GatsToGo"),
+			getEnv("RESEND_REPLY_TO", "support@notification.gatstogo.com"),
+		)
 	}
 
 	s := &Server{
@@ -226,6 +236,7 @@ func CreateNewServer() (*Server, error) {
 		SMS:               smsSender,
 		Email:             emailSender,
 		NotificationEmail: getEnv("TICKET_NOTIFICATION_EMAIL", "gatstogofficial@gmail.com"),
+		SupportEmail:      getEnv("SUPPORT_EMAIL", "info@gatstogo.com"),
 		AppBaseURL:        strings.TrimRight(getEnv("APP_BASE_URL", "/"), "/"),
 	}
 	if s.AppBaseURL == "" {

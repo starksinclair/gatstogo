@@ -46,9 +46,12 @@ services:
       # secret key for local development. Also verifies webhook signatures.
       PAYSTACK_SECRET_KEY: "${PAYSTACK_SECRET_KEY:?set PAYSTACK_SECRET_KEY in .env}"
       PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY:-}
-      TICKET_NOTIFICATION_EMAIL: ${TICKET_NOTIFICATION_EMAIL:-gatstogofficial@gmail.com}
+      TICKET_NOTIFICATION_EMAIL: ${TICKET_NOTIFICATION_EMAIL:-ticket@notification.gatstogo.com}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-noreply@notification.gatstogo.com}
+      RESEND_FROM_NAME: ${RESEND_FROM_NAME:-GatsToGo}
+      RESEND_REPLY_TO: ${RESEND_REPLY_TO:-support@notification.gatstogo.com}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-info@gatstogo.com}
       SMS_PROVIDER: ${SMS_PROVIDER:-logging}
     command: ["air", "-c", ".air.toml"]
     depends_on:

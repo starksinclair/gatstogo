@@ -10,11 +10,10 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "gatstogo/web/templates/components"
 
-// About takes the real contact inbox (Server.NotificationEmail) rather
-// than hardcoding it here -- same address cmd/server/tickets.go already
-// uses as the base for Paystack's required customer-email field, kept
-// configurable via the one TICKET_NOTIFICATION_EMAIL env var rather than
-// duplicated as a literal in this template too.
+// About takes the public contact inbox (Server.SupportEmail, SUPPORT_EMAIL)
+// rather than hardcoding it here. That address is the marketing and
+// support mailbox shown on the live site, separate from the Resend
+// sending address and from Paystack's ticket placeholder email.
 //
 // Every claim on this page is either how the product actually works (see
 // pricing.templ's comment for the payment terms) or sourced: the market
@@ -109,7 +108,7 @@ func aboutContent(contactEmail string) templ.Component {
 		var templ_7745c5c3_Var3 templ.SafeURL
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("mailto:" + contactEmail))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/about.templ`, Line: 168, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/about.templ`, Line: 167, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -122,7 +121,7 @@ func aboutContent(contactEmail string) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(contactEmail)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/about.templ`, Line: 168, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/about.templ`, Line: 167, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

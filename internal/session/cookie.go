@@ -41,9 +41,9 @@ func SecureCookies() bool {
 // staff-PIN-login, and receipts code paths.
 //
 // Deliberately host-only: no Domain attribute is set. A cookie scoped to a
-// parent domain (e.g. Domain=.gatstogo.ng) would be sent to every tenant's
-// subdomain, meaning a session minted on sunrise.gatstogo.ng could
-// physically arrive at acme.gatstogo.ng. Leaving Domain unset makes that
+// parent domain (e.g. Domain=.gatstogo.com) would be sent to every tenant's
+// subdomain, meaning a session minted on sunrise.gatstogo.com could
+// physically arrive at acme.gatstogo.com. Leaving Domain unset makes that
 // structurally impossible, on top of whatever server-side role/plant_id
 // checks a handler does -- real defense in depth, not just a convention.
 //

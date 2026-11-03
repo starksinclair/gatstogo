@@ -129,7 +129,7 @@ func pricingPageHandler(s *Server) http.HandlerFunc {
 
 func aboutPageHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := pages.About(s.NotificationEmail).Render(r.Context(), w); err != nil {
+		if err := pages.About(s.SupportEmail).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
