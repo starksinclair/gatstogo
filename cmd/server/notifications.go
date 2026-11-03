@@ -86,6 +86,21 @@ type dispensingNotification struct {
 	Code           string
 	SizeLabel      string
 	PumpName       string
+	// ReviewURL, when set, is appended so the customer can rate the plant
+	// straight from the dispensing text.
+	ReviewURL string
+}
+
+func dispensingMessage(n dispensingNotification) string {
+	pump := strings.TrimSpace(n.PumpName)
+	if pump == "" {
+		pump = "your assigned pump"
+	}
+	message := n.PlantName + ": gas dispensing has started for code " + n.Code + ". You paid for " + n.SizeLabel + ". Your pump is " + pump + "."
+	if link := strings.TrimSpace(n.ReviewURL); link != "" {
+		message += " Rate your experience: " + link
+	}
+	return message
 }
 
 func notifyDispensingStarted(ctx context.Context, s *Server, n dispensingNotification) {
@@ -97,12 +112,7 @@ func notifyDispensingStarted(ctx context.Context, s *Server, n dispensingNotific
 		log.Println("dispensing notification: skipped sms, customer phone missing")
 		return
 	}
-	pump := strings.TrimSpace(n.PumpName)
-	if pump == "" {
-		pump = "your assigned pump"
-	}
-	message := n.PlantName + ": gas dispensing has started for code " + n.Code + ". You paid for " + n.SizeLabel + ". Your pump is " + pump + "."
-	if err := sms.SendWithSenderID(ctx, s.SMS, n.TermiiSenderID, phone, message); err != nil {
+	if err := sms.SendWithSenderID(ctx, s.SMS, n.TermiiSenderID, phone, dispensingMessage(n)); err != nil {
 		log.Println("dispensing notification: sms failed:", err)
 	}
 }
@@ -125,4 +135,78 @@ func tenantAbsoluteURL(appBaseURL, slug, path string) string {
 	u.RawQuery = ""
 	u.Fragment = ""
 	return u.String()
+}
+
+// plantApplicationNotification is what the two "new application" emails
+// are built from -- deliberately no bank or password data; the admin
+// reviews those on the plant's admin detail page.
+type plantApplicationNotification struct {
+	PlantID           uuid.UUID
+	PlantName         string
+	Slug              string
+	City              string
+	State             string
+	OwnerName         string
+	OwnerPhone        string
+	OwnerEmail        string
+	LegalBusinessName string
+	CACNumber         string
+	NMDPRALicense     string
+}
+
+// oneLine keeps user-supplied text from breaking an email subject.
+func oneLine(v string) string {
+	return strings.Join(strings.Fields(v), " ")
+}
+
+func applicationAdminEmail(appBaseURL string, n plantApplicationNotification) (subject, body string) {
+	subject = "New GatsToGo application: " + oneLine(n.PlantName)
+	reviewURL := strings.TrimRight(strings.TrimSpace(appBaseURL), "/") + "/admin/plants/" + n.PlantID.String()
+	body = "A new plant has applied on /get-started and is waiting for review.\n\n" +
+		"Plant: " + n.PlantName + " (" + n.Slug + ")\n" +
+		"Location: " + oneLine(n.City+", "+n.State) + "\n" +
+		"Business: " + n.LegalBusinessName + "\n" +
+		"CAC: " + n.CACNumber + "\n" +
+		"NMDPRA licence: " + n.NMDPRALicense + "\n\n" +
+		"Owner: " + n.OwnerName + "\n" +
+		"Phone: " + n.OwnerPhone + "\n" +
+		"Email: " + n.OwnerEmail + "\n\n" +
+		"Review and approve: " + reviewURL + "\n"
+	return subject, body
+}
+
+func applicationApplicantEmail(n plantApplicationNotification) (subject, body string) {
+	ownerName := oneLine(n.OwnerName)
+	if ownerName == "" {
+		ownerName = "there"
+	}
+	subject = "We received your GatsToGo application"
+	body = "Hello " + ownerName + ",\n\n" +
+		"Thanks for applying to put " + n.PlantName + " on GatsToGo. We have your details and will review them shortly.\n\n" +
+		"Your page is not live yet. Once we have verified your information we will email you your sign-in link, and text you as well when SMS is available.\n\n" +
+		"If anything is wrong with what you submitted, just reply to this email.\n\n" +
+		"The GatsToGo team"
+	return subject, body
+}
+
+// notifyNewApplication emails GatsToGo's own inbox so a submission is
+// never sitting unseen in the admin console, and sends the applicant a
+// receipt so they know it went through. Failures are only logged -- the
+// application itself is already saved and must not be reported as failed.
+func notifyNewApplication(ctx context.Context, s *Server, n plantApplicationNotification) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	if to := strings.TrimSpace(s.NotificationEmail); to != "" {
+		subject, body := applicationAdminEmail(s.AppBaseURL, n)
+		if err := s.Email.Send(ctx, to, subject, body); err != nil {
+			log.Println("new application notification: admin email failed:", err)
+		}
+	}
+	if to := strings.TrimSpace(n.OwnerEmail); to != "" {
+		subject, body := applicationApplicantEmail(n)
+		if err := s.Email.Send(ctx, to, subject, body); err != nil {
+			log.Println("new application notification: applicant email failed:", err)
+		}
+	}
 }

@@ -642,7 +642,6 @@ func terminalFillHandler(s *Server) http.HandlerFunc {
 		}
 
 		var notice dispensingNotification
-		var reviewURL string
 		err = tenantdb.WithTenant(r.Context(), s.AppDB, plant.ID, func(ctx context.Context, q tenantdb.Querier) error {
 			if actor.Role == session.RoleOperator {
 				return errTerminalForbidden
@@ -658,6 +657,11 @@ func terminalFillHandler(s *Server) http.HandlerFunc {
 				LEFT JOIN pumps p ON p.id = t.pump_id AND p.plant_id = t.plant_id
 				WHERE t.id = $1 AND t.plant_id = $2
 			`, ticketID, plant.ID).Scan(&phone, &code, &sizeGrams, &pumpName)
+			reviewReq, _, err := reviews.EnsureRequest(ctx, q, plant.ID, ticketID)
+			if err != nil {
+				return err
+			}
+			reviewURL := tenantAbsoluteURL(s.AppBaseURL, plant.Slug, "/reviews/"+reviewReq.Token)
 			notice = dispensingNotification{
 				PlantName:      plant.Name,
 				TermiiSenderID: ptrString(plant.TermiiSenderID, ""),
@@ -665,12 +669,8 @@ func terminalFillHandler(s *Server) http.HandlerFunc {
 				Code:           code,
 				SizeLabel:      formatKg(int64(sizeGrams)),
 				PumpName:       pumpName,
+				ReviewURL:      reviewURL,
 			}
-			reviewReq, _, err := reviews.EnsureRequest(ctx, q, plant.ID, ticketID)
-			if err != nil {
-				return err
-			}
-			reviewURL = tenantAbsoluteURL(s.AppBaseURL, plant.Slug, "/reviews/"+reviewReq.Token)
 			if err := audit.Log(ctx, q, &plant.ID, &actor.UserID, "ticket.dispensing_started", ticketID.String(), nil); err != nil {
 				return err
 			}
@@ -684,9 +684,6 @@ func terminalFillHandler(s *Server) http.HandlerFunc {
 			log.Println("terminal fill: failed:", err)
 			writeJSONError(w, http.StatusBadRequest, "could not start dispensing")
 			return
-		}
-		if reviewURL != "" {
-			log.Println("review link:", reviewURL)
 		}
 		go notifyDispensingStarted(context.Background(), s, notice)
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -764,9 +761,17 @@ func terminalCashSaleHandler(s *Server) http.HandlerFunc {
 				return err
 			}
 			ticket = t
+			// Same tolerance the online checkout paths already have
+			// (cmd/server/tickets.go): with every pump down the sale itself
+			// must still be recorded -- the customer has handed over cash --
+			// so the ticket is left without a pump rather than rolled back.
+			// Any other error (a real database failure) still aborts.
 			assignedPump, err := pumps.AssignLeastBusy(ctx, q, plant.ID, t.ID)
 			if err != nil {
-				return err
+				if !errors.Is(err, pumps.ErrNoWorkingPump) {
+					return err
+				}
+				log.Println("terminal cash sale: no working pump, ticket left unassigned:", err)
 			}
 			pumpName = assignedPump.Name
 

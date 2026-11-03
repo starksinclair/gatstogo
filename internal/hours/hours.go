@@ -25,6 +25,12 @@ type Day struct {
 	Label     string
 	Segments  []Segment
 	Closed    bool
+	// Unset marks a day with no saved plant_hours rows. Week still fills
+	// in 08:00-18:00 for it so the owner's form has sensible values to
+	// save, but StatusNow treats an unset day as open all day -- callers
+	// displaying hours must say so instead of presenting the fill-in as
+	// the schedule actually in force.
+	Unset bool
 }
 
 type TodayStatus struct {
@@ -65,6 +71,7 @@ func Week(ctx context.Context, q tenantdb.Querier, plantID uuid.UUID) ([]Day, er
 	for i := range days {
 		if !seen[i] {
 			days[i].Segments = []Segment{{DayOfWeek: i, Segment: 1, OpensAt: "08:00", ClosesAt: "18:00"}}
+			days[i].Unset = true
 		}
 	}
 	return days, nil

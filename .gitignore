@@ -14,3 +14,4 @@ coverage/
 # meant to be shared, see docker-compose.override.yml's own comment.
 docker-compose.override.yml
 .env.prod
+.codex

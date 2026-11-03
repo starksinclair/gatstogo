@@ -128,7 +128,7 @@ func aboutContent(contactEmail string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</a></div><div class=\"about-contact-row\"><span>Run a plant?</span> <a href=\"/get-started\">Apply to get started</a></div><div class=\"about-contact-row\"><span>Already a customer?</span><p>Log in from your plant's own page: the link you were given at setup, followed by <span class=\"mono\">/owner/login</span>. Can't find it? Email us.</p></div></div></div></section><section class=\"cta-band\"><div class=\"wrap\"><h2>Bring your plant online.</h2><p>No setup fee, no monthly fee. We review every application.</p><a class=\"button-primary\" href=\"/get-started\">Get started")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</a></div><div class=\"about-contact-row\"><span>Run a plant?</span> <a href=\"/get-started\">Apply to get started</a></div><div class=\"about-contact-row\"><span>Already a customer?</span><p>Log in from your plant's own page, Can't find it? Email us.</p></div></div></div></section><section class=\"cta-band\"><div class=\"wrap\"><h2>Bring your plant online.</h2><p>No setup fee, no monthly fee. We review every application.</p><a class=\"button-primary\" href=\"/get-started\">Get started")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

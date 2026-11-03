@@ -416,7 +416,7 @@ templ StaffTerminal(plant *domain.Plant, init any) {
 						state.cashHeldKobo = d.cash_held_kobo;
 						state.phone = "";
 						state.cashAmount = "";
-						setMessage("cash", "Cash recorded for " + d.size_kg + ". Code: " + d.code + ". Pump: " + (d.pump || "assigned") + ".", "confirmed");
+						setMessage("cash", "Cash recorded for " + d.size_kg + ". Code: " + d.code + "." + (d.pump ? " Pump: " + d.pump + "." : " No pump assigned yet because no pump is working."), "confirmed");
 						render();
 						setTimeout(function () {
 							if (state.messageTab === "cash" && state.messageKind === "confirmed") { clearMessage("cash"); render(); }

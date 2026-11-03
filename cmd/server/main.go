@@ -255,6 +255,12 @@ func (s *Server) MountHandlers() {
 		staticFiles.ServeHTTP(w, r)
 	}))
 
+	// Liveness/readiness for load balancers and uptime monitors. Registered
+	// ahead of every host-conditional route so it answers on any Host.
+	healthz := healthHandler(serverHealthChecks(s))
+	s.Router.Get("/healthz", healthz)
+	s.Router.Head("/healthz", healthz)
+
 	// Server-to-server; no session, no cookies, and deliberately no CSRF
 	// middleware -- authenticity here comes entirely from the
 	// X-Paystack-Signature HMAC check inside the handler itself.
@@ -1168,7 +1174,9 @@ func loadOwnerHours(ctx context.Context, db tenantdb.Querier, plant *domain.Plan
 				row.Open2, row.Close2 = seg.OpensAt, seg.ClosesAt
 			}
 		}
-		if row.Closed {
+		if day.Unset {
+			row.Summary = "Not set (open all day)"
+		} else if row.Closed {
 			row.Summary = "Closed"
 		} else if row.Open2 != "" && row.Close2 != "" {
 			row.Summary = row.Open1 + "-" + row.Close1 + ", " + row.Open2 + "-" + row.Close2

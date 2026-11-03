@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"math"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/plants"
 	"gatstogo/web/templates/pages"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // This file holds GatsToGo's own public marketing site (landing, pricing,
@@ -233,16 +236,41 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			params.StartingPriceKobo = startingPriceKobo
 		}
 
+		// Everything below this point makes real Paystack calls (bank
+		// account lookup, payout-account creation), so cap how often one
+		// address can reach it -- this is what stops the public form being
+		// used to mint Paystack subaccounts in bulk.
+		if !allowSignupAttempt(r.Context(), s.Redis, clientIP(r)) {
+			renderSignupForm(s, w, r, "Too many applications from this connection. Please wait a while and try again, or contact us if you need help.")
+			return
+		}
+
 		// Logo upload stays admin-only for now because the public form is
 		// a normal URL-encoded submission. Brand colors are safe to accept
 		// here because plants.Create sanitizes invalid/empty values back to
 		// the design-system defaults before anything reaches CSS.
-		_, err := provisionPlant(r.Context(), s, params, nil, nil, nil)
+		plant, err := provisionPlant(r.Context(), s, params, nil, nil, nil)
 		if err != nil {
 			log.Println("signup: create plant failed:", err)
 			renderSignupForm(s, w, r, signupErrorMessage(adminPlantErrorCode(err)))
 			return
 		}
+
+		// Detached from the request: the visitor should not wait on (or be
+		// told about a failure of) outgoing email once the application is saved.
+		go notifyNewApplication(context.Background(), s, plantApplicationNotification{
+			PlantID:           plant.ID,
+			PlantName:         params.Name,
+			Slug:              plant.Slug,
+			City:              params.City,
+			State:             params.State,
+			OwnerName:         params.OwnerName,
+			OwnerPhone:        params.OwnerPhone,
+			OwnerEmail:        params.OwnerEmail,
+			LegalBusinessName: params.LegalBusinessName,
+			CACNumber:         params.CACNumber,
+			NMDPRALicense:     params.NMDPRALicenseNumber,
+		})
 
 		http.Redirect(w, r, "/get-started?submitted=1", http.StatusSeeOther)
 	}
@@ -311,4 +339,25 @@ func signupErrorMessage(code string) string {
 	default:
 		return ""
 	}
+}
+
+// signupRateLimitMax/-Window cap how many applications one IP can push
+// through to the Paystack-calling part of the signup form. Generous enough
+// for a person fixing a mistyped bank account a few times, or an office
+// sharing one connection; far too low to farm subaccounts with.
+const (
+	signupRateLimitMax    = 10
+	signupRateLimitWindow = time.Hour
+)
+
+// allowSignupAttempt fails open on a Redis error, like the bank-lookup
+// endpoint's limiter: a Redis outage shouldn't stop real applications, and
+// the error is logged so a persistent problem stays visible.
+func allowSignupAttempt(ctx context.Context, rdb *redis.Client, ip string) bool {
+	allowed, err := checkIPRateLimit(ctx, rdb, "signup_rl:", ip, signupRateLimitMax, signupRateLimitWindow)
+	if err != nil {
+		log.Println("signup: rate limit check failed:", err)
+		return true
+	}
+	return allowed
 }
