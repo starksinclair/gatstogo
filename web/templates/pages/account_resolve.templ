@@ -85,6 +85,11 @@ templ accountResolveScript() {
 			form.addEventListener("submit", function (event) {
 				if (!verified) event.preventDefault();
 			});
+
+			// A failed submit re-renders the form with the bank and account
+			// number already filled in. Nothing is typed, so no event fires;
+			// verify them now or the submit button stays disabled forever.
+			if (accountInput.value.trim().length === 10 && bankSelect.value) attempt();
 		});
 	</script>
 }

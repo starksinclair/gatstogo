@@ -44,6 +44,7 @@ func adminPlantDetailHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		data.CSRFToken, _ = csrf.Token(actor.Token)
+		data.Notice, data.NoticeIsError = adminPlantNotice(r.URL.Query().Get("notice"), r.URL.Query().Get("detail"))
 
 		if err := pages.AdminPlantDetail(data).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -153,4 +154,22 @@ func loadAdminPlantDetail(ctx context.Context, db tenantdb.Querier, plantID uuid
 	data.Activity = loadActivity(ctx, db, plantID, 10)
 
 	return data, true
+}
+
+func adminPlantNotice(code, detail string) (string, bool) {
+	switch code {
+	case "no-subaccount":
+		return "Create the Paystack subaccount before activating this plant, otherwise its payments would not split.", true
+	case "subaccount-ok":
+		return "Paystack subaccount created. You can now activate this plant.", false
+	case "subaccount-missing":
+		return "This plant has no bank details on file.", true
+	case "resolve-failed":
+		return "Paystack could not verify this bank account: " + detail + ". Email the owner to confirm the details.", true
+	case "create-failed":
+		return "Paystack could not create the subaccount: " + detail, true
+	case "save-failed":
+		return "The subaccount was created but could not be saved. Try again.", true
+	}
+	return "", false
 }

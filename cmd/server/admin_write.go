@@ -7,6 +7,7 @@ import (
 	"math"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -195,6 +196,11 @@ func provisionPlant(ctx context.Context, s *Server, params plants.CreateParams, 
 	bankCode := strings.TrimSpace(params.BankCode)
 	accountNumber := strings.TrimSpace(params.BankAccountNumber)
 
+	if params.DeferSettlement {
+		params.BankName = s.Paystack.BankName(ctx, bankCode)
+		return plants.Create(ctx, s.AdminDB, params, actorID)
+	}
+
 	resolved, err := s.Paystack.ResolveAccount(ctx, accountNumber, bankCode)
 	if err != nil {
 		return nil, &bankVerificationError{err}
@@ -269,6 +275,14 @@ func adminPlantStatusHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		status := r.FormValue("status")
+		if status == "active" {
+			var code string
+			_ = s.AdminDB.QueryRow(r.Context(), `SELECT COALESCE(paystack_subaccount_code, '') FROM plants WHERE id = $1`, plantID).Scan(&code)
+			if code == "" {
+				http.Redirect(w, r, "/admin/plants/"+plantID.String()+"?notice=no-subaccount", http.StatusSeeOther)
+				return
+			}
+		}
 		approvalNotice, noticeErr := loadPlantApprovalNotification(r.Context(), s, plantID)
 		if noticeErr != nil {
 			log.Println("admin plant status: load approval notification:", noticeErr)
@@ -283,6 +297,63 @@ func adminPlantStatusHandler(s *Server) http.HandlerFunc {
 			notifyPlantApproved(r.Context(), s, approvalNotice)
 		}
 		http.Redirect(w, r, "/admin#plants", http.StatusSeeOther)
+	}
+}
+
+// ---- POST /admin/plants/{id}/subaccount ----
+
+// adminPlantSubaccountHandler verifies a plant's submitted bank account with
+// Paystack and creates its split-payment subaccount. Public signups skip
+// this (marketing.go sets DeferSettlement), so an admin runs it after
+// reviewing the application. On failure the admin sees Paystack's reason
+// and can email the owner to correct the details.
+func adminPlantSubaccountHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		actor := middleware.GetActor(r.Context())
+		if actor == nil {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		plantID, err := uuid.Parse(chi.URLParam(r, "id"))
+		if err != nil {
+			http.Redirect(w, r, "/admin?error=form#plants", http.StatusSeeOther)
+			return
+		}
+		back := "/admin/plants/" + plantID.String()
+
+		var bankCode, accountNumber, legalName string
+		err = s.AdminDB.QueryRow(r.Context(), `
+			SELECT COALESCE(bank_code, ''), COALESCE(bank_account_number, ''), COALESCE(legal_business_name, '')
+			FROM plants WHERE id = $1
+		`, plantID).Scan(&bankCode, &accountNumber, &legalName)
+		if err != nil || bankCode == "" || accountNumber == "" {
+			http.Redirect(w, r, back+"?notice=subaccount-missing", http.StatusSeeOther)
+			return
+		}
+
+		resolved, err := s.Paystack.ResolveAccount(r.Context(), accountNumber, bankCode)
+		if err != nil {
+			log.Println("admin subaccount: resolve:", err)
+			http.Redirect(w, r, back+"?notice=resolve-failed&detail="+url.QueryEscape(err.Error()), http.StatusSeeOther)
+			return
+		}
+		sub, err := s.Paystack.CreateSubaccount(r.Context(), payments.CreateSubaccountParams{
+			BusinessName:     legalName,
+			SettlementBank:   bankCode,
+			AccountNumber:    accountNumber,
+			PercentageCharge: payments.PlantSettlementPercentage,
+		})
+		if err != nil {
+			log.Println("admin subaccount: create:", err)
+			http.Redirect(w, r, back+"?notice=create-failed&detail="+url.QueryEscape(err.Error()), http.StatusSeeOther)
+			return
+		}
+		if err := plants.SetSettlement(r.Context(), s.AdminDB, plantID, resolved.AccountName, sub.SubaccountCode, actor.UserID); err != nil {
+			log.Println("admin subaccount: save:", err)
+			http.Redirect(w, r, back+"?notice=save-failed", http.StatusSeeOther)
+			return
+		}
+		http.Redirect(w, r, back+"?notice=subaccount-ok", http.StatusSeeOther)
 	}
 }
 

@@ -177,7 +177,7 @@ func signupContent(data SignupViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<span><strong>Your phone and email</strong> For your owner login and updates</span></li></ul></div><div class=\"signup-aside-block signup-aside-next\"><div class=\"signup-aside-title\">What happens next</div><ol class=\"signup-next\"><li><strong>We verify your details</strong> CAC, NMDPRA licence, and bank account.</li><li><strong>We contact you</strong> By email and SMS, with your login details.</li><li><strong>You go live</strong> Customers can buy gas on your page.</li></ol></div><div class=\"signup-aside-block signup-aside-price\"><strong>1.5% per online sale.</strong> No setup or monthly fee. <a href=\"/pricing\">See pricing</a></div></aside><form class=\"signup-form\" method=\"post\" action=\"/get-started\" data-account-resolve><input type=\"hidden\" name=\"csrf_token\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<span><strong>Your phone and email</strong> For your owner login and updates</span></li></ul></div><div class=\"signup-aside-block signup-aside-next\"><div class=\"signup-aside-title\">What happens next</div><ol class=\"signup-next\"><li><strong>We verify your details</strong> CAC, NMDPRA licence, and bank account.</li><li><strong>We contact you</strong> By email and SMS, with your login details.</li><li><strong>You go live</strong> Customers can buy gas on your page.</li></ol></div><div class=\"signup-aside-block signup-aside-price\"><strong>1.5% per online sale.</strong> No setup or monthly fee. <a href=\"/pricing\">See pricing</a></div></aside><form class=\"signup-form\" method=\"post\" action=\"/get-started\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -362,14 +362,14 @@ func signupContent(data SignupViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" placeholder=\"0123456789\" inputmode=\"numeric\" pattern=\"[0-9]{10}\" maxlength=\"10\" required></div></div><div class=\"account-readout\" data-account-name data-state=\"idle\">Enter your account number and bank to verify.</div></div><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">04</span>Owner login</div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"owner_name\">Your name</label> <input id=\"owner_name\" type=\"text\" name=\"owner_name\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" placeholder=\"0123456789\" inputmode=\"numeric\" pattern=\"[0-9]{10}\" maxlength=\"10\" required></div></div></div><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">04</span>Owner login</div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"owner_name\">Your name</label> <input id=\"owner_name\" type=\"text\" name=\"owner_name\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 177, Col: 83}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 176, Col: 83}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 			if templ_7745c5c3_Err != nil {
@@ -382,7 +382,7 @@ func signupContent(data SignupViewData) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerPhone)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 181, Col: 85}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 180, Col: 85}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
 			if templ_7745c5c3_Err != nil {
@@ -395,7 +395,7 @@ func signupContent(data SignupViewData) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerEmail)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 186, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 185, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 			if templ_7745c5c3_Err != nil {
@@ -408,7 +408,7 @@ func signupContent(data SignupViewData) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.PrimaryColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 211, Col: 93}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 210, Col: 93}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
 			if templ_7745c5c3_Err != nil {
@@ -421,7 +421,7 @@ func signupContent(data SignupViewData) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ButtonColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 215, Col: 90}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 214, Col: 90}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var21)
 			if templ_7745c5c3_Err != nil {
@@ -434,7 +434,7 @@ func signupContent(data SignupViewData) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.SecondaryColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 221, Col: 99}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 220, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
 			if templ_7745c5c3_Err != nil {
@@ -447,26 +447,18 @@ func signupContent(data SignupViewData) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ButtonTextColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 225, Col: 104}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 224, Col: 104}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" placeholder=\"#F8FAFC\"></div></div><p class=\"field-hint\">Leave these blank to use the GatsToGo default customer-site look. Invalid colors are ignored safely.</p></div></details> <label class=\"signup-consent\"><input type=\"checkbox\" name=\"accept_terms\" value=\"yes\" required> <span>I agree to the <a href=\"/terms\" target=\"_blank\" rel=\"noopener\">Terms of Service</a> and have read the <a href=\"/privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>. I'm authorised to register this business.</span></label> <button class=\"button-primary\" type=\"submit\" disabled>Submit application</button><p class=\"signup-submit-note\">Submit unlocks once your bank account is verified above.</p></form>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = accountResolveScript().Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<script>\n\t\t\t\t\t(function () {\n\t\t\t\t\t\tvar input = document.getElementById(\"slug\");\n\t\t\t\t\t\tvar preview = document.querySelector(\".slug-preview strong\");\n\t\t\t\t\t\tif (!input || !preview) return;\n\t\t\t\t\t\tinput.addEventListener(\"input\", function () {\n\t\t\t\t\t\t\tvar v = input.value.toLowerCase().replace(/[^a-z0-9-]/g, \"\");\n\t\t\t\t\t\t\tif (v !== input.value) input.value = v;\n\t\t\t\t\t\t\tpreview.textContent = v || \"yourname\";\n\t\t\t\t\t\t});\n\t\t\t\t\t})();\n\t\t\t\t</script></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" placeholder=\"#F8FAFC\"></div></div><p class=\"field-hint\">Leave these blank to use the GatsToGo default customer-site look. Invalid colors are ignored safely.</p></div></details> <label class=\"signup-consent\"><input type=\"checkbox\" name=\"accept_terms\" value=\"yes\" required> <span>I agree to the <a href=\"/terms\" target=\"_blank\" rel=\"noopener\">Terms of Service</a> and have read the <a href=\"/privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>. I'm authorised to register this business.</span></label> <button class=\"button-primary\" type=\"submit\">Submit application</button><p class=\"signup-submit-note\">We verify your bank account during review and email you if anything needs fixing.</p></form><script>\n\t\t\t\t\t(function () {\n\t\t\t\t\t\tvar form = document.querySelector(\".signup-form\");\n\t\t\t\t\t\tvar alertBox = document.querySelector(\".signup-head .inline-alert\");\n\t\t\t\t\t\tif (!form || !alertBox) return;\n\t\t\t\t\t\talertBox.scrollIntoView({ block: \"center\" });\n\t\t\t\t\t\tfunction dismiss() {\n\t\t\t\t\t\t\talertBox.remove();\n\t\t\t\t\t\t\tform.removeEventListener(\"input\", dismiss);\n\t\t\t\t\t\t\tform.removeEventListener(\"change\", dismiss);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tform.addEventListener(\"input\", dismiss);\n\t\t\t\t\t\tform.addEventListener(\"change\", dismiss);\n\t\t\t\t\t})();\n\t\t\t\t</script><script>\n\t\t\t\t\t(function () {\n\t\t\t\t\t\tvar input = document.getElementById(\"slug\");\n\t\t\t\t\t\tvar preview = document.querySelector(\".slug-preview strong\");\n\t\t\t\t\t\tif (!input || !preview) return;\n\t\t\t\t\t\tinput.addEventListener(\"input\", function () {\n\t\t\t\t\t\t\tvar v = input.value.toLowerCase().replace(/[^a-z0-9-]/g, \"\");\n\t\t\t\t\t\t\tif (v !== input.value) input.value = v;\n\t\t\t\t\t\t\tpreview.textContent = v || \"yourname\";\n\t\t\t\t\t\t});\n\t\t\t\t\t})();\n\t\t\t\t</script></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -534,7 +526,7 @@ func plantUnderReviewContent(name string, appBaseURL string) templ.Component {
 			templ_7745c5c3_Var25 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<main><div class=\"signup-submitted review-state\"><div class=\"review-panel\"><div class=\"icon-badge\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<main><div class=\"signup-submitted review-state\"><div class=\"review-panel\"><div class=\"icon-badge\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -542,33 +534,33 @@ func plantUnderReviewContent(name string, appBaseURL string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div><div class=\"section-eyebrow\">Application under review</div><h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><div class=\"section-eyebrow\">Application under review</div><h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 279, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 292, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, " is not live yet</h1><p>We are verifying this plant before customers can buy gas from it. Once approved, the owner will receive an email and SMS with the next steps for using the platform.</p><div class=\"review-steps\" aria-label=\"Application progress\"><div class=\"review-step is-done\"><span>1</span><strong>Application received</strong></div><div class=\"review-step is-current\"><span>2</span><strong>Verification in progress</strong></div><div class=\"review-step\"><span>3</span><strong>Plant page goes live after approval</strong></div></div><a class=\"button-primary\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, " is not live yet</h1><p>We are verifying this plant before customers can buy gas from it. Once approved, the owner will receive an email and SMS with the next steps for using the platform.</p><div class=\"review-steps\" aria-label=\"Application progress\"><div class=\"review-step is-done\"><span>1</span><strong>Application received</strong></div><div class=\"review-step is-current\"><span>2</span><strong>Verification in progress</strong></div><div class=\"review-step\"><span>3</span><strong>Plant page goes live after approval</strong></div></div><a class=\"button-primary\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var27 templ.SafeURL
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(appBaseURL))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 286, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 299, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\">Back to GatsToGo</a></div></div></main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\">Back to GatsToGo</a></div></div></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

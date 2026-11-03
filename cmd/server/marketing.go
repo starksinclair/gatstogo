@@ -201,6 +201,11 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			renderSignupForm(s, w, r, "Your password needs at least 8 characters.")
 			return
 		}
+		acct := strings.TrimSpace(r.FormValue("bank_account_number"))
+		if len(acct) != 10 || strings.Trim(acct, "0123456789") != "" {
+			renderSignupForm(s, w, r, "Enter your 10-digit bank account number.")
+			return
+		}
 		if r.FormValue("accept_terms") != "yes" {
 			renderSignupForm(s, w, r, "Please agree to the Terms of Service and Privacy Policy to submit your application.")
 			return
@@ -230,16 +235,16 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			OwnerEmail:          r.FormValue("owner_email"),
 			OwnerPassword:       password,
 			Status:              "provisioning",
+			DeferSettlement:     true,
 			TermsAcceptedAt:     time.Now(),
 		}
 		if priceErr == nil {
 			params.StartingPriceKobo = startingPriceKobo
 		}
 
-		// Everything below this point makes real Paystack calls (bank
-		// account lookup, payout-account creation), so cap how often one
-		// address can reach it -- this is what stops the public form being
-		// used to mint Paystack subaccounts in bulk.
+		// Bank details are stored as typed; an admin verifies them and
+		// creates the Paystack subaccount during review (DeferSettlement).
+		// The rate limit still caps junk applications per address.
 		if !allowSignupAttempt(r.Context(), s.Redis, clientIP(r)) {
 			renderSignupForm(s, w, r, "Too many applications from this connection. Please wait a while and try again, or contact us if you need help.")
 			return

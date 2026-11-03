@@ -167,6 +167,13 @@ type CreateParams struct {
 	// and PlantSettlementPercentage for the actual number).
 	PaystackSubaccountCode string
 
+	// DeferSettlement lets a plant be created without a resolved bank
+	// account name or Paystack subaccount. Used by the public signup form
+	// while payout setup is done by an admin (SetSettlement) after review.
+	// A plant created this way must not be activated until
+	// SetSettlement has run -- cmd/server's admin status handler enforces that.
+	DeferSettlement bool
+
 	OwnerName     string
 	OwnerPhone    string
 	OwnerEmail    string
@@ -314,7 +321,7 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 	bankName := strings.TrimSpace(p.BankName)
 	bankAccountName := strings.TrimSpace(p.BankAccountName)
 	subaccountCode := strings.TrimSpace(p.PaystackSubaccountCode)
-	if bankName == "" || bankAccountName == "" || subaccountCode == "" {
+	if !p.DeferSettlement && (bankName == "" || bankAccountName == "" || subaccountCode == "") {
 		return nil, ErrMissingField
 	}
 
@@ -356,8 +363,8 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 	`,
 		v.name, v.slug, nullIfEmpty(p.City), nullIfEmpty(p.Address), nullIfEmpty(p.Phone), v.state,
 		v.legalBusinessName, v.cacNumber, v.nmdpraLicenseNumber,
-		v.bankCode, bankName, v.bankAccountNumber, bankAccountName,
-		subaccountCode,
+		v.bankCode, nullIfEmpty(bankName), v.bankAccountNumber, nullIfEmpty(bankAccountName),
+		nullIfEmpty(subaccountCode),
 		v.primaryColor, v.buttonColor, v.secondaryColor, v.buttonTextColor, nullIfEmpty(p.LogoPath), v.status,
 	).Scan(&plantID)
 	if err != nil {
@@ -488,4 +495,28 @@ func nullIfEmpty(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+// SetSettlement records the resolved bank account name and Paystack
+// subaccount code on a plant that was created with DeferSettlement.
+func SetSettlement(ctx context.Context, adminDB *pgxpool.Pool, plantID uuid.UUID, bankAccountName, subaccountCode string, actorID uuid.UUID) error {
+	tx, err := adminDB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	tag, err := tx.Exec(ctx, `
+		UPDATE plants SET bank_account_name = $2, paystack_subaccount_code = $3 WHERE id = $1
+	`, plantID, bankAccountName, subaccountCode)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	if err := audit.Log(ctx, tx, &plantID, &actorID, "plant.settlement_set", subaccountCode, nil); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }

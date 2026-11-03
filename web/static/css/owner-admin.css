@@ -394,6 +394,7 @@ h3 { font-size: 14px; }
 	font-weight: 700;
 }
 .owner-error .icon { flex: none; font-size: 18px; }
+.owner-error.owner-ok { border-left-color: var(--green, #0a7a4f); background: var(--green-bg, #e8f6ef); color: var(--green, #0a7a4f); }
 
 /* ---- KPI row: hairline-divided stats, no individual boxed cards ---- */
 .kpi-row {

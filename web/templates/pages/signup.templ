@@ -92,7 +92,7 @@ templ signupContent(data SignupViewData) {
 						<strong>1.5% per online sale.</strong> No setup or monthly fee. <a href="/pricing">See pricing</a>
 					</div>
 				</aside>
-				<form class="signup-form" method="post" action="/get-started" data-account-resolve>
+				<form class="signup-form" method="post" action="/get-started">
 					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 
 					<div class="field-group">
@@ -166,8 +166,7 @@ templ signupContent(data SignupViewData) {
 								<input id="bank_account_number" type="text" name="bank_account_number" value={ data.BankAccountNumber } placeholder="0123456789" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required/>
 							</div>
 						</div>
-						<div class="account-readout" data-account-name data-state="idle">Enter your account number and bank to verify.</div>
-					</div>
+						</div>
 
 					<div class="field-group">
 						<div class="field-group-heading"><span class="step-num">04</span>Owner login</div>
@@ -233,10 +232,24 @@ templ signupContent(data SignupViewData) {
 						<input type="checkbox" name="accept_terms" value="yes" required/>
 						<span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms of Service</a> and have read the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. I'm authorised to register this business.</span>
 					</label>
-					<button class="button-primary" type="submit" disabled>Submit application</button>
-					<p class="signup-submit-note">Submit unlocks once your bank account is verified above.</p>
+					<button class="button-primary" type="submit">Submit application</button>
+					<p class="signup-submit-note">We verify your bank account during review and email you if anything needs fixing.</p>
 				</form>
-				@accountResolveScript()
+				<script>
+					(function () {
+						var form = document.querySelector(".signup-form");
+						var alertBox = document.querySelector(".signup-head .inline-alert");
+						if (!form || !alertBox) return;
+						alertBox.scrollIntoView({ block: "center" });
+						function dismiss() {
+							alertBox.remove();
+							form.removeEventListener("input", dismiss);
+							form.removeEventListener("change", dismiss);
+						}
+						form.addEventListener("input", dismiss);
+						form.addEventListener("change", dismiss);
+					})();
+				</script>
 				<script>
 					(function () {
 						var input = document.getElementById("slug");

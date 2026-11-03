@@ -349,6 +349,7 @@ func (s *Server) MountHandlers() {
 		r.Get("/admin/plants/{id}", adminPlantDetailHandler(s))
 		r.Post("/admin/plants/{id}/messaging", adminPlantMessagingHandler(s))
 		r.Post("/admin/plants/{id}/status", adminPlantStatusHandler(s))
+		r.Post("/admin/plants/{id}/subaccount", adminPlantSubaccountHandler(s))
 	})
 
 	s.Router.Group(func(r chi.Router) {
