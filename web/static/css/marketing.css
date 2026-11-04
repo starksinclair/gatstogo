@@ -1571,3 +1571,88 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	.hc-contact-actions .button-primary { width: 100%; }
 	.hc-page { padding-top: 36px; }
 }
+
+/* ==========================================================================
+   Get started: owner / buyer tabs and the launch-offer counter
+   ========================================================================== */
+.signup-tabs {
+	display: flex;
+	gap: 0;
+	max-width: 1080px;
+	margin: 0 auto;
+	border-bottom: 1px solid var(--line);
+}
+.signup-tab {
+	appearance: none;
+	background: none;
+	border: 0;
+	border-bottom: 3px solid transparent;
+	margin-bottom: -1px;
+	padding: 14px 22px;
+	color: var(--muted);
+	font-size: 17px;
+	font-weight: 700;
+	cursor: pointer;
+}
+.signup-tab:hover { color: var(--ink); }
+.signup-tab[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+.signup-panel[hidden] { display: none; }
+
+.spots-banner {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	margin: 22px 0 28px;
+	padding: 16px 18px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: var(--brand-tint);
+	color: var(--ink);
+}
+.spots-banner strong { display: block; font-size: 17px; }
+.spots-banner p { margin: 4px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.5; }
+.spots-count { display: flex; align-items: baseline; gap: 10px; flex: none; }
+.spots-num { font-family: var(--font-mono, "IBM Plex Mono", monospace); font-size: 40px; font-weight: 600; line-height: 1; color: var(--brand); }
+.spots-of { font-size: 15px; font-weight: 700; color: var(--ink-soft); }
+.spots-bar { flex: 1; height: 8px; border-radius: 4px; background: #FFFFFF; overflow: hidden; }
+.spots-bar span { display: block; height: 100%; background: var(--brand); border-radius: 4px; }
+.spots-medal { flex: none; width: 64px; height: 64px; animation: spots-pulse 2.4s ease-in-out infinite; }
+@keyframes spots-pulse {
+	0%, 100% { transform: scale(1) rotate(0deg); }
+	50% { transform: scale(1.08) rotate(-4deg); }
+}
+@media (prefers-reduced-motion: reduce) { .spots-medal { animation: none; } }
+@media (max-width: 640px) {
+	.signup-tab { flex: 1; padding: 14px 8px; font-size: 16px; }
+	.spots-banner:not(.spots-empty) { flex-direction: column; align-items: flex-start; }
+	.spots-bar { width: 100%; flex: none; }
+	.spots-medal { width: 48px; height: 48px; }
+}
+.founding-badge {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: var(--brand-tint, #E7F6F1);
+	color: var(--brand, #006B4D);
+	font-weight: 800;
+	font-size: 12px;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+}
+@media (max-width: 1128px) {
+	.signup-tabs, .signup-panel { box-sizing: border-box; padding-left: 24px; padding-right: 24px; }
+}
+.spots-empty { align-items: flex-start; }
+.spots-empty-body { flex: 1; min-width: 0; }
+.spots-count-inline { margin: 14px 0 8px; }
+.spots-empty-body .spots-bar { flex: none; width: 100%; }
+.signup-panel .signup-layout { padding-top: 32px; }
+@media (max-width: 640px) {
+	.signup-panel .signup-layout { padding-top: 24px; }
+	.signup-panel .signup-layout .lede { margin-bottom: 24px; }
+}
+.spots-full { flex-wrap: wrap; background: #FFF7E6; border-color: #F2D9A6; }
+.spots-full .spots-num { color: #92580A; }
+.spots-full-body { flex: 1; min-width: 220px; }
+.spots-full .spots-bar { flex: none; width: 100%; background: #F2D9A6; }
+.spots-full .spots-bar span { background: #92580A; }

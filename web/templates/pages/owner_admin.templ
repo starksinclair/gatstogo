@@ -169,6 +169,7 @@ type OwnerDashboardData struct {
 	// (ownerDashboardContent) so an owner can verify what was submitted.
 	// Editing them, and a dedicated admin-side compliance review view, are
 	// both explicit follow-ups, not built this round.
+	FoundingRank           int
 	PlantState             string
 	PlantLegalBusinessName string
 	PlantCACNumber         string
@@ -996,6 +997,10 @@ templ ownerDashboardContent(data OwnerDashboardData) {
 				<span class="mono">{ data.PlantSlug }</span>
 				<span class="sep"></span>
 				<span>Domain { data.DomainStatus }</span>
+				if foundingBadgeLabel(data.FoundingRank) != "" {
+					<span class="sep"></span>
+					<span class="founding-badge">{ foundingBadgeLabel(data.FoundingRank) }</span>
+				}
 			</div>
 		</div>
 		<div class="toolbar">

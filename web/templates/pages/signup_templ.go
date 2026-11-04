@@ -9,6 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"strconv"
+
 	"gatstogo/internal/payments"
 	"gatstogo/web/templates/components"
 )
@@ -48,6 +50,45 @@ type SignupViewData struct {
 	ButtonColor     string
 	SecondaryColor  string
 	ButtonTextColor string
+
+	// Tab is the /get-started tab that opens first: "owner" or "buyer".
+	Tab string
+	// Source tags where a buyer came from (?src=); saved with the sign-up.
+	Source string
+
+	// The two launch-offer counters are independent: founding plant
+	// applications and registered gas buyers each count toward their own 50.
+	OwnerSpotsClaimed int
+	OwnerSpotsTotal   int
+	BuyerSpotsClaimed int
+	BuyerSpotsTotal   int
+
+	BuyerErrorMsg  string
+	BuyerSubmitted bool
+	BuyerOfferRank int
+	BuyerName      string
+	BuyerPhone     string
+	BuyerEmail     string
+	BuyerState     string
+}
+
+const buyerShareURL = "https://wa.me/?text=Hello%2C%20I%27d%20like%20to%20buy%20gas%20from%20you%20online%20and%20pay%20from%20my%20phone.%20Gas%20plants%20can%20set%20up%20for%20free%20on%20GatsToGo%3A%20https%3A%2F%2Fgatstogo.com%2Fget-started"
+
+func spotsLeft(claimed int, total int) int {
+	if claimed >= total {
+		return 0
+	}
+	return total - claimed
+}
+
+func spotsPercent(claimed int, total int) int {
+	if total <= 0 || claimed <= 0 {
+		return 0
+	}
+	if claimed >= total {
+		return 100
+	}
+	return claimed * 100 / total
 }
 
 func Signup(data SignupViewData) templ.Component {
@@ -79,7 +120,9 @@ func Signup(data SignupViewData) templ.Component {
 	})
 }
 
-func signupContent(data SignupViewData) templ.Component {
+// spotsBanner is the launch-offer counter: an empty-state invitation while
+// nobody has claimed a spot yet, then a live "N of 50 left" bar.
+func spotsBanner(kind string, claimed int, total int, emptyTitle string, emptyText string, liveLabel string, fullText string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -100,12 +143,287 @@ func signupContent(data SignupViewData) templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main>")
+		if claimed <= 0 {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"spots-banner spots-empty\" data-spots=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(kind)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 94, Col: 57}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><svg class=\"spots-medal\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><circle cx=\"32\" cy=\"26\" r=\"18\" fill=\"#006B4D\"></circle> <circle cx=\"32\" cy=\"26\" r=\"12\" fill=\"none\" stroke=\"#10B981\" stroke-width=\"3\"></circle> <path d=\"M22 42l-6 16 12-5 4 8 4-14zM42 42l6 16-12-5-4 8-4-14z\" fill=\"#10B981\"></path> <path d=\"M32 18l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z\" fill=\"#FFFFFF\"></path></svg><div class=\"spots-empty-body\"><strong>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(emptyTitle)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 102, Col: 24}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</strong><p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(emptyText)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 103, Col: 18}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p><div class=\"spots-count spots-count-inline\"><span class=\"spots-num\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(spotsLeft(claimed, total)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 104, Col: 113}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</span><span class=\"spots-of\">of ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(total))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 104, Col: 169}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(liveLabel)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 104, Col: 183}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span></div><div class=\"spots-bar\" role=\"img\" aria-label=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(spotsLeft(claimed, total)) + " of " + strconv.Itoa(total) + " spots left")
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 105, Col: 137}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><span style=\"width:0%\"></span></div></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else if claimed >= total {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"spots-banner spots-full\" data-spots=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(kind)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 109, Col: 56}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\"><div class=\"spots-count\"><span class=\"spots-num\">0</span><span class=\"spots-of\">of ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(total))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 110, Col: 107}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var12 string
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(liveLabel)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 110, Col: 121}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</span></div><div class=\"spots-full-body\"><strong>All ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var13 string
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(total))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 112, Col: 37}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " spots are gone</strong><p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var14 string
+			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fullText)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 113, Col: 17}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</p></div><div class=\"spots-bar\" role=\"img\" aria-label=\"No spots left\"><span style=\"width:100%\"></span></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"spots-banner\" data-spots=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var15 string
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(kind)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 118, Col: 45}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"><div class=\"spots-count\"><span class=\"spots-num\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var16 string
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(spotsLeft(claimed, total)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 119, Col: 93}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span><span class=\"spots-of\">of ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var17 string
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(total))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 119, Col: 149}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var18 string
+			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(liveLabel)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 119, Col: 163}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</span></div><div class=\"spots-bar\" role=\"img\" aria-label=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var19 string
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(spotsLeft(claimed, total)) + " of " + strconv.Itoa(total) + " spots left")
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 120, Col: 136}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"><span style=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var20 string
+			templ_7745c5c3_Var20, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("width:" + strconv.Itoa(spotsPercent(claimed, total)) + "%")
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 120, Col: 212}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\"></span></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		return nil
+	})
+}
+
+func signupContent(data SignupViewData) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var21 == nil {
+			templ_7745c5c3_Var21 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if data.Submitted {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"signup-submitted\"><div class=\"icon-badge\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div class=\"signup-submitted\"><div class=\"icon-badge\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -113,17 +431,115 @@ func signupContent(data SignupViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><h1>We've got your application</h1><p>Thanks for telling us about your plant. Your page is now under review, so it will not go live yet. Look out for our email and SMS: once we verify your information, we'll contact you and confirm your platform login details.</p><a class=\"button-primary\" href=\"/\">Back to homepage</a></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div><h1>We've got your application</h1><p>Thanks for telling us about your plant. Your page is now under review, so it will not go live yet. Look out for our email and SMS: once we verify your information, we'll contact you and confirm your platform login details.</p><a class=\"button-primary\" href=\"/\">Back to homepage</a></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else if data.BuyerSubmitted {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"signup-submitted\"><div class=\"icon-badge\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div><h1>You're on the list</h1>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if data.BuyerOfferRank > 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<p>You've got offer spot <strong>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var22 string
+				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(data.BuyerOfferRank))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 143, Col: 73}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, " of 50</strong>: ₦1,000 off your first gas order on GatsToGo. We'll text you when a gas plant near you goes live.</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<p>The first 50 offers are taken, but we'll still text you when a gas plant near you goes live.</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<p>The more plants join, the sooner you can buy. Know a gas station near you? Tell them about GatsToGo.</p><a class=\"button-primary\" href=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var23 templ.SafeURL
+			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(buyerShareURL))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 148, Col: 65}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" target=\"_blank\" rel=\"noopener\">Tell my gas plant on WhatsApp</a></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"signup-layout signup-split\"><div class=\"signup-head\"><div class=\"section-eyebrow\">Get started</div><h1>Tell us about your plant</h1><p class=\"lede\">About 5 minutes. We set up your branded page and owner login, and review every application before it goes live.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div class=\"signup-tabs\" role=\"tablist\" aria-label=\"Who are you?\"><button type=\"button\" role=\"tab\" class=\"signup-tab\" data-tab-btn=\"owner\" aria-selected=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if data.ErrorMsg != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"inline-alert\">")
+			var templ_7745c5c3_Var24 string
+			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.FormatBool(data.Tab != "buyer"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 152, Col: 132}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var24)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\">I sell gas</button> <button type=\"button\" role=\"tab\" class=\"signup-tab\" data-tab-btn=\"buyer\" aria-selected=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var25 string
+			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.FormatBool(data.Tab == "buyer"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 153, Col: 132}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\">I buy gas</button></div><div class=\"signup-panel\" data-tab-panel=\"buyer\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if data.Tab != "buyer" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, " hidden")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "><div class=\"signup-layout signup-split signup-buyer\"><div class=\"signup-head\"><div class=\"section-eyebrow\">For gas buyers</div><h1>Get ₦1,000 off your first gas order</h1><p class=\"lede\">Tell us where you are. We'll text you when a gas plant near you joins GatsToGo, so you can pay from your phone and skip the queue.</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = spotsBanner("buyer", data.BuyerSpotsClaimed, data.BuyerSpotsTotal,
+				"Be the first customer to use our service",
+				"The first buyer gets ₦1,000 off their first order, and we'll shout you out on our social media.",
+				"₦1,000 offers left",
+				"This offer has been claimed by 50 buyers, but you can still join the list and we'll text you when a plant near you goes live.").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if data.BuyerErrorMsg != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div class=\"inline-alert\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -131,45 +547,29 @@ func signupContent(data SignupViewData) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var3 string
-				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(data.ErrorMsg)
+				var templ_7745c5c3_Var26 string
+				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(data.BuyerErrorMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 69, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 169, Col: 28}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><aside class=\"signup-aside\"><div class=\"signup-aside-block\"><div class=\"signup-aside-title\">Have these ready</div><ul class=\"signup-ready\"><li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div><aside class=\"signup-aside\"><div class=\"signup-aside-block\"><div class=\"signup-aside-title\">What you get</div><ul class=\"signup-ready\"><li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = components.Icon("identification-badge").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.Icon("check-circle").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<span><strong>CAC number</strong> RC (company) or BN (business name)</span></li><li>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = components.Icon("shield-check").Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<span><strong>NMDPRA licence number</strong> From your Licence to Operate</span></li><li>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = components.Icon("bank").Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<span><strong>Business bank account</strong> Where customer payments settle</span></li><li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<span><strong>₦1,000 off</strong> Your first gas order on GatsToGo</span></li><li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -177,150 +577,308 @@ func signupContent(data SignupViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<span><strong>Your phone and email</strong> For your owner login and updates</span></li></ul></div><div class=\"signup-aside-block signup-aside-next\"><div class=\"signup-aside-title\">What happens next</div><ol class=\"signup-next\"><li><strong>We verify your details</strong> CAC, NMDPRA licence, and bank account.</li><li><strong>We contact you</strong> By email and SMS, with your login details.</li><li><strong>You go live</strong> Customers can buy gas on your page.</li></ol></div><div class=\"signup-aside-block signup-aside-price\"><strong>1.5% per online sale.</strong> No setup or monthly fee. <a href=\"/pricing\">See pricing</a></div></aside><form class=\"signup-form\" method=\"post\" action=\"/get-started\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<span><strong>A text from us</strong> When a gas plant near you goes live</span></li><li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 96, Col: 66}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
+			templ_7745c5c3_Err = components.Icon("shield-check").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">01</span>Plant details</div><div class=\"field-underline\"><label for=\"name\">Plant name</label> <input id=\"name\" type=\"text\" name=\"name\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<span><strong>No payment now</strong> Just your name, phone and state</span></li></ul></div><div class=\"signup-aside-block signup-aside-next\"><div class=\"signup-aside-title\">What happens next</div><ol class=\"signup-next\"><li><strong>You register</strong> It takes under a minute.</li><li><strong>Tell your gas plant</strong> We give you a message to send them on WhatsApp.</li><li><strong>Buy and save</strong> Pay from your phone and get ₦1,000 off.</li></ol></div></aside><form class=\"signup-form\" method=\"post\" action=\"/get-started/buyer\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Name)
+			var templ_7745c5c3_Var27 string
+			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 102, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 192, Col: 67}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" placeholder=\"Sunrise Gas Plant\" required autofocus></div><div class=\"field-underline\"><label for=\"slug\">Web address</label> <input id=\"slug\" type=\"text\" name=\"slug\" value=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var27)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Slug)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 106, Col: 65}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\"> <input type=\"hidden\" name=\"src\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" placeholder=\"sunrise\" pattern=\"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\" required><p class=\"slug-preview\">Customers will find you at <strong>")
+			var templ_7745c5c3_Var28 string
+			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Source)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 193, Col: 57}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var28)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(slugOrPlaceholder(data.Slug))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 107, Col: 96}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\"><div class=\"field-underline\"><label for=\"buyer_name\">Your name</label> <input id=\"buyer_name\" type=\"text\" name=\"buyer_name\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</strong>.")
+			var templ_7745c5c3_Var29 string
+			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.BuyerName)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 196, Col: 82}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var29)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(AppBaseDomain)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 107, Col: 123}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" placeholder=\"Ada Nwosu\" required></div><div class=\"field-underline\"><label for=\"buyer_phone\">Phone number</label> <input id=\"buyer_phone\" type=\"tel\" name=\"buyer_phone\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</p></div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"city\">City</label> <input id=\"city\" type=\"text\" name=\"city\" value=\"")
+			var templ_7745c5c3_Var30 string
+			templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.BuyerPhone)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 200, Col: 84}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var30)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.City)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 112, Col: 66}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" placeholder=\"0803 000 0000\" required></div><div class=\"field-underline\"><label for=\"buyer_email\">Email (optional)</label> <input id=\"buyer_email\" type=\"email\" name=\"buyer_email\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" placeholder=\"Owerri\"></div><div class=\"field-underline\"><label for=\"phone\">Plant phone number</label> <input id=\"phone\" type=\"tel\" name=\"phone\" value=\"")
+			var templ_7745c5c3_Var31 string
+			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.BuyerEmail)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 204, Col: 86}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var31)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Phone)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 116, Col: 68}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" placeholder=\"ada@example.com\"></div><div class=\"field-underline\"><label>State</label>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" placeholder=\"0803 000 0000\"></div></div><div class=\"field-underline\"><label for=\"address\">Address</label> <input id=\"address\" type=\"text\" name=\"address\" value=\"")
+			templ_7745c5c3_Err = themedSelect("buyer_state", stateSelectOptions(), data.BuyerState).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Address)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 121, Col: 74}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div><label class=\"signup-consent\"><input type=\"checkbox\" name=\"accept_contact\" value=\"yes\" required> <span>Text me when a gas plant near me joins GatsToGo. I've read the <a href=\"/privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>.</span></label> <button class=\"button-primary\" type=\"submit\">Claim my ₦1,000 off</button><p class=\"signup-submit-note\">No payment needed. The offer applies to your first order on GatsToGo.</p></form></div></div><div class=\"signup-panel\" data-tab-panel=\"owner\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" placeholder=\"12 Wetheral Road\"></div><div class=\"field-underline\"><label for=\"starting_price\">Starting price per kg (₦)</label> <input id=\"starting_price\" type=\"text\" name=\"starting_price\" value=\"")
+			if data.Tab == "buyer" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, " hidden")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "><div class=\"signup-layout signup-split\"><div class=\"signup-head\"><div class=\"section-eyebrow\">Get started</div><h1>Tell us about your plant</h1><p class=\"lede\">About 5 minutes. We set up your branded page and owner login, and review every application before it goes live.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.StartingPrice)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 125, Col: 94}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" placeholder=\"1200\" inputmode=\"decimal\" required><p class=\"field-hint\">You can change this any time from your dashboard once you're live.</p></div></div><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">02</span>Business details</div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"legal_business_name\">Legal business name</label> <input id=\"legal_business_name\" type=\"text\" name=\"legal_business_name\" value=\"")
+			templ_7745c5c3_Err = spotsBanner("owner", data.OwnerSpotsClaimed, data.OwnerSpotsTotal,
+				"Be the first plant on GatsToGo",
+				"Get the 1st Founding Plant badge on your dashboard for good, and we'll feature you on our social media.",
+				"founding spots left",
+				"Spots have run out because so many plants applied, but applications are still open. Apply now and we'll review yours.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var13 string
-			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.LegalBusinessName)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 135, Col: 109}
+			if data.ErrorMsg != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<div class=\"inline-alert\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = components.Icon("warning-circle").Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var32 string
+				templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(data.ErrorMsg)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 233, Col: 22}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div><aside class=\"signup-aside\"><div class=\"signup-aside-block\"><div class=\"signup-aside-title\">Have these ready</div><ul class=\"signup-ready\"><li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" placeholder=\"As registered with CAC\" required></div><div class=\"field-underline\"><label for=\"cac_number\">CAC registration number</label> <input id=\"cac_number\" type=\"text\" name=\"cac_number\" value=\"")
+			templ_7745c5c3_Err = components.Icon("identification-badge").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var14 string
-			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CACNumber)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 139, Col: 83}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<span><strong>CAC number</strong> RC (company) or BN (business name)</span></li><li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" placeholder=\"RC 1234567 or BN 1234567\" required><p class=\"field-hint\">RC for a registered company, BN for a business name.</p></div></div><div class=\"field-grid\"><div class=\"field-underline\"><label>State</label>")
+			templ_7745c5c3_Err = components.Icon("shield-check").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<span><strong>NMDPRA licence number</strong> From your Licence to Operate</span></li><li>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Icon("bank").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<span><strong>Business bank account</strong> Where customer payments settle</span></li><li>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Icon("phone").Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<span><strong>Your phone and email</strong> For your owner login and updates</span></li></ul></div><div class=\"signup-aside-block signup-aside-next\"><div class=\"signup-aside-title\">What happens next</div><ol class=\"signup-next\"><li><strong>We verify your details</strong> CAC, NMDPRA licence, and bank account.</li><li><strong>We contact you</strong> By email and SMS, with your login details.</li><li><strong>You go live</strong> Customers can buy gas on your page.</li></ol></div><div class=\"signup-aside-block signup-aside-price\"><strong>1.5% per online sale.</strong> No setup or monthly fee. <a href=\"/pricing\">See pricing</a></div></aside><form class=\"signup-form\" method=\"post\" action=\"/get-started\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var33 string
+			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CSRFToken)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 260, Col: 66}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var33)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\"><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">01</span>Plant details</div><div class=\"field-underline\"><label for=\"name\">Plant name</label> <input id=\"name\" type=\"text\" name=\"name\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var34 string
+			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Name)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 266, Col: 65}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var34)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\" placeholder=\"Sunrise Gas Plant\" required autofocus></div><div class=\"field-underline\"><label for=\"slug\">Web address</label> <input id=\"slug\" type=\"text\" name=\"slug\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var35 string
+			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Slug)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 270, Col: 65}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var35)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "\" placeholder=\"sunrise\" pattern=\"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\" required><p class=\"slug-preview\">Customers will find you at <strong>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var36 string
+			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(slugOrPlaceholder(data.Slug))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 271, Col: 96}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</strong>.")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var37 string
+			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(AppBaseDomain)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 271, Col: 123}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</p></div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"city\">City</label> <input id=\"city\" type=\"text\" name=\"city\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var38 string
+			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.City)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 276, Col: 66}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var38)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\" placeholder=\"Owerri\"></div><div class=\"field-underline\"><label for=\"phone\">Plant phone number</label> <input id=\"phone\" type=\"tel\" name=\"phone\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var39 string
+			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Phone)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 280, Col: 68}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var39)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "\" placeholder=\"0803 000 0000\"></div></div><div class=\"field-underline\"><label for=\"address\">Address</label> <input id=\"address\" type=\"text\" name=\"address\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var40 string
+			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.Address)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 285, Col: 74}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var40)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "\" placeholder=\"12 Wetheral Road\"></div><div class=\"field-underline\"><label for=\"starting_price\">Starting price per kg (₦)</label> <input id=\"starting_price\" type=\"text\" name=\"starting_price\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var41 string
+			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.StartingPrice)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 289, Col: 94}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var41)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "\" placeholder=\"1200\" inputmode=\"decimal\" required><p class=\"field-hint\">You can change this any time from your dashboard once you're live.</p></div></div><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">02</span>Business details</div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"legal_business_name\">Legal business name</label> <input id=\"legal_business_name\" type=\"text\" name=\"legal_business_name\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var42 string
+			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.LegalBusinessName)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 299, Col: 109}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var42)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "\" placeholder=\"As registered with CAC\" required></div><div class=\"field-underline\"><label for=\"cac_number\">CAC registration number</label> <input id=\"cac_number\" type=\"text\" name=\"cac_number\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var43 string
+			templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.CACNumber)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 303, Col: 83}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var43)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\" placeholder=\"RC 1234567 or BN 1234567\" required><p class=\"field-hint\">RC for a registered company, BN for a business name.</p></div></div><div class=\"field-grid\"><div class=\"field-underline\"><label>State</label>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -328,20 +886,20 @@ func signupContent(data SignupViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><div class=\"field-underline\"><label for=\"nmdpra_license_number\">NMDPRA licence number</label> <input id=\"nmdpra_license_number\" type=\"text\" name=\"nmdpra_license_number\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div><div class=\"field-underline\"><label for=\"nmdpra_license_number\">NMDPRA licence number</label> <input id=\"nmdpra_license_number\" type=\"text\" name=\"nmdpra_license_number\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var15 string
-			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.NMDPRALicenseNumber)
+			var templ_7745c5c3_Var44 string
+			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.NMDPRALicenseNumber)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 150, Col: 115}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 314, Col: 115}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var44)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" placeholder=\"Licence number\" required><p class=\"field-hint\">As shown on your NMDPRA Licence to Operate.</p></div></div></div><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">03</span>Payout details</div><p class=\"field-hint field-group-intro\">Customer payments settle straight to this account. GatsToGo keeps 1.5% automatically, no manual payouts. The account name must match your business.</p><div class=\"field-grid\"><div class=\"field-underline\"><label>Bank</label>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "\" placeholder=\"Licence number\" required><p class=\"field-hint\">As shown on your NMDPRA Licence to Operate.</p></div></div></div><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">03</span>Payout details</div><p class=\"field-hint field-group-intro\">Customer payments settle straight to this account. GatsToGo keeps 1.5% automatically, no manual payouts. The account name must match your business.</p><div class=\"field-grid\"><div class=\"field-underline\"><label>Bank</label>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -349,116 +907,116 @@ func signupContent(data SignupViewData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div><div class=\"field-underline\"><label for=\"bank_account_number\">Account number</label> <input id=\"bank_account_number\" type=\"text\" name=\"bank_account_number\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</div><div class=\"field-underline\"><label for=\"bank_account_number\">Account number</label> <input id=\"bank_account_number\" type=\"text\" name=\"bank_account_number\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var16 string
-			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.BankAccountNumber)
+			var templ_7745c5c3_Var45 string
+			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.BankAccountNumber)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 166, Col: 109}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 330, Col: 109}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" placeholder=\"0123456789\" inputmode=\"numeric\" pattern=\"[0-9]{10}\" maxlength=\"10\" required></div></div></div><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">04</span>Owner login</div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"owner_name\">Your name</label> <input id=\"owner_name\" type=\"text\" name=\"owner_name\" value=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var45)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var17 string
-			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerName)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 176, Col: 83}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "\" placeholder=\"0123456789\" inputmode=\"numeric\" pattern=\"[0-9]{10}\" maxlength=\"10\" required></div></div></div><div class=\"field-group\"><div class=\"field-group-heading\"><span class=\"step-num\">04</span>Owner login</div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"owner_name\">Your name</label> <input id=\"owner_name\" type=\"text\" name=\"owner_name\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" placeholder=\"Ada Nwosu\" required></div><div class=\"field-underline\"><label for=\"owner_phone\">Your phone number</label> <input id=\"owner_phone\" type=\"tel\" name=\"owner_phone\" value=\"")
+			var templ_7745c5c3_Var46 string
+			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerName)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 340, Col: 83}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var46)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var18 string
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerPhone)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 180, Col: 85}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "\" placeholder=\"Ada Nwosu\" required></div><div class=\"field-underline\"><label for=\"owner_phone\">Your phone number</label> <input id=\"owner_phone\" type=\"tel\" name=\"owner_phone\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" placeholder=\"0803 000 0000\" required></div></div><div class=\"field-underline\"><label for=\"owner_email\">Your email</label> <input id=\"owner_email\" type=\"email\" name=\"owner_email\" value=\"")
+			var templ_7745c5c3_Var47 string
+			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerPhone)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 344, Col: 85}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var47)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var19 string
-			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerEmail)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 185, Col: 86}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "\" placeholder=\"0803 000 0000\" required></div></div><div class=\"field-underline\"><label for=\"owner_email\">Your email</label> <input id=\"owner_email\" type=\"email\" name=\"owner_email\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" placeholder=\"ada@sunrisegas.ng\" required></div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"owner_password\">Password</label> <input id=\"owner_password\" type=\"password\" name=\"owner_password\" autocomplete=\"new-password\" minlength=\"8\" required><p class=\"field-hint\">At least 8 characters.</p></div><div class=\"field-underline\"><label for=\"owner_password_confirm\">Confirm password</label> <input id=\"owner_password_confirm\" type=\"password\" name=\"owner_password_confirm\" autocomplete=\"new-password\" minlength=\"8\" required></div></div><p class=\"field-hint\">This is what you'll use to log in to your plant's dashboard once it's approved: your phone number and this password, at your own plant's login page.</p></div><details class=\"advanced-group\"><summary><span>Brand kit</span> <small>Optional. Use our default look now, or set yours up later.</small></summary><div class=\"advanced-body\"><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"primary_color\">Primary color</label> <input id=\"primary_color\" type=\"text\" name=\"primary_color\" value=\"")
+			var templ_7745c5c3_Var48 string
+			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.OwnerEmail)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 349, Col: 86}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var48)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var20 string
-			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.PrimaryColor)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 210, Col: 93}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "\" placeholder=\"ada@sunrisegas.ng\" required></div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"owner_password\">Password</label> <input id=\"owner_password\" type=\"password\" name=\"owner_password\" autocomplete=\"new-password\" minlength=\"8\" required><p class=\"field-hint\">At least 8 characters.</p></div><div class=\"field-underline\"><label for=\"owner_password_confirm\">Confirm password</label> <input id=\"owner_password_confirm\" type=\"password\" name=\"owner_password_confirm\" autocomplete=\"new-password\" minlength=\"8\" required></div></div><p class=\"field-hint\">This is what you'll use to log in to your plant's dashboard once it's approved: your phone number and this password, at your own plant's login page.</p></div><details class=\"advanced-group\"><summary><span>Brand kit</span> <small>Optional. Use our default look now, or set yours up later.</small></summary><div class=\"advanced-body\"><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"primary_color\">Primary color</label> <input id=\"primary_color\" type=\"text\" name=\"primary_color\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" placeholder=\"#006B4D\"></div><div class=\"field-underline\"><label for=\"button_color\">Button color</label> <input id=\"button_color\" type=\"text\" name=\"button_color\" value=\"")
+			var templ_7745c5c3_Var49 string
+			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.PrimaryColor)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 374, Col: 93}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var49)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var21 string
-			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ButtonColor)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 214, Col: 90}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var21)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "\" placeholder=\"#006B4D\"></div><div class=\"field-underline\"><label for=\"button_color\">Button color</label> <input id=\"button_color\" type=\"text\" name=\"button_color\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" placeholder=\"#006B4D\"></div></div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"secondary_color\">Secondary color</label> <input id=\"secondary_color\" type=\"text\" name=\"secondary_color\" value=\"")
+			var templ_7745c5c3_Var50 string
+			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ButtonColor)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 378, Col: 90}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var50)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var22 string
-			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.SecondaryColor)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 220, Col: 99}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "\" placeholder=\"#006B4D\"></div></div><div class=\"field-grid\"><div class=\"field-underline\"><label for=\"secondary_color\">Secondary color</label> <input id=\"secondary_color\" type=\"text\" name=\"secondary_color\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" placeholder=\"#10B981\"></div><div class=\"field-underline\"><label for=\"button_text_color\">Button text color</label> <input id=\"button_text_color\" type=\"text\" name=\"button_text_color\" value=\"")
+			var templ_7745c5c3_Var51 string
+			templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.SecondaryColor)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 384, Col: 99}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var51)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var23 string
-			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ButtonTextColor)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 224, Col: 104}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "\" placeholder=\"#10B981\"></div><div class=\"field-underline\"><label for=\"button_text_color\">Button text color</label> <input id=\"button_text_color\" type=\"text\" name=\"button_text_color\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" placeholder=\"#F8FAFC\"></div></div><p class=\"field-hint\">Leave these blank to use the GatsToGo default customer-site look. Invalid colors are ignored safely.</p></div></details> <label class=\"signup-consent\"><input type=\"checkbox\" name=\"accept_terms\" value=\"yes\" required> <span>I agree to the <a href=\"/terms\" target=\"_blank\" rel=\"noopener\">Terms of Service</a> and have read the <a href=\"/privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>. I'm authorised to register this business.</span></label> <button class=\"button-primary\" type=\"submit\">Submit application</button><p class=\"signup-submit-note\">We verify your bank account during review and email you if anything needs fixing.</p></form><script>\n\t\t\t\t\t(function () {\n\t\t\t\t\t\tvar form = document.querySelector(\".signup-form\");\n\t\t\t\t\t\tvar alertBox = document.querySelector(\".signup-head .inline-alert\");\n\t\t\t\t\t\tif (!form || !alertBox) return;\n\t\t\t\t\t\talertBox.scrollIntoView({ block: \"center\" });\n\t\t\t\t\t\tfunction dismiss() {\n\t\t\t\t\t\t\talertBox.remove();\n\t\t\t\t\t\t\tform.removeEventListener(\"input\", dismiss);\n\t\t\t\t\t\t\tform.removeEventListener(\"change\", dismiss);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tform.addEventListener(\"input\", dismiss);\n\t\t\t\t\t\tform.addEventListener(\"change\", dismiss);\n\t\t\t\t\t})();\n\t\t\t\t</script><script>\n\t\t\t\t\t(function () {\n\t\t\t\t\t\tvar input = document.getElementById(\"slug\");\n\t\t\t\t\t\tvar preview = document.querySelector(\".slug-preview strong\");\n\t\t\t\t\t\tif (!input || !preview) return;\n\t\t\t\t\t\tinput.addEventListener(\"input\", function () {\n\t\t\t\t\t\t\tvar v = input.value.toLowerCase().replace(/[^a-z0-9-]/g, \"\");\n\t\t\t\t\t\t\tif (v !== input.value) input.value = v;\n\t\t\t\t\t\t\tpreview.textContent = v || \"yourname\";\n\t\t\t\t\t\t});\n\t\t\t\t\t})();\n\t\t\t\t</script></div>")
+			var templ_7745c5c3_Var52 string
+			templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.ResolveAttributeValue(data.ButtonTextColor)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 388, Col: 104}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var52)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "\" placeholder=\"#F8FAFC\"></div></div><p class=\"field-hint\">Leave these blank to use the GatsToGo default customer-site look. Invalid colors are ignored safely.</p></div></details> <label class=\"signup-consent\"><input type=\"checkbox\" name=\"accept_terms\" value=\"yes\" required> <span>I agree to the <a href=\"/terms\" target=\"_blank\" rel=\"noopener\">Terms of Service</a> and have read the <a href=\"/privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>. I'm authorised to register this business.</span></label> <button class=\"button-primary\" type=\"submit\">Submit application</button><p class=\"signup-submit-note\">We verify your bank account during review and email you if anything needs fixing.</p></form><script>\n\t\t\t\t\t(function () {\n\t\t\t\t\t\tvar form = document.querySelector(\".signup-form\");\n\t\t\t\t\t\tvar alertBox = document.querySelector(\".signup-head .inline-alert\");\n\t\t\t\t\t\tif (!form || !alertBox) return;\n\t\t\t\t\t\talertBox.scrollIntoView({ block: \"center\" });\n\t\t\t\t\t\tfunction dismiss() {\n\t\t\t\t\t\t\talertBox.remove();\n\t\t\t\t\t\t\tform.removeEventListener(\"input\", dismiss);\n\t\t\t\t\t\t\tform.removeEventListener(\"change\", dismiss);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tform.addEventListener(\"input\", dismiss);\n\t\t\t\t\t\tform.addEventListener(\"change\", dismiss);\n\t\t\t\t\t})();\n\t\t\t\t</script><script>\n\t\t\t\t\t(function () {\n\t\t\t\t\t\tvar input = document.getElementById(\"slug\");\n\t\t\t\t\t\tvar preview = document.querySelector(\".slug-preview strong\");\n\t\t\t\t\t\tif (!input || !preview) return;\n\t\t\t\t\t\tinput.addEventListener(\"input\", function () {\n\t\t\t\t\t\t\tvar v = input.value.toLowerCase().replace(/[^a-z0-9-]/g, \"\");\n\t\t\t\t\t\t\tif (v !== input.value) input.value = v;\n\t\t\t\t\t\t\tpreview.textContent = v || \"yourname\";\n\t\t\t\t\t\t});\n\t\t\t\t\t})();\n\t\t\t\t</script></div></div><script>\n\t\t\t\t(function () {\n\t\t\t\t\tvar btns = document.querySelectorAll(\"[data-tab-btn]\");\n\t\t\t\t\tvar panels = document.querySelectorAll(\"[data-tab-panel]\");\n\t\t\t\t\tfunction show(which, push) {\n\t\t\t\t\t\tbtns.forEach(function (b) { b.setAttribute(\"aria-selected\", b.dataset.tabBtn === which ? \"true\" : \"false\"); });\n\t\t\t\t\t\tpanels.forEach(function (p) { p.hidden = p.dataset.tabPanel !== which; });\n\t\t\t\t\t\tif (push && window.history && history.replaceState) {\n\t\t\t\t\t\t\tvar u = new URL(window.location.href);\n\t\t\t\t\t\t\tu.searchParams.set(\"for\", which);\n\t\t\t\t\t\t\thistory.replaceState(null, \"\", u.toString());\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t\tbtns.forEach(function (b) { b.addEventListener(\"click\", function () { show(b.dataset.tabBtn, true); }); });\n\t\t\t\t})();\n\t\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -492,9 +1050,9 @@ func PlantUnderReview(name string, appBaseURL string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var24 == nil {
-			templ_7745c5c3_Var24 = templ.NopComponent
+		templ_7745c5c3_Var53 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var53 == nil {
+			templ_7745c5c3_Var53 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = marketingPageShell(name+" is under review | GatsToGo", plantUnderReviewContent(name, appBaseURL)).Render(ctx, templ_7745c5c3_Buffer)
@@ -521,12 +1079,12 @@ func plantUnderReviewContent(name string, appBaseURL string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var25 == nil {
-			templ_7745c5c3_Var25 = templ.NopComponent
+		templ_7745c5c3_Var54 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var54 == nil {
+			templ_7745c5c3_Var54 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<main><div class=\"signup-submitted review-state\"><div class=\"review-panel\"><div class=\"icon-badge\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "<main><div class=\"signup-submitted review-state\"><div class=\"review-panel\"><div class=\"icon-badge\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -534,33 +1092,33 @@ func plantUnderReviewContent(name string, appBaseURL string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><div class=\"section-eyebrow\">Application under review</div><h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "</div><div class=\"section-eyebrow\">Application under review</div><h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(name)
+		var templ_7745c5c3_Var55 string
+		templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 292, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 473, Col: 14}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, " is not live yet</h1><p>We are verifying this plant before customers can buy gas from it. Once approved, the owner will receive an email and SMS with the next steps for using the platform.</p><div class=\"review-steps\" aria-label=\"Application progress\"><div class=\"review-step is-done\"><span>1</span><strong>Application received</strong></div><div class=\"review-step is-current\"><span>2</span><strong>Verification in progress</strong></div><div class=\"review-step\"><span>3</span><strong>Plant page goes live after approval</strong></div></div><a class=\"button-primary\" href=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var27 templ.SafeURL
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(appBaseURL))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 299, Col: 62}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, " is not live yet</h1><p>We are verifying this plant before customers can buy gas from it. Once approved, the owner will receive an email and SMS with the next steps for using the platform.</p><div class=\"review-steps\" aria-label=\"Application progress\"><div class=\"review-step is-done\"><span>1</span><strong>Application received</strong></div><div class=\"review-step is-current\"><span>2</span><strong>Verification in progress</strong></div><div class=\"review-step\"><span>3</span><strong>Plant page goes live after approval</strong></div></div><a class=\"button-primary\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\">Back to GatsToGo</a></div></div></main>")
+		var templ_7745c5c3_Var56 templ.SafeURL
+		templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(appBaseURL))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/templates/pages/signup.templ`, Line: 480, Col: 62}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "\">Back to GatsToGo</a></div></div></main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

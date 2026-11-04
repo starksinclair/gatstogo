@@ -1,6 +1,8 @@
 package pages
 
 import (
+	"strconv"
+
 	"gatstogo/internal/payments"
 	"gatstogo/web/templates/components"
 )
@@ -40,10 +42,84 @@ type SignupViewData struct {
 	ButtonColor     string
 	SecondaryColor  string
 	ButtonTextColor string
+
+	// Tab is the /get-started tab that opens first: "owner" or "buyer".
+	Tab string
+	// Source tags where a buyer came from (?src=); saved with the sign-up.
+	Source string
+
+	// The two launch-offer counters are independent: founding plant
+	// applications and registered gas buyers each count toward their own 50.
+	OwnerSpotsClaimed int
+	OwnerSpotsTotal   int
+	BuyerSpotsClaimed int
+	BuyerSpotsTotal   int
+
+	BuyerErrorMsg  string
+	BuyerSubmitted bool
+	BuyerOfferRank int
+	BuyerName      string
+	BuyerPhone     string
+	BuyerEmail     string
+	BuyerState     string
+}
+
+const buyerShareURL = "https://wa.me/?text=Hello%2C%20I%27d%20like%20to%20buy%20gas%20from%20you%20online%20and%20pay%20from%20my%20phone.%20Gas%20plants%20can%20set%20up%20for%20free%20on%20GatsToGo%3A%20https%3A%2F%2Fgatstogo.com%2Fget-started"
+
+func spotsLeft(claimed int, total int) int {
+	if claimed >= total {
+		return 0
+	}
+	return total - claimed
+}
+
+func spotsPercent(claimed int, total int) int {
+	if total <= 0 || claimed <= 0 {
+		return 0
+	}
+	if claimed >= total {
+		return 100
+	}
+	return claimed * 100 / total
 }
 
 templ Signup(data SignupViewData) {
 	@marketingPageShell("Get started | GatsToGo", signupContent(data))
+}
+
+// spotsBanner is the launch-offer counter: an empty-state invitation while
+// nobody has claimed a spot yet, then a live "N of 50 left" bar.
+templ spotsBanner(kind string, claimed int, total int, emptyTitle string, emptyText string, liveLabel string, fullText string) {
+	if claimed <= 0 {
+		<div class="spots-banner spots-empty" data-spots={ kind }>
+			<svg class="spots-medal" viewBox="0 0 64 64" aria-hidden="true">
+				<circle cx="32" cy="26" r="18" fill="#006B4D"></circle>
+				<circle cx="32" cy="26" r="12" fill="none" stroke="#10B981" stroke-width="3"></circle>
+				<path d="M22 42l-6 16 12-5 4 8 4-14zM42 42l6 16-12-5-4 8-4-14z" fill="#10B981"></path>
+				<path d="M32 18l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z" fill="#FFFFFF"></path>
+			</svg>
+			<div class="spots-empty-body">
+				<strong>{ emptyTitle }</strong>
+				<p>{ emptyText }</p>
+				<div class="spots-count spots-count-inline"><span class="spots-num">{ strconv.Itoa(spotsLeft(claimed, total)) }</span><span class="spots-of">of { strconv.Itoa(total) } { liveLabel }</span></div>
+				<div class="spots-bar" role="img" aria-label={ strconv.Itoa(spotsLeft(claimed, total)) + " of " + strconv.Itoa(total) + " spots left" }><span style="width:0%"></span></div>
+			</div>
+		</div>
+	} else if claimed >= total {
+		<div class="spots-banner spots-full" data-spots={ kind }>
+			<div class="spots-count"><span class="spots-num">0</span><span class="spots-of">of { strconv.Itoa(total) } { liveLabel }</span></div>
+			<div class="spots-full-body">
+				<strong>All { strconv.Itoa(total) } spots are gone</strong>
+				<p>{ fullText }</p>
+			</div>
+			<div class="spots-bar" role="img" aria-label="No spots left"><span style="width:100%"></span></div>
+		</div>
+	} else {
+		<div class="spots-banner" data-spots={ kind }>
+			<div class="spots-count"><span class="spots-num">{ strconv.Itoa(spotsLeft(claimed, total)) }</span><span class="spots-of">of { strconv.Itoa(total) } { liveLabel }</span></div>
+			<div class="spots-bar" role="img" aria-label={ strconv.Itoa(spotsLeft(claimed, total)) + " of " + strconv.Itoa(total) + " spots left" }><span style={ "width:" + strconv.Itoa(spotsPercent(claimed, total)) + "%" }></span></div>
+		</div>
+	}
 }
 
 templ signupContent(data SignupViewData) {
@@ -57,12 +133,100 @@ templ signupContent(data SignupViewData) {
 				<p>Thanks for telling us about your plant. Your page is now under review, so it will not go live yet. Look out for our email and SMS: once we verify your information, we'll contact you and confirm your platform login details.</p>
 				<a class="button-primary" href="/">Back to homepage</a>
 			</div>
+		} else if data.BuyerSubmitted {
+			<div class="signup-submitted">
+				<div class="icon-badge">
+					@components.Icon("check-circle")
+				</div>
+				<h1>You're on the list</h1>
+				if data.BuyerOfferRank > 0 {
+					<p>You've got offer spot <strong>{ strconv.Itoa(data.BuyerOfferRank) } of 50</strong>: ₦1,000 off your first gas order on GatsToGo. We'll text you when a gas plant near you goes live.</p>
+				} else {
+					<p>The first 50 offers are taken, but we'll still text you when a gas plant near you goes live.</p>
+				}
+				<p>The more plants join, the sooner you can buy. Know a gas station near you? Tell them about GatsToGo.</p>
+				<a class="button-primary" href={ templ.SafeURL(buyerShareURL) } target="_blank" rel="noopener">Tell my gas plant on WhatsApp</a>
+			</div>
 		} else {
+			<div class="signup-tabs" role="tablist" aria-label="Who are you?">
+				<button type="button" role="tab" class="signup-tab" data-tab-btn="owner" aria-selected={ strconv.FormatBool(data.Tab != "buyer") }>I sell gas</button>
+				<button type="button" role="tab" class="signup-tab" data-tab-btn="buyer" aria-selected={ strconv.FormatBool(data.Tab == "buyer") }>I buy gas</button>
+			</div>
+			<div class="signup-panel" data-tab-panel="buyer" hidden?={ data.Tab != "buyer" }>
+				<div class="signup-layout signup-split signup-buyer">
+					<div class="signup-head">
+						<div class="section-eyebrow">For gas buyers</div>
+						<h1>Get ₦1,000 off your first gas order</h1>
+						<p class="lede">Tell us where you are. We'll text you when a gas plant near you joins GatsToGo, so you can pay from your phone and skip the queue.</p>
+						@spotsBanner("buyer", data.BuyerSpotsClaimed, data.BuyerSpotsTotal,
+							"Be the first customer to use our service",
+							"The first buyer gets ₦1,000 off their first order, and we'll shout you out on our social media.",
+							"₦1,000 offers left",
+							"This offer has been claimed by 50 buyers, but you can still join the list and we'll text you when a plant near you goes live.")
+						if data.BuyerErrorMsg != "" {
+							<div class="inline-alert">
+								@components.Icon("warning-circle")
+								{ data.BuyerErrorMsg }
+							</div>
+						}
+					</div>
+					<aside class="signup-aside">
+						<div class="signup-aside-block">
+							<div class="signup-aside-title">What you get</div>
+							<ul class="signup-ready">
+								<li>@components.Icon("check-circle") <span><strong>₦1,000 off</strong> Your first gas order on GatsToGo</span></li>
+								<li>@components.Icon("phone") <span><strong>A text from us</strong> When a gas plant near you goes live</span></li>
+								<li>@components.Icon("shield-check") <span><strong>No payment now</strong> Just your name, phone and state</span></li>
+							</ul>
+						</div>
+						<div class="signup-aside-block signup-aside-next">
+							<div class="signup-aside-title">What happens next</div>
+							<ol class="signup-next">
+								<li><strong>You register</strong> It takes under a minute.</li>
+								<li><strong>Tell your gas plant</strong> We give you a message to send them on WhatsApp.</li>
+								<li><strong>Buy and save</strong> Pay from your phone and get ₦1,000 off.</li>
+							</ol>
+						</div>
+					</aside>
+					<form class="signup-form" method="post" action="/get-started/buyer">
+						<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+						<input type="hidden" name="src" value={ data.Source }/>
+						<div class="field-underline">
+							<label for="buyer_name">Your name</label>
+							<input id="buyer_name" type="text" name="buyer_name" value={ data.BuyerName } placeholder="Ada Nwosu" required/>
+						</div>
+						<div class="field-underline">
+							<label for="buyer_phone">Phone number</label>
+							<input id="buyer_phone" type="tel" name="buyer_phone" value={ data.BuyerPhone } placeholder="0803 000 0000" required/>
+						</div>
+						<div class="field-underline">
+							<label for="buyer_email">Email (optional)</label>
+							<input id="buyer_email" type="email" name="buyer_email" value={ data.BuyerEmail } placeholder="ada@example.com"/>
+						</div>
+						<div class="field-underline">
+							<label>State</label>
+							@themedSelect("buyer_state", stateSelectOptions(), data.BuyerState)
+						</div>
+						<label class="signup-consent">
+							<input type="checkbox" name="accept_contact" value="yes" required/>
+							<span>Text me when a gas plant near me joins GatsToGo. I've read the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+						</label>
+						<button class="button-primary" type="submit">Claim my ₦1,000 off</button>
+						<p class="signup-submit-note">No payment needed. The offer applies to your first order on GatsToGo.</p>
+					</form>
+				</div>
+			</div>
+			<div class="signup-panel" data-tab-panel="owner" hidden?={ data.Tab == "buyer" }>
 			<div class="signup-layout signup-split">
 				<div class="signup-head">
 					<div class="section-eyebrow">Get started</div>
 					<h1>Tell us about your plant</h1>
 					<p class="lede">About 5 minutes. We set up your branded page and owner login, and review every application before it goes live.</p>
+					@spotsBanner("owner", data.OwnerSpotsClaimed, data.OwnerSpotsTotal,
+						"Be the first plant on GatsToGo",
+						"Get the 1st Founding Plant badge on your dashboard for good, and we'll feature you on our social media.",
+						"founding spots left",
+						"Spots have run out because so many plants applied, but applications are still open. Apply now and we'll review yours.")
 					if data.ErrorMsg != "" {
 						<div class="inline-alert">
 							@components.Icon("warning-circle")
@@ -263,6 +427,23 @@ templ signupContent(data SignupViewData) {
 					})();
 				</script>
 			</div>
+			</div>
+			<script>
+				(function () {
+					var btns = document.querySelectorAll("[data-tab-btn]");
+					var panels = document.querySelectorAll("[data-tab-panel]");
+					function show(which, push) {
+						btns.forEach(function (b) { b.setAttribute("aria-selected", b.dataset.tabBtn === which ? "true" : "false"); });
+						panels.forEach(function (p) { p.hidden = p.dataset.tabPanel !== which; });
+						if (push && window.history && history.replaceState) {
+							var u = new URL(window.location.href);
+							u.searchParams.set("for", which);
+							history.replaceState(null, "", u.toString());
+						}
+					}
+					btns.forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.tabBtn, true); }); });
+				})();
+			</script>
 		}
 	</main>
 }

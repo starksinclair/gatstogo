@@ -54,6 +54,8 @@ type AdminPlantDetailData struct {
 
 	CSRFToken string
 
+	FoundingRank int
+
 	Notice        string
 	NoticeIsError bool
 }
@@ -74,6 +76,10 @@ templ adminPlantDetailContent(data AdminPlantDetailData) {
 				<span class="mono">{ data.Slug }</span>
 				<span class="sep"></span>
 				<span>Created { data.CreatedAt }</span>
+				if foundingBadgeLabel(data.FoundingRank) != "" {
+					<span class="sep"></span>
+					<span class="founding-badge">{ foundingBadgeLabel(data.FoundingRank) }</span>
+				}
 			</div>
 		</div>
 		<div class="toolbar action-strip">

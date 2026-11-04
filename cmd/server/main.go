@@ -305,6 +305,7 @@ func (s *Server) MountHandlers() {
 	s.Router.With(marketingHostOnly).Post("/help/feedback", helpFeedbackHandler(s))
 	s.Router.With(marketingHostOnly).Get("/contact", contactPageHandler(s))
 	s.Router.With(middleware.CSRF).Post("/get-started", signupSubmitHandler(s))
+	s.Router.With(middleware.CSRF).Post("/get-started/buyer", buyerSignupHandler(s))
 
 	// Human-facing tenant entry pages should explain "under review" for
 	// self-serve plants that exist but are not active yet. Their POST/API
@@ -350,6 +351,7 @@ func (s *Server) MountHandlers() {
 		r.Post("/admin/plants/{id}/messaging", adminPlantMessagingHandler(s))
 		r.Post("/admin/plants/{id}/status", adminPlantStatusHandler(s))
 		r.Post("/admin/plants/{id}/subaccount", adminPlantSubaccountHandler(s))
+		r.Get("/admin/buyers.csv", adminBuyersCSVHandler(s))
 	})
 
 	s.Router.Group(func(r chi.Router) {
@@ -887,13 +889,17 @@ func loadOwnerDashboard(ctx context.Context, db tenantdb.Querier, plant *domain.
 // they're queried here instead, scoped to this one dashboard render.
 func loadPlantProfile(ctx context.Context, db tenantdb.Querier, plantID uuid.UUID, data *pages.OwnerDashboardData) {
 	var state, legalBusinessName, cacNumber, nmdpraLicenseNumber, bankName, bankAccountNumber, bankAccountName sql.NullString
+	var foundingRank sql.NullInt64
 	err := db.QueryRow(ctx, `
 		SELECT state, legal_business_name, cac_number, nmdpra_license_number,
-		       bank_name, bank_account_number, bank_account_name
+		       bank_name, bank_account_number, bank_account_name, founding_rank
 		FROM plants WHERE id = $1
-	`, plantID).Scan(&state, &legalBusinessName, &cacNumber, &nmdpraLicenseNumber, &bankName, &bankAccountNumber, &bankAccountName)
+	`, plantID).Scan(&state, &legalBusinessName, &cacNumber, &nmdpraLicenseNumber, &bankName, &bankAccountNumber, &bankAccountName, &foundingRank)
 	if err != nil {
 		return
+	}
+	if foundingRank.Valid {
+		data.FoundingRank = int(foundingRank.Int64)
 	}
 	data.PlantState = nullableString(state, "State coming soon")
 	data.PlantLegalBusinessName = nullableString(legalBusinessName, "Not yet provided")

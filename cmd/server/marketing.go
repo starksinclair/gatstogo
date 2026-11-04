@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"math"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"gatstogo/internal/buyers"
 	"gatstogo/internal/middleware"
 	"gatstogo/internal/plants"
 	"gatstogo/web/templates/pages"
@@ -161,7 +163,18 @@ func signupPageHandler(s *Server) http.HandlerFunc {
 			ErrorMsg:  signupErrorMessage(r.URL.Query().Get("error")),
 			Submitted: r.URL.Query().Get("submitted") == "1",
 			Banks:     s.Paystack.BanksWithFallback(r.Context()),
+			Tab:       signupTab(r.URL.Query().Get("for")),
+			Source:    r.URL.Query().Get("src"),
 		}
+		switch r.URL.Query().Get("submitted") {
+		case "buyer":
+			data.BuyerSubmitted = true
+			data.BuyerOfferRank = atoiOr(r.URL.Query().Get("rank"), 0)
+			if data.BuyerOfferRank < 0 || data.BuyerOfferRank > buyers.OfferSpots {
+				data.BuyerOfferRank = 0
+			}
+		}
+		fillSignupCounters(r.Context(), s, &data)
 		if err := pages.Signup(data).Render(r.Context(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -236,6 +249,7 @@ func signupSubmitHandler(s *Server) http.HandlerFunc {
 			OwnerPassword:       password,
 			Status:              "provisioning",
 			DeferSettlement:     true,
+			ClaimFoundingSpot:   true,
 			TermsAcceptedAt:     time.Now(),
 		}
 		if priceErr == nil {
@@ -312,7 +326,9 @@ func renderSignupForm(s *Server, w http.ResponseWriter, r *http.Request, errorMs
 		OwnerEmail:          r.FormValue("owner_email"),
 		StartingPrice:       r.FormValue("starting_price"),
 		Banks:               s.Paystack.BanksWithFallback(r.Context()),
+		Tab:                 "owner",
 	}
+	fillSignupCounters(r.Context(), s, &data)
 	if err := pages.Signup(data).Render(r.Context(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -365,4 +381,100 @@ func allowSignupAttempt(ctx context.Context, rdb *redis.Client, ip string) bool 
 		return true
 	}
 	return allowed
+}
+
+// signupTab picks which /get-started tab opens first. Anything but "buyer"
+// opens the owner tab, so every existing link keeps working.
+func signupTab(v string) string {
+	if v == "buyer" {
+		return "buyer"
+	}
+	return "owner"
+}
+
+func atoiOr(v string, fallback int) int {
+	n, err := strconv.Atoi(strings.TrimSpace(v))
+	if err != nil {
+		return fallback
+	}
+	return n
+}
+
+// fillSignupCounters sets the two independent "spots left" counters. A
+// database error leaves the counters at zero claimed rather than failing
+// the page, since the counters are decoration, not part of submitting.
+func fillSignupCounters(ctx context.Context, s *Server, data *pages.SignupViewData) {
+	data.OwnerSpotsTotal = plants.FoundingSpots
+	data.BuyerSpotsTotal = buyers.OfferSpots
+	if n, err := plants.FoundingSpotsClaimed(ctx, s.AdminDB); err == nil {
+		data.OwnerSpotsClaimed = n
+	} else {
+		log.Println("signup: founding counter:", err)
+	}
+	if n, err := buyers.SpotsClaimed(ctx, s.AdminDB); err == nil {
+		data.BuyerSpotsClaimed = n
+	} else {
+		log.Println("signup: buyer counter:", err)
+	}
+}
+
+// ---- POST /get-started/buyer (public: a gas buyer registers) ----
+
+func buyerSignupHandler(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fail := func(msg string) {
+			csrfToken := middleware.EnsurePublicCSRFCookie(w, r)
+			data := pages.SignupViewData{
+				CSRFToken:     csrfToken,
+				Tab:           "buyer",
+				BuyerErrorMsg: msg,
+				BuyerName:     r.FormValue("buyer_name"),
+				BuyerPhone:    r.FormValue("buyer_phone"),
+				BuyerEmail:    r.FormValue("buyer_email"),
+				BuyerState:    r.FormValue("buyer_state"),
+				Source:        r.FormValue("src"),
+				Banks:         s.Paystack.BanksWithFallback(r.Context()),
+			}
+			fillSignupCounters(r.Context(), s, &data)
+			if err := pages.Signup(data).Render(r.Context(), w); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		}
+		if err := r.ParseForm(); err != nil {
+			fail("Could not read that submission. Try again.")
+			return
+		}
+		if r.FormValue("accept_contact") != "yes" {
+			fail("Please tick the box so we can text you when a plant near you joins.")
+			return
+		}
+		if !allowSignupAttempt(r.Context(), s.Redis, clientIP(r)) {
+			fail("Too many sign-ups from this connection. Please wait a while and try again.")
+			return
+		}
+		res, err := buyers.Signup(r.Context(), s.AdminDB, buyers.SignupParams{
+			Name:   r.FormValue("buyer_name"),
+			Phone:  r.FormValue("buyer_phone"),
+			Email:  r.FormValue("buyer_email"),
+			State:  r.FormValue("buyer_state"),
+			Source: r.FormValue("src"),
+		})
+		if err != nil {
+			switch {
+			case errors.Is(err, buyers.ErrMissingField):
+				fail("Enter your name.")
+			case errors.Is(err, buyers.ErrInvalidPhone):
+				fail("Enter a valid Nigerian phone number, for example 0803 000 0000.")
+			case errors.Is(err, buyers.ErrInvalidEmail):
+				fail("That email address doesn't look right. You can also leave it blank.")
+			case errors.Is(err, buyers.ErrInvalidState):
+				fail("Choose your state.")
+			default:
+				log.Println("buyer signup:", err)
+				fail("Something went wrong. Please try again.")
+			}
+			return
+		}
+		http.Redirect(w, r, "/get-started?submitted=buyer&for=buyer&rank="+strconv.Itoa(res.OfferRank), http.StatusSeeOther)
+	}
 }
