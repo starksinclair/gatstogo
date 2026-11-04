@@ -174,6 +174,10 @@ type CreateParams struct {
 	// SetSettlement has run -- cmd/server's admin status handler enforces that.
 	DeferSettlement bool
 
+	// ClaimFoundingSpot gives this application the next free founding rank
+	// (1..FoundingSpots) if any remain. Only the public signup sets it.
+	ClaimFoundingSpot bool
+
 	OwnerName     string
 	OwnerPhone    string
 	OwnerEmail    string
@@ -349,6 +353,21 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 		return nil, ErrReservedSlug
 	}
 
+	var foundingRank *int
+	if p.ClaimFoundingSpot {
+		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(7710001)`); err != nil {
+			return nil, err
+		}
+		var claimed int
+		if err := tx.QueryRow(ctx, `SELECT COALESCE(MAX(founding_rank), 0) FROM plants`).Scan(&claimed); err != nil {
+			return nil, err
+		}
+		if claimed < FoundingSpots {
+			r := claimed + 1
+			foundingRank = &r
+		}
+	}
+
 	var plantID uuid.UUID
 	err = tx.QueryRow(ctx, `
 		INSERT INTO plants (
@@ -356,9 +375,10 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 			legal_business_name, cac_number, nmdpra_license_number,
 			bank_code, bank_name, bank_account_number, bank_account_name,
 			paystack_subaccount_code,
-			primary_color, button_color, secondary_color, button_text_color, logo_path, status
+			primary_color, button_color, secondary_color, button_text_color, logo_path, status,
+			founding_rank
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
 		RETURNING id
 	`,
 		v.name, v.slug, nullIfEmpty(p.City), nullIfEmpty(p.Address), nullIfEmpty(p.Phone), v.state,
@@ -366,6 +386,7 @@ func Create(ctx context.Context, adminDB *pgxpool.Pool, p CreateParams, actorID 
 		v.bankCode, nullIfEmpty(bankName), v.bankAccountNumber, nullIfEmpty(bankAccountName),
 		nullIfEmpty(subaccountCode),
 		v.primaryColor, v.buttonColor, v.secondaryColor, v.buttonTextColor, nullIfEmpty(p.LogoPath), v.status,
+		foundingRank,
 	).Scan(&plantID)
 	if err != nil {
 		if isUniqueViolation(err) {
@@ -519,4 +540,14 @@ func SetSettlement(ctx context.Context, adminDB *pgxpool.Pool, plantID uuid.UUID
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+// FoundingSpots is how many applications get a Founding Plant badge.
+const FoundingSpots = 50
+
+// FoundingSpotsClaimed counts applications that took a founding spot.
+func FoundingSpotsClaimed(ctx context.Context, adminDB *pgxpool.Pool) (int, error) {
+	var n int
+	err := adminDB.QueryRow(ctx, `SELECT COUNT(*) FROM plants WHERE founding_rank IS NOT NULL`).Scan(&n)
+	return n, err
 }
