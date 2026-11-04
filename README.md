@@ -208,7 +208,18 @@ http://localhost:8080/admin/login
 | Cashier (`sunrise` terminal PIN) | `08098765432` | `1234` |
 | Platform admin | `08000000000` | `platform-admin-dev` |
 
-There is currently no bootstrap path for creating the *first* admin against a real production database (0002 never runs there, and every `/admin` route requires an existing admin session) -- that's an open gap, not something this seed data solves beyond local dev.
+### Creating the first platform admin on a real database
+
+Run this once from a trusted place (a one-off container or Cloud Run job with a terminal, using the production owner `MIGRATE_DATABASE_URL`), never with the dev seed:
+
+```bash
+gtg create-admin --name "Your Name" --phone 08031234567 --email you@example.com
+```
+
+- The password is typed at a hidden prompt (twice), 14+ characters. It is never read from an argument or environment variable, and the command refuses to run without a terminal.
+- Admins hang off an internal closed plant (`gatstogo-platform`), because `users.plant_id` is required. Admin access itself is platform-wide.
+- Run production migrations as `gtg migrate` **without** `--seed`. The seed creates the demo admin `08000000000` / `platform-admin-dev`.
+- If the demo admin ever exists on a real database, remove it with `gtg delete-admin --phone 08000000000`. `delete-admin` refuses to remove the last active admin and keeps the row (deactivated, credentials cleared) so the audit trail stays intact.
 
 Optional Adminer database UI is available through the `tools` profile:
 

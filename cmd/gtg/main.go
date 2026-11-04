@@ -59,6 +59,14 @@ func main() {
 		if err := cmdSeed(ctx, force); err != nil {
 			fatal(err)
 		}
+	case "create-admin":
+		if err := cmdCreateAdmin(ctx, os.Args[2:]); err != nil {
+			fatal(err)
+		}
+	case "delete-admin":
+		if err := cmdDeleteAdmin(ctx, os.Args[2:]); err != nil {
+			fatal(err)
+		}
 	case "help", "-h", "--help":
 		printUsage()
 	default:
@@ -215,6 +223,10 @@ Usage:
   gtg migrate status       Show applied vs pending
   gtg db:seed              Apply seed data only
   gtg db:seed --force      Allow seed even when APP_ENV=production
+  gtg create-admin --name "Ada" --phone 08031234567 [--email a@b.com] [--yes]
+                           Create a platform admin (password typed hidden, 14+ chars)
+  gtg delete-admin --phone 08031234567 [--yes]
+                           Deactivate a platform admin (never the last one)
 
 Env (see docs/DATABASE.md):
   MIGRATE_DATABASE_URL     Neon direct owner URL (preferred for migrate)

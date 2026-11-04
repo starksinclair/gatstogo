@@ -48,7 +48,7 @@ COPY migrations/ /migrations/
 
 USER app
 ENTRYPOINT ["/gtg"]
-CMD ["migrate", "--seed"]
+CMD ["migrate"]
 
 # ======================
 # Stage 2: Development image (docker compose --target dev)
